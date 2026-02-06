@@ -24,6 +24,7 @@
 #define ROOT_TABLE_LEN(T0SZ)           (TT_ENTRY_COUNT >> ((T0SZ) - 16) % 9)
 #define ARM_TT_BASE_ADDRESS(page)      (page & TT_ADDRESS_MASK_BLOCK_ENTRY)
 #define ARM_TT_BLOCK_ATTRIBUTES(page)  (page & AARCH64_ATTRIBUTES_MASK)
+#define TT_ADDRESS_MASK  (0xFFFFFFFFFULL << 12)
 
 // All translation table bit definitions were taken from the Armv8 A
 // Architecture Manual version H.a.
@@ -141,6 +142,7 @@ IsHierarchicalControlEnabled (
   @param[in]      LastEntry                   Pointer to last map entry.
   @param[in]      OneEntry                    Pointer to a library internal storage that holds one map entry which is
                                               used when Map array is at capacity.
+  @param[in]      SelfMapped                  TRUE if the page tables are self-mapped, FALSE otherwise.
 **/
 STATIC
 VOID
@@ -153,7 +155,8 @@ TranslationTableParseRecursive (
   IN OUT UINTN                              *MapCount,
   IN     UINTN                              MapCapacity,
   IN     PAGE_MAP_ENTRY                     **LastEntry,
-  IN     PAGE_MAP_ENTRY                     *OneEntry
+  IN     PAGE_MAP_ENTRY                     *OneEntry,
+  IN     BOOLEAN                            SelfMapped
   )
 {
   TRANSLATION_TABLE_ENTRY_UNION  *PagingEntry;
@@ -166,7 +169,30 @@ TranslationTableParseRecursive (
     return;
   }
 
-  PagingEntry  = (TRANSLATION_TABLE_ENTRY_UNION *)(UINTN)PageTableBaseAddress;
+  if (SelfMapped) {
+    switch (Level) {
+      case 0:
+        PagingEntry = (TRANSLATION_TABLE_ENTRY_UNION *)0xFFFFFFFFF000;
+        break;
+      case 1:
+        PagingEntry = (TRANSLATION_TABLE_ENTRY_UNION *)(0xFFFFFFE00000 + SIZE_4KB * ((RegionStart >> 39) & 0x1FF));
+        break;
+      case 2:
+        PagingEntry = (TRANSLATION_TABLE_ENTRY_UNION *)(0xFFFFC0000000 +
+                                                        SIZE_2MB * ((RegionStart >> 39) & 0x1FF) +
+                                                        SIZE_4KB * ((RegionStart >> 30) & 0x1FF));
+        break;
+      case 3:
+        PagingEntry = (TRANSLATION_TABLE_ENTRY_UNION *)(0xFF8000000000 +
+                                                        SIZE_1GB * ((RegionStart >> 39) & 0x1FF) +
+                                                        SIZE_2MB * ((RegionStart >> 30) & 0x1FF) +
+                                                        SIZE_4KB * ((RegionStart >> 21) & 0x1FF));
+        break;
+    }
+  } else {
+    PagingEntry = (TRANSLATION_TABLE_ENTRY_UNION *)(UINTN)PageTableBaseAddress;
+  }
+
   RegionLength = TT_BLOCK_ENTRY_SIZE_AT_LEVEL (Level);
   if (Level == 0) {
     EntryCount = ROOT_TABLE_LEN (ArmGetTCR () & TCR_T0SZ_MASK);
@@ -177,6 +203,11 @@ TranslationTableParseRecursive (
   for (Index = 0; Index < EntryCount; Index++, RegionStart += RegionLength) {
     // Skip unmapped entries
     if (!IS_VALID (PagingEntry[Index].Uint64)) {
+      continue;
+    }
+
+    if ((Level == 0) && ((Index == 0x1FF) || (Index == 0x1FE)) && SelfMapped) {
+      // Skip self-map entries in root table
       continue;
     }
 
@@ -220,15 +251,15 @@ TranslationTableParseRecursive (
         // 0b01 -> Access from EL0 is not allowed, no effect on write permissions
         if ((ParentHeritableAttributes.Bits.ApTable & TT_TABLE_AP_MASK) == TT_TABLE_AP_EL0_NO_ACCESS) {
           // BIT6 toggles access from EL0
-          ScratchEntry.Tteb.Bits.AccessPermissions &= ~((UINT64)BIT6); // Clear BIT6
+          ScratchEntry.Tteb.Bits.AccessPermissions &= ~((UINT64)BIT6);   // Clear BIT6
           // 0b10 -> Access from EL0 is read-only, no write permissions at any EL
         } else if ((ParentHeritableAttributes.Bits.ApTable & TT_TABLE_AP_MASK) == TT_TABLE_AP_NO_WRITE_ACCESS) {
           // BIT7 toggles write access for all ELs
-          ScratchEntry.Tteb.Bits.AccessPermissions |= BIT7; // Set BIT7
+          ScratchEntry.Tteb.Bits.AccessPermissions |= BIT7;   // Set BIT7
           // 0b11 -> Access from EL0 is not allowed, no write permissions at any EL
         } else if ((ParentHeritableAttributes.Bits.ApTable & TT_TABLE_AP_MASK) == TT_TABLE_AP_MASK) {
-          ScratchEntry.Tteb.Bits.AccessPermissions |= BIT7;            // Set BIT7
-          ScratchEntry.Tteb.Bits.AccessPermissions &= ~((UINT64)BIT6); // Clear BIT6
+          ScratchEntry.Tteb.Bits.AccessPermissions |= BIT7;              // Set BIT7
+          ScratchEntry.Tteb.Bits.AccessPermissions &= ~((UINT64)BIT6);   // Clear BIT6
         }
       }
 
@@ -273,7 +304,8 @@ TranslationTableParseRecursive (
         MapCount,
         MapCapacity,
         LastEntry,
-        OneEntry
+        OneEntry,
+        SelfMapped
         );
     }
   }
@@ -301,6 +333,8 @@ CreateFlatPageTable (
   PAGE_MAP_ENTRY                     OneEntry;
   TRANSLATION_TABLE_ENTRY_HERITABLE  HeritableAttributes;
   UINTN                              T0SZ;
+  BOOLEAN                            SelfMapped;
+  UINT64                             Base;
 
   ASSERT (sizeof (OneEntry.PageEntry) == sizeof (AARCH64_PAGE_MAP_ENTRY));
 
@@ -317,6 +351,9 @@ CreateFlatPageTable (
   LastEntry                   = NULL;
   LocalEntryCount             = 0;
 
+  Base       = (UINT64)(UINTN)ArmGetTTBR0BaseAddress ();
+  SelfMapped = (((UINT64 *)Base)[0x1FF] & TT_ADDRESS_MASK) == Base ? TRUE : FALSE;
+
   TranslationTableParseRecursive (
     (UINTN)ArmGetTTBR0BaseAddress (),
     0,
@@ -326,7 +363,8 @@ CreateFlatPageTable (
     &LocalEntryCount,
     Map->EntryCount,
     &LastEntry,
-    &OneEntry
+    &OneEntry,
+    SelfMapped
     );
 
   if (LocalEntryCount > Map->EntryCount) {
