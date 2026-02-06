@@ -13,16 +13,11 @@ use alloc::{
     collections::{BTreeSet, VecDeque},
     vec::Vec,
 };
-use core::{ops::Deref, sync::atomic::Ordering};
+use core::ops::Deref;
 use hidparser::report_data_types::Usage;
 use hii_keyboard_layout::{EfiKey, HiiKey, HiiKeyboardLayout, HiiNsKeyDescriptor};
-use r_efi::{
-    efi,
-    protocols::{self, hii_database::*, simple_text_input::InputKey, simple_text_input_ex::*},
-};
+use r_efi::protocols::{self, hii_database::*, simple_text_input::InputKey, simple_text_input_ex::*};
 use rust_advanced_logger_dxe::{DEBUG_WARN, debugln};
-
-use crate::RUNTIME_SERVICES;
 
 // The set of HID usages that represent modifier keys this driver is interested in.
 #[rustfmt::skip]
@@ -36,9 +31,9 @@ const KEYBOARD_MODIFIERS: &[u16] = &[
 const TOGGLE_MODIFIERS: &[u16] = &[NUM_LOCK_MODIFIER, CAPS_LOCK_MODIFIER, SCROLL_LOCK_MODIFIER];
 
 // Control, Shift, and Alt modifiers.
-const CTRL_MODIFIERS: &[u16] = &[LEFT_CONTROL_MODIFIER, RIGHT_CONTROL_MODIFIER];
+const _CTRL_MODIFIERS: &[u16] = &[LEFT_CONTROL_MODIFIER, RIGHT_CONTROL_MODIFIER];
 const SHIFT_MODIFIERS: &[u16] = &[LEFT_SHIFT_MODIFIER, RIGHT_SHIFT_MODIFIER];
-const ALT_MODIFIERS: &[u16] = &[LEFT_ALT_MODIFIER, RIGHT_ALT_MODIFIER];
+const _ALT_MODIFIERS: &[u16] = &[LEFT_ALT_MODIFIER, RIGHT_ALT_MODIFIER];
 
 /// Defines whether a key stroke represents a key being pressed (KeyDown) or released (KeyUp)
 #[derive(Debug, PartialEq, Eq)]
@@ -220,18 +215,6 @@ impl KeyQueue {
             } else {
                 self.active_modifiers.insert(current_descriptor.modifier);
             }
-        }
-
-        //handle ctrl-alt-delete
-        if CTRL_MODIFIERS.iter().any(|x| self.active_modifiers.contains(x))
-            && ALT_MODIFIERS.iter().any(|x| self.active_modifiers.contains(x))
-            && current_descriptor.modifier == DELETE_MODIFIER
-        {
-            debugln!(DEBUG_WARN, "Ctrl-Alt-Del pressed, resetting system.");
-            if let Some(runtime_services) = unsafe { RUNTIME_SERVICES.load(Ordering::SeqCst).as_mut() } {
-                (runtime_services.reset_system)(efi::RESET_WARM, efi::Status::SUCCESS, 0, core::ptr::null_mut());
-            }
-            panic!("Reset failed.");
         }
 
         if action == KeyAction::KeyUp {
@@ -551,32 +534,31 @@ fn usage_to_efi_key(usage: Usage) -> Option<EfiKey> {
 }
 
 //These should be defined in r_efi::protocols::simple_text_input
-const SCAN_NULL: u16 = 0x0000;
-const SCAN_UP: u16 = 0x0001;
-const SCAN_DOWN: u16 = 0x0002;
-const SCAN_RIGHT: u16 = 0x0003;
-const SCAN_LEFT: u16 = 0x0004;
-const SCAN_HOME: u16 = 0x0005;
-const SCAN_END: u16 = 0x0006;
-const SCAN_INSERT: u16 = 0x0007;
-const SCAN_DELETE: u16 = 0x0008;
-const SCAN_PAGE_UP: u16 = 0x0009;
-const SCAN_PAGE_DOWN: u16 = 0x000A;
-const SCAN_F1: u16 = 0x000B;
-const SCAN_F2: u16 = 0x000C;
-const SCAN_F3: u16 = 0x000D;
-const SCAN_F4: u16 = 0x000E;
-const SCAN_F5: u16 = 0x000F;
-const SCAN_F6: u16 = 0x0010;
-const SCAN_F7: u16 = 0x0011;
-const SCAN_F8: u16 = 0x0012;
-const SCAN_F9: u16 = 0x0013;
-const SCAN_F10: u16 = 0x0014;
-const SCAN_F11: u16 = 0x0015;
-const SCAN_F12: u16 = 0x0016;
-const SCAN_ESC: u16 = 0x0017;
-const SCAN_PAUSE: u16 = 0x0048;
-
+pub const SCAN_NULL: u16 = 0x0000;
+pub const SCAN_UP: u16 = 0x0001;
+pub const SCAN_DOWN: u16 = 0x0002;
+pub const SCAN_RIGHT: u16 = 0x0003;
+pub const SCAN_LEFT: u16 = 0x0004;
+pub const SCAN_HOME: u16 = 0x0005;
+pub const SCAN_END: u16 = 0x0006;
+pub const SCAN_INSERT: u16 = 0x0007;
+pub const SCAN_DELETE: u16 = 0x0008;
+pub const SCAN_PAGE_UP: u16 = 0x0009;
+pub const SCAN_PAGE_DOWN: u16 = 0x000A;
+pub const SCAN_F1: u16 = 0x000B;
+pub const SCAN_F2: u16 = 0x000C;
+pub const SCAN_F3: u16 = 0x000D;
+pub const SCAN_F4: u16 = 0x000E;
+pub const SCAN_F5: u16 = 0x000F;
+pub const SCAN_F6: u16 = 0x0010;
+pub const SCAN_F7: u16 = 0x0011;
+pub const SCAN_F8: u16 = 0x0012;
+pub const SCAN_F9: u16 = 0x0013;
+pub const SCAN_F10: u16 = 0x0014;
+pub const SCAN_F11: u16 = 0x0015;
+pub const SCAN_F12: u16 = 0x0016;
+pub const SCAN_ESC: u16 = 0x0017;
+pub const SCAN_PAUSE: u16 = 0x0048;
 // helper routine that converts the given modifier to the corresponding SCAN code
 fn modifier_to_scan(modifier: u16) -> u16 {
     match modifier {
