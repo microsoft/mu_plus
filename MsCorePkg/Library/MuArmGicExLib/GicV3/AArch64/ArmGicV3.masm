@@ -30,16 +30,14 @@
 //  VOID
 //  );
 ArmGicV3GetControlSystemRegisterEnable PROC
-        EL1_OR_EL2_OR_EL3(x1)
+        EL1_OR_EL2(x1)
 1
     mrs x0, ICC_SRE_EL1
-        b       %f4
+        b       %f3
 2
     mrs x0, ICC_SRE_EL2
-        b       %f4
+        b       %f3
 3
-    mrs x0, ICC_SRE_EL3
-4
     ret
 ArmGicV3GetControlSystemRegisterEnable ENDP
 
@@ -49,16 +47,14 @@ ArmGicV3GetControlSystemRegisterEnable ENDP
 //  IN UINT32         ControlSystemRegisterEnable
 //  );
 ArmGicV3SetControlSystemRegisterEnable PROC
-        EL1_OR_EL2_OR_EL3(x1)
+        EL1_OR_EL2(x1)
 1
     msr ICC_SRE_EL1, x0
-        b       %f4
+        b       %f3
 2
     msr ICC_SRE_EL2, x0
-        b       %f4
+        b       %f3
 3
-    msr ICC_SRE_EL3, x0
-4
     isb sy
         ret
 ArmGicV3SetControlSystemRegisterEnable ENDP
