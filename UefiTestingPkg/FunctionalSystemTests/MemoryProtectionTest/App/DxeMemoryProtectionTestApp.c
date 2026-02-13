@@ -223,25 +223,6 @@ CheckMemoryProtectionExceptionHandlerInstallation (
 }
 
 /**
-  This helper function returns TRUE if the MemProtExGetIgnoreNextException() returns TRUE.
-
-  @retval     TRUE                IgnoreNextException set
-  @retval     FALSE               Otherwise
-**/
-STATIC
-BOOLEAN
-GetIgnoreNextEx (
-  VOID
-  )
-{
-  BOOLEAN  Result = FALSE;
-
-  ExPersistGetIgnoreNextPageFault (&Result);
-
-  return Result;
-}
-
-/**
   The recursion loop for testing stack overflow protection. This function will
   recurse until it overflows the stack at which point it's expected that a switch
   stack is used and an interrupt is generated.
@@ -265,31 +246,6 @@ Recursion (
   // a boolean check.
   if (AlwaysTrueBool) {
     Sum = Recursion (++Count);
-  }
-
-  return Sum + Count;
-}
-
-/**
-  A recursive stack overflow function which at every recursion level checks if the interrupt handler
-  has signaled that it ran and cleared the faulting region at which point we unwind the recursion.
-
-  @param[in]  Count   The current recursion depth.
-
-  @retval             The sum of Count and the return value of the next recursive call.
-**/
-STATIC
-UINT64
-RecursionDynamic (
-  IN UINT64  Count
-  )
-{
-  UINT64  Sum = 0;
-
-  DEBUG ((DEBUG_ERROR, "%a - 0x%x\n", __FUNCTION__, Count));
-
-  if (GetIgnoreNextEx ()) {
-    Sum = RecursionDynamic (++Count);
   }
 
   return Sum + Count;
