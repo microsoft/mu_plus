@@ -68,7 +68,6 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
         ''' return iterable of edk2 architectures supported by this build '''
         return ("IA32",
                 "X64",
-                "ARM",
                 "AARCH64")
 
     def GetTargetsSupported(self):
@@ -131,7 +130,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
     def GetActiveScopes(self):
         ''' return tuple containing scopes that should be active for this process '''
         if self.ActualScopes is None:
-            scopes = ("cibuild", "edk2-build", "host-based-test", "rust-ci")
+            scopes = ("cibuild", "edk2-build", "host-based-test")
 
             self.ActualToolChainTag = shell_environment.GetBuildVars().GetValue("TOOL_CHAIN_TAG", "")
 
@@ -194,12 +193,12 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             {
                 "Path": "MU_BASECORE",
                 "Url": "https://github.com/microsoft/mu_basecore.git",
-                "Branch": "release/202511"
-                ""
+                "Branch": "release/202511",
+                "Recurse": {"CIFile": ".pytool/CISettings.py"}
             },
             {
-                "Path": "Silicon/Intel/MU_TIANO",
-                "Url": "https://github.com/Microsoft/mu_silicon_intel_tiano.git",
+                "Path": "Silicon/MIN_PLAT",
+                "Url": "https://github.com/microsoft/mu_common_intel_min_platform.git",
                 "Branch": "release/202511"
             }
         ]
