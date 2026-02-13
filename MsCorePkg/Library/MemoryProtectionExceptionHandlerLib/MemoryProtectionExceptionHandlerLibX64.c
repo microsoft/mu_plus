@@ -13,7 +13,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Pi/PiStatusCode.h>
 
 #include <Protocol/DebugSupport.h>
-#include <Protocol/MemoryProtectionNonstopMode.h>
 
 #include <Library/CpuExceptionHandlerLib.h>
 #include <Library/DebugLib.h>
@@ -64,10 +63,8 @@ MemoryProtectionExceptionHandler (
   IN EFI_SYSTEM_CONTEXT  SystemContext
   )
 {
-  UINTN                                    pointer;
-  MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *NonstopModeProtocol;
-  BOOLEAN                                  IgnoreNext = FALSE;
-  EFI_STATUS                               Status;
+  UINTN    pointer;
+  BOOLEAN  IgnoreNext = FALSE;
 
   if (!EFI_ERROR (ExPersistGetIgnoreNextPageFault (&IgnoreNext)) &&
       IgnoreNext &&
