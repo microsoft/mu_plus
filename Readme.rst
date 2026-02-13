@@ -11,19 +11,19 @@ Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverag
 
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu.
 
-Branch Status - release/202502
+Branch Status - release/202511
 ==============================
 
 :Status:
   In Development
 
 :Entered Development:
-  2025/02/21 (Date Edk2 started accepting changes which were not in a previous release)
+  2026/11/22 (Date Edk2 started accepting changes which were not in a previous release)
 
 :Anticipated Stabilization:
-  May 2025
+  May 2026
 
-Branch Changes - release/202502
+Branch Changes - release/202511
 ===============================
 
 Breaking Changes-dev
@@ -31,26 +31,14 @@ Breaking Changes-dev
 
 Main Changes-dev
 ----------------
-- AdvLoggerPkg: AdvLoggerPrmConfigLibGoogleTest buffer overun fixed. Discovered from UnitTestFrameworkPkgHost.dsc.inf enabling address sanitization.
-- AdvLoggerPkg: AdvLoggerPrmConfigLibGoogleTest buffer overun fixed. Discovered from UnitTestFrameworkPkgHost.dsc.inf enabling address sanitization.
-- HidPkg: HidPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
-- MfciPkg: MfciPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
-- MfciPkg: MfciPkg.dsc no longer includes VsIntrinsicLib as it has been removed in basecore.
-- MfciPkg: Fixed MfciTargetingHostTest and MfciVerifyPolicyAndChangeHostTest copy length errors discovered by UnitTestFrameworkPkgHost.dsc.inf enabling address sanitization.
-- MsApplicationPkg: MsApplicationPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
-- MsCorePkg: MsCorePkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
-- MsCorePkg: MsCorePkg.dsc no longer includes no longer includes VsIntrinsicLib as it has been removed in basecore.
-- MsGraphicsPkg: MsGraphicsPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
-- MsWheaPkg: MsWheaPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
-- PcBdsPkg: PcBdsPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
-- TpmTestingPkg: Tcg2Dxe has been updated to match latest mu_tiano_plus changes. 
-- TpmTestingPkg: TpmTestingPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2. Uses MdeLibs.dsc.inc.
-- UefiTestingPkg: UefiTestingPkg.dsc no longer includes VsInstrinsicLib or StackCheckLib.
 
+- gEfiEventPostReadyToBootGuid was replaced with EDK2's gEfiEventAfterReadyToBootGuid
+- gMemoryProtectionNonstopModeProtocolGuid has been depreciated and associated code removed. 
+- The changes in basecore which allowed removing STATIC defines were dropped. Associated unit tests which relied on this capability were dropped. 
 
 Platform Integration Reference
 ------------------------------
-Reference platforms which consume release/202405 are available in [mu_tiano_platforms](https://github.com/microsoft/mu_tiano_platforms).
+Reference platforms which consume release/202511 are available in [mu_tiano_platforms](https://github.com/microsoft/mu_tiano_platforms).
 
 Code of Conduct
 ===============
@@ -79,12 +67,12 @@ Copyright & License
 
 .. CoreCI
 
-.. _Windows_VS2022: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202405
-.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2022?branchName=release%2F202405
+.. _Windows_VS2022: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202511
+.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2022?branchName=release%2F202511
 .. |WindowsCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/49.svg
 .. |WindowsCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
 
-.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202405
-.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202405
+.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202511
+.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202511
 .. |UbuntuCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/50.svg
 .. |UbuntuCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
