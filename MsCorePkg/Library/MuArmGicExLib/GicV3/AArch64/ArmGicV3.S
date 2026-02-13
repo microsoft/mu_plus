@@ -32,13 +32,12 @@
 //  VOID
 //  );
 ASM_FUNC(ArmGicV3GetControlSystemRegisterEnable)
-        EL1_OR_EL2_OR_EL3(x1)
+        EL1_OR_EL2(x1)
 1:  mrs x0, ICC_SRE_EL1
-        b       4f
+        b       3f
 2:  mrs x0, ICC_SRE_EL2
-        b       4f
-3:  mrs x0, ICC_SRE_EL3
-4:  ret
+        b       3f
+3:  ret
 
 //VOID
 //EFIAPI
@@ -46,13 +45,12 @@ ASM_FUNC(ArmGicV3GetControlSystemRegisterEnable)
 //  IN UINT32         ControlSystemRegisterEnable
 //  );
 ASM_FUNC(ArmGicV3SetControlSystemRegisterEnable)
-        EL1_OR_EL2_OR_EL3(x1)
+        EL1_OR_EL2(x1)
 1:  msr ICC_SRE_EL1, x0
-        b       4f
+        b       3f
 2:  msr ICC_SRE_EL2, x0
-        b       4f
-3:  msr ICC_SRE_EL3, x0
-4:  isb
+        b       3f
+3:  isb
         ret
 
 //VOID
