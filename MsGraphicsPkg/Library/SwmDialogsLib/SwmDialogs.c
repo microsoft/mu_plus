@@ -402,6 +402,7 @@ SwmDialogsDestructor (
     gBS->UninstallMultipleProtocolInterfaces (
            gPriorityHandle,
            &gPriorityGuid,
+           NULL,
            NULL
            );
   }
