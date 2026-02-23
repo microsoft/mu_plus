@@ -13,6 +13,7 @@
 #include <Guid/SmmVariableCommon.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <Protocol/SmmReadyToLock.h>
 #include <AdvancedLoggerInternalProtocol.h>
 
 #include <Library/AdvLoggerAccessLib.h>
@@ -21,12 +22,14 @@
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
 #include <Library/SafeIntLib.h>
+#include <Library/SmmServicesTableLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
 STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo        = NULL;
 STATIC UINT32                mBufferSize         = 0;
 STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress         = 0;
 STATIC UINTN                 mLoggerTransferSize = 0;
+STATIC BOOLEAN               mReadyToLock        = FALSE;
 extern UINTN                 mVariableBufferPayloadSize;
 
 /**
@@ -142,6 +145,38 @@ ValidateInfoBlock (
 }
 
 /**
+  SMM ReadyToLock notification handler.
+
+  Ensures any move needed to the new logger buffer is done before ReadyToLock completes.
+
+  @param[in] Protocol   Protocol GUID pointer.
+  @param[in] Interface  Protocol interface pointer.
+  @param[in] Handle     The handle on which the interface was installed.
+
+  @retval EFI_SUCCESS   The notification handler completed successfully.
+
+**/
+STATIC
+EFI_STATUS
+EFIAPI
+OnSmmReadyToLock (
+  IN CONST EFI_GUID  *Protocol,
+  IN VOID            *Interface,
+  IN EFI_HANDLE      Handle
+  )
+{
+  if (mLoggerInfo != NULL) {
+    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
+      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated at ReadyToLock. LoggerInfo=%p\n", __func__, mLoggerInfo));
+    }
+  }
+
+  mReadyToLock = TRUE;
+
+  return EFI_SUCCESS;
+}
+
+/**
     AdvLoggerInit - Obtain the address of the logger info block.
 
     @param          NONE
@@ -154,8 +189,11 @@ AdvLoggerAccessInit (
   )
 {
   ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
+  VOID                      *Registration;
   UINTN                     TempSize;
   EFI_STATUS                Status;
+
+  Registration = NULL;
 
   if (gBS == NULL) {
     return;
@@ -191,7 +229,7 @@ AdvLoggerAccessInit (
     if (mLoggerInfo != NULL) {
       mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
 
-      if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
+      if (!FeaturePcdGet (PcdAdvancedLoggerFixedInRAM) && AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
         DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
       }
     }
@@ -206,6 +244,17 @@ AdvLoggerAccessInit (
   //
 
   DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+
+  if (!FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+    Status = gSmst->SmmRegisterProtocolNotify (
+                      &gEfiSmmReadyToLockProtocolGuid,
+                      OnSmmReadyToLock,
+                      &Registration
+                      );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Failed to register ReadyToLock notify - %r\n", __func__, Status));
+    }
+  }
 }
 
 /**
@@ -261,7 +310,7 @@ AdvLoggerAccessGetVariable (
   UINT8       *LogBufferEnd;
   UINTN       LogBufferSize;
 
-  if ((mLoggerInfo != NULL) && !mLoggerInfo->AtRuntime) {
+  if ((mLoggerInfo != NULL) && !mReadyToLock && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
     if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
       DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated during access. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
     }
@@ -333,12 +382,6 @@ AdvLoggerAccessAtRuntime (
   VOID
   )
 {
-  if (mLoggerInfo != NULL) {
-    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
-      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated at ExitBootServices. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
-    }
-  }
-
   if (mLoggerInfo != NULL) {
     mLoggerInfo->AtRuntime = TRUE;
   }

@@ -13,6 +13,7 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <Protocol/MmReadyToLock.h>
 
 #include <Library/AdvLoggerAccessLib.h>
 #include <Library/BaseLib.h>
@@ -20,6 +21,7 @@
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
+#include <Library/MmServicesTableLib.h>
 #include <Library/SafeIntLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
@@ -27,6 +29,7 @@ STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo        = NULL;
 STATIC UINT32                mBufferSize         = 0;
 STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress         = 0;
 STATIC UINTN                 mLoggerTransferSize = 0;
+STATIC BOOLEAN               mReadyToLock        = FALSE;
 extern UINTN                 mVariableBufferPayloadSize;
 
 /**
@@ -140,6 +143,38 @@ ValidateInfoBlock (
 }
 
 /**
+  MM ReadyToLock notification handler.
+
+  Ensures any move needed to the new logger buffer is done before ReadyToLock completes.
+
+  @param[in] Protocol   Protocol GUID pointer.
+  @param[in] Interface  Protocol interface pointer.
+  @param[in] Handle     The handle on which the interface was installed.
+
+  @retval EFI_SUCCESS   The notification handler completed successfully.
+
+**/
+STATIC
+EFI_STATUS
+EFIAPI
+OnMmReadyToLock (
+  IN CONST EFI_GUID  *Protocol,
+  IN VOID            *Interface,
+  IN EFI_HANDLE      Handle
+  )
+{
+  if ((mLoggerInfo != NULL) && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
+      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated at ReadyToLock. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
+    }
+  }
+
+  mReadyToLock = TRUE;
+
+  return EFI_SUCCESS;
+}
+
+/**
     AdvLoggerInit - Obtain the address of the logger info block.
 
     @param          NONE
@@ -152,6 +187,7 @@ AdvLoggerAccessInit (
   )
 {
   EFI_HOB_GUID_TYPE    *GuidHob;
+  VOID                 *Registration;
   ADVANCED_LOGGER_PTR  *LogPtr;
   EFI_STATUS           Status;
   UINTN                TempSize;
@@ -173,11 +209,11 @@ AdvLoggerAccessInit (
 
   if (mLoggerInfo != NULL) {
     mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
-  }
 
-  if ((mLoggerInfo != NULL) && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
-      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
+    if (!FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+      if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
+        DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
+      }
     }
   }
 
@@ -208,6 +244,15 @@ AdvLoggerAccessInit (
   //
 
   DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+
+  Status = gMmst->MmRegisterProtocolNotify (
+                    &gEfiMmReadyToLockProtocolGuid,
+                    OnMmReadyToLock,
+                    &Registration
+                    );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to register ReadyToLock notify - %r\n", __func__, Status));
+  }
 }
 
 /**
@@ -263,7 +308,7 @@ AdvLoggerAccessGetVariable (
   UINT8       *LogBufferEnd;
   UINTN       LogBufferSize;
 
-  if ((mLoggerInfo != NULL) && !mLoggerInfo->AtRuntime && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+  if ((mLoggerInfo != NULL) && !mReadyToLock && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
     if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
       DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated during access. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
     }
@@ -335,12 +380,6 @@ AdvLoggerAccessAtRuntime (
   VOID
   )
 {
-  if ((mLoggerInfo != NULL) && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
-      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated at ExitBootServices. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
-    }
-  }
-
   if (mLoggerInfo != NULL) {
     mLoggerInfo->AtRuntime = TRUE;
   }
