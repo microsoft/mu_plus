@@ -45,6 +45,7 @@ jobs:
       contents: read
     outputs:
       packages: ${{ steps.generate_matrix.outputs.packages }}
+      package_count: ${{ steps.generate_matrix.outputs.package_count }}
 
     steps:
     - name: Checkout repository
@@ -67,21 +68,24 @@ jobs:
 
         packages = [d for d in os.listdir() if d.strip().lower().endswith('pkg')]
 
-        # Ensure the package can actually be built
-        for package in packages:
-            if not any(file.endswith('.dsc') for file in os.listdir(package)):
+        # Ensure the package can actually be built for IA32 or X64
+        for package in list(packages):
+            dsc = [os.path.join(package, f) for f in os.listdir(package) if f.endswith('.dsc')]
+            if not any('IA32' in l or 'X64' in l for d in dsc for l in open(d) if 'SUPPORTED_ARCHITECTURES' in l):
                 packages.remove(package)
 
         packages.sort()
 
         with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
             print(f'packages={json.dumps(packages)}', file=fh)
+            print(f'package_count={len(packages)}', file=fh)
 
   analyze:
     name: Analyze
     runs-on: windows-2022
     needs:
       - gather_packages
+    if: needs.gather_packages.outputs.package_count != '0'
     permissions:
       actions: read
       contents: read
@@ -494,5 +498,50 @@ jobs:
         # Optional category for the results. Used to differentiate multiple results for one commit.
         # Each package is a separate category.
         category: ${{ matrix.package }}
+
+  analyze_empty:
+    name: Analyze
+    runs-on: ubuntu-latest
+    needs:
+      - gather_packages
+    if: needs.gather_packages.outputs.package_count == '0'
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Create Empty SARIF
+      shell: python
+      run: |
+        import json
+
+        sarif = {
+            "version": "2.1.0",
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [
+          {
+            "tool": {
+              "driver": {
+                "name": "CodeQL",
+                "informationUri": "https://github.com/github/codeql-action"
+              }
+            },
+            "results": []
+          }
+        ]
+        }
+
+        with open('empty.sarif', 'w', encoding='utf-8') as f:
+            json.dump(sarif, f)
+
+    - name: Upload Empty SARIF To GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: empty.sarif
+        category: no-packages
 
 
