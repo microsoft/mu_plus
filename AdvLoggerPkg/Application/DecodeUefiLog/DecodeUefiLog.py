@@ -216,8 +216,33 @@ class AdvLogParser ():
     # EFI_PHYSICAL_ADDRESS    NewLoggerInfoAddress;   // If non-zero, this field holds the address of new logger info (added in later V5 revision, may not be present in older logs)
     # } ADVANCED_LOGGER_INFO;
     V5_LOGGER_INFO_SIZE = 80
-    V5_LOGGER_INFO_SIZE_WITH_NEW_ADDRESS = 88
+    V5_LOGGER_INFO_SIZE_WITH_NEW_ADDRESS = 88         # Note: This was shortly released in V5 but soon after in v6
     V5_LOGGER_INFO_VERSION = 5
+
+    # typedef volatile struct {
+    # UINT32      Signature;                          // Signature 'ALOG'
+    # UINT16      Version;                            // Current Version
+    # UINT16      Reserved[3];                        // Reserved for future
+    # UINT32      LogBufferOffset;                    // Offset from LoggerInfo to start of log, expected to be the size of this structure, 8 byte aligned
+    # UINT32      Reserved4;
+    # UINT32      LogCurrentOffset;                   // Offset from LoggerInfo to where to store next log entry.
+    # UINT32      DiscardedSize;                      // Number of bytes of messages missed
+    # UINT32      LogBufferSize;                      // Size of allocated buffer
+    # BOOLEAN     InPermanentRAM;                     // Log in permanent RAM
+    # BOOLEAN     AtRuntime;                          // After ExitBootServices
+    # BOOLEAN     GoneVirtual;                        // After VirtualAddressChange
+    # BOOLEAN     HdwPortInitialized;                 // HdwPort initialized
+    # BOOLEAN     HdwPortDisabled;                    // HdwPort is Disabled
+    # BOOLEAN     Reserved2[3];                       //
+    # UINT64      TimerFrequency;                     // Ticks per second for log timing
+    # UINT64      TicksAtTime;                        // Ticks when Time Acquired
+    # EFI_TIME    Time;                               // Uefi Time Field
+    # UINT32      HwPrintLevel;                       // Logging level to be printed at hw port
+    # UINT32      Reserved3;                          //
+    # EFI_PHYSICAL_ADDRESS    NewLoggerInfoAddress;   // If non-zero, this field holds the address of new logger info
+    # } ADVANCED_LOGGER_INFO;
+    V6_LOGGER_INFO_SIZE = 88
+    V6_LOGGER_INFO_VERSION = 6
 
     # ---------------------------------------------------------------------- #
     #
@@ -458,26 +483,40 @@ class AdvLogParser ():
             if InFile.tell() != (Size):
                 raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 
-        elif Version == self.V5_LOGGER_INFO_VERSION:
-            InFile.read(4)  # skip over rest of reserved section
-            # V5 can be either 80 bytes or 88 bytes (minor version 1 update with NewLoggerInfoAddress)
+        elif (Version == self.V5_LOGGER_INFO_VERSION or
+              Version == self.V6_LOGGER_INFO_VERSION):
+            # skip over rest of reserved section
+            InFile.read(4)
+
+            # V5 can be either 80 bytes or 88 bytes
+            LoggerInfo["LogBufferOffset"] = struct.unpack(
+                "=I", InFile.read(4))[0]
+
             BaseAddress = 0
-            LoggerInfo["LogBufferOffset"] = struct.unpack("=I", InFile.read(4))[0]
             Size = LoggerInfo["LogBufferOffset"]
 
-            # Determine if this has the NewLoggerInfoAddress field based on structure size
-            if Size == self.V5_LOGGER_INFO_SIZE:
-                HasNewLoggerInfoAddress = False
-            elif Size == self.V5_LOGGER_INFO_SIZE_WITH_NEW_ADDRESS:
+            print("Logger Info:")
+            print(f"  Version: {Version}")
+            print(f"  Size: {Size}")
+
+            # For V5, determine if this has the NewLoggerInfoAddress field
+            # based on structure size
+            if Version == self.V5_LOGGER_INFO_VERSION:
+                if Size == self.V5_LOGGER_INFO_SIZE:
+                    HasNewLoggerInfoAddress = False
+                elif Size == self.V5_LOGGER_INFO_SIZE_WITH_NEW_ADDRESS:
+                    HasNewLoggerInfoAddress = True
+                else:
+                    raise Exception(
+                        'Error initializing logger info. '
+                        'Unexpected V5 structure size: %d' % Size)
+            if Version == self.V6_LOGGER_INFO_VERSION:
                 HasNewLoggerInfoAddress = True
-            else:
-                raise Exception('Error initializing logger info. Unexpected V5 structure size: %d' % Size)
+                assert Size == self.V6_LOGGER_INFO_SIZE
 
             # we no longer have this field in the struct but for compatibility can calculate it
             # to be used
             LoggerInfo["LogBuffer"] = Size
-            # this is only used to calculate LogCurrent as an offset, but V5 uses
-            # LogCurrentOffset already, so we do this just to share the common code
             InFile.read(4)  # skip over reserved4 field
             LoggerInfo["LogCurrentOffset"] = struct.unpack("=I", InFile.read(4))[0]
             # we don't have this field anymore, but to share the common code we
@@ -521,6 +560,7 @@ class AdvLogParser ():
 
             if InFile.tell() != (Size):
                 raise Exception('Error initializing logger info. AmountRead: %d, Expected: %d' % (InFile.tell(), Size))
+
 
         else:
             raise Exception('Error initializing logger info. Unsupported version: 0x%X' % LoggerInfo["Version"])
@@ -694,7 +734,10 @@ class AdvLogParser ():
     #   Convert Ticks to approximate time based of Frequency setting
     #
     def _GetTimeInNanoSecond(self, Ticks, Frequency):
-        Nanosecond = int((Ticks / Frequency) * 1000000000)
+        if Frequency != 0:
+            Nanosecond = int((Ticks / Frequency) * 1000000000)
+        else:
+            Nanosecond = 0
 
         return Nanosecond
 
