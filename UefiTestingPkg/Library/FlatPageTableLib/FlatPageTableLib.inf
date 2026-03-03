@@ -46,9 +46,11 @@
 
 [LibraryClasses]
   BaseLib
-  BaseMemoryLib
   SafeIntLib
   DebugLib
+
+[LibraryClasses.X64]
+  CpuPageTableLib
 
 [LibraryClasses.AARCH64]
   ArmLib

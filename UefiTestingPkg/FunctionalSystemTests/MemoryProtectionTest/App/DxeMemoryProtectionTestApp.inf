@@ -51,7 +51,6 @@
   UefiLib
   HobLib
   ExceptionPersistenceLib
-  PeCoffGetEntryPointLib
 
 [LibraryClasses.X64]
   HwResetSystemLib

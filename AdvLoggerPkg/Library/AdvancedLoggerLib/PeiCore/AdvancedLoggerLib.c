@@ -512,7 +512,7 @@ AdvancedLoggerGetLoggerInfo (
     BufferSize = sizeof (ADVANCED_LOGGER_INFO) + ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
     ZeroMem ((VOID *)LoggerInfo, BufferSize);
     LoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
-    LoggerInfo->Version          = ADVANCED_LOGGER_INFO_VER;
+    LoggerInfo->Version          = ADVANCED_LOGGER_VERSION;
     LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
     LoggerInfo->LogBufferSize    = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
     LoggerInfo->LogCurrentOffset = LoggerInfo->LogBufferOffset;
@@ -565,7 +565,7 @@ AdvancedLoggerGetLoggerInfo (
         LoggerInfo = ALI_FROM_PA (NewLoggerInfo);
         ZeroMem ((VOID *)LoggerInfo, BufferSize);
         LoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
-        LoggerInfo->Version          = ADVANCED_LOGGER_INFO_VER;
+        LoggerInfo->Version          = ADVANCED_LOGGER_VERSION;
         LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
         LoggerInfo->LogBufferSize    = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
         LoggerInfo->LogCurrentOffset = LoggerInfo->LogBufferOffset;

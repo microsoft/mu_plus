@@ -38,7 +38,6 @@
   MdeModulePkg/MdeModulePkg.dec
   MsCorePkg/MsCorePkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
-  EmbeddedPkg/EmbeddedPkg.dec
 
 [Packages.AARCH64]
   ArmPkg/ArmPkg.dec
@@ -62,7 +61,7 @@
   gArmTokenSpaceGuid.PcdGicRedistributorsBase
   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
   gArmTokenSpaceGuid.PcdGicSgiIntId
-  gUefiTestingPkgTokenSpaceGuid.PcdGicPerPackageOffset
+    gUefiTestingPkgTokenSpaceGuid.PcdGicPerPackageOffset
 
 [Pcd.AARCH64]
   gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
@@ -82,7 +81,6 @@
 [Protocols.AARCH64]
   gEfiTimerArchProtocolGuid           ## CONSUMES
   gEfiWatchdogTimerArchProtocolGuid   ## CONSUMES
-  gHardwareInterrupt2ProtocolGuid     ## CONSUMES
 
 [Depex]
   gEfiMpServiceProtocolGuid

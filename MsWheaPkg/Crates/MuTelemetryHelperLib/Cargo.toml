@@ -14,7 +14,7 @@ r-efi = { workspace = true }
 mu_uefi_boot_services = { workspace = true }
 
 [dev-dependencies]
-mockall = { workspace = true }
+mockall = { version = "0.14.0" }
 mu_uefi_boot_services = { workspace = true, features = ["mockall"] }
 
 [lints.rust]

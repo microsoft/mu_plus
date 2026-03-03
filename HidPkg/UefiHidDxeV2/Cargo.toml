@@ -29,4 +29,4 @@ scroll = {workspace=true}
 RustBootServicesAllocatorDxe = {workspace=true}
 
 [dev-dependencies]
-mockall = { workspace = true }
+mockall = "0.14.0"
