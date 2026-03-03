@@ -577,9 +577,6 @@ GetFlatPageTableData (
   UINTN                           NumPage2MNotPresent = 0;
   UINTN                           NumPage1GNotPresent = 0;
   UINT64                          Address;
-  BOOLEAN                         SelfMapped;
-
-  SelfMapped = FALSE;
 
   //
   // First, fail fast if some of the parameters don't look right.
@@ -602,27 +599,12 @@ GetFlatPageTableData (
   //
   Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *)AsmReadCr3 ();
 
-  //
-  // Check for the self-map entry as the last entry
-  //
-  if ((Pml4[0x1FF].Bits.PageTableBaseAddress << 12) == (UINTN)Pml4) {
-    SelfMapped = TRUE;
-    Pml4       = (PAGE_MAP_AND_DIRECTORY_POINTER *)0xFFFFFFFFFFFFF000;
-  }
-
   for (Index4 = 0x0; Index4 < 0x200; Index4++) {
-    if (!Pml4[Index4].Bits.Present || (((Index4 == 0x1FF) || (Index4 == 0x1FE)) && SelfMapped)) {
+    if (!Pml4[Index4].Bits.Present) {
       continue;
     }
 
-    if (SelfMapped) {
-      Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)((0xFFFFFFFFFFE00000 + SIZE_4KB * Index4));
-    } else {
-      //
-      // No self-map entry, so just use the physical address.
-      //
-      Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
-    }
+    Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
 
     for (Index3 = 0x0; Index3 < 0x200; Index3++ ) {
       if (!Pte1G[Index3].Bits.Present) {
@@ -639,15 +621,8 @@ GetFlatPageTableData (
         // We have to cast 1G and 2M directories to this to
         // get all of their address bits.
         //
-        if (SelfMapped) {
-          Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
-          Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(0xFFFFFFFFC0000000 +
-                                              SIZE_2MB * Index4 +
-                                              SIZE_4KB * Index3);
-        } else {
-          Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
-          Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
-        }
+        Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
+        Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
 
         for (Index2 = 0x0; Index2 < 0x200; Index2++ ) {
           if (!Pte2M[Index2].Bits.Present) {
@@ -656,16 +631,8 @@ GetFlatPageTableData (
           }
 
           if (!(Pte2M[Index2].Bits.MustBe1)) {
-            if (SelfMapped) {
-              Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
-              Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(0xFFFFFF8000000000 +
-                                                     SIZE_1GB * Index4 +
-                                                     SIZE_2MB * Index3 +
-                                                     SIZE_4KB * Index2);
-            } else {
-              Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
-              Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
-            }
+            Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
+            Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
 
             for (Index1 = 0x0; Index1 < 0x200; Index1++ ) {
               if (!Pte4K[Index1].Bits.Present) {

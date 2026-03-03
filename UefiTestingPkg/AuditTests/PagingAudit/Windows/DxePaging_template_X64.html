@@ -654,6 +654,22 @@
                 } //end of configuring filter inputs
             });
 
+            SavedFilters.push({
+                "Name": "Check Memory Not in EFI Memory Map is Inaccessible",
+                "Description": "Memory not in the EFI memory map should cause a fault if accessed",
+                "Filter": function (mrObject) {
+                    var isTargetType = mrObject["Memory Type"] === "None";
+                    var hasInvalidAttributes = mrObject["Present"] !== "No";
+                    return isTargetType && hasInvalidAttributes;
+                }, //end of Filter function
+                "ConfigureFilter": function () {
+                    $("button#ClearAllFilter").click();  //clear the filters
+                    SetMultiselectTo("MemoryTypeFilter", ["None"]);
+                    SetMultiselectTo("PresentFilter", ["Yes"]);
+                    return true;
+                } //end of configuring filter inputs
+            });
+
             //Fill in the test results tab
             SavedFilters.forEach(function (TestObject) {
                 var FailedCount = EmbeddedJd.MemoryRanges.filter(TestObject.Filter);

@@ -14,14 +14,12 @@
 #define ADVANCED_LOGGER_SIGNATURE  SIGNATURE_32('A','L','O','G')
 
 //
-// Advanced Logger Information Structure Version
+// Advanced Logger Hardware Port Level Support Version
 //
-#define ADVANCED_LOGGER_INFO_VER  6
-
+// Writing to hardware port based on message DebugLevel is supported
+// (AdvancedLoggerHdwPortWrite()).
 //
-// The Advanced Logger Information Structure Version that supports HW_LVL logging
-//
-#define ADVANCED_LOGGER_INFO_HW_LVL_SUPPORTED_VER  5
+#define ADVANCED_LOGGER_HW_LVL_VER  5
 
 //
 // Advanced Logger Message structure versions
@@ -31,6 +29,8 @@
 //
 #define ADVANCED_LOGGER_MSG_MAJ_VER  2
 #define ADVANCED_LOGGER_MSG_MIN_VER  1
+
+#define ADVANCED_LOGGER_VERSION  ADVANCED_LOGGER_HW_LVL_VER
 
 #define ADVANCED_LOGGER_PHASE_UNSPECIFIED  0
 #define ADVANCED_LOGGER_PHASE_SEC          1

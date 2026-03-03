@@ -58,6 +58,7 @@
 
 [LibraryClasses.X64]
   CpuLib
+  CpuPageTableLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID

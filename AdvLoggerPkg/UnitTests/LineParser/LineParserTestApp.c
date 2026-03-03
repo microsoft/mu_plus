@@ -408,9 +408,7 @@ InitializeInMemoryLog (
     UT_ASSERT_TRUE (FALSE);
   }
 
-  ZeroMem ((VOID *)mLoggerInfo, sizeof (*mLoggerInfo));
   mLoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
-  mLoggerInfo->Version          = ADVANCED_LOGGER_INFO_VER;
   mLoggerInfo->GoneVirtual      = FALSE;
   mLoggerInfo->AtRuntime        = FALSE;
   mLoggerInfo->LogBufferSize    = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
@@ -459,9 +457,7 @@ InitializeInMemoryLogV2 (
     UT_ASSERT_TRUE (FALSE);
   }
 
-  ZeroMem ((VOID *)mLoggerInfo, sizeof (*mLoggerInfo));
   mLoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
-  mLoggerInfo->Version          = ADVANCED_LOGGER_INFO_VER;
   mLoggerInfo->GoneVirtual      = FALSE;
   mLoggerInfo->AtRuntime        = FALSE;
   mLoggerInfo->LogBufferSize    = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
@@ -511,9 +507,7 @@ InitializeInMemoryLogV2Hybrid (
     UT_ASSERT_TRUE (FALSE);
   }
 
-  ZeroMem ((VOID *)mLoggerInfo, sizeof (*mLoggerInfo));
   mLoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
-  mLoggerInfo->Version          = ADVANCED_LOGGER_INFO_VER;
   mLoggerInfo->GoneVirtual      = FALSE;
   mLoggerInfo->AtRuntime        = FALSE;
   mLoggerInfo->LogBufferSize    = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);

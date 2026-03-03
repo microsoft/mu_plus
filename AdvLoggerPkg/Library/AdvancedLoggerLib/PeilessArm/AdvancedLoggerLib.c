@@ -39,7 +39,7 @@ AdvancedLoggerLibConstructor (
   if (LoggerInfo != NULL) {
     ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
     LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
-    LoggerInfo->Version            = ADVANCED_LOGGER_INFO_VER;
+    LoggerInfo->Version            = ADVANCED_LOGGER_VERSION;
     LoggerInfo->LogBufferSize      = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
     LoggerInfo->LogBufferOffset    = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
     LoggerInfo->LogCurrentOffset   = LoggerInfo->LogBufferOffset;

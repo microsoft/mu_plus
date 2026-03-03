@@ -28,17 +28,10 @@ EntryPoint (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS  Status;
-
   gAdvLogHiiHandle = InitializeHiiPackage (ImageHandle);
   if (gAdvLogHiiHandle == NULL) {
     return EFI_ABORTED;
   }
 
-  Status = AdvLogDumperInternalWorker (ImageHandle, SystemTable);
-
-  // Remove the package before returning.
-  HiiRemovePackages (gAdvLogHiiHandle);
-
-  return Status;
+  return AdvLogDumperInternalWorker (ImageHandle, SystemTable);
 }
