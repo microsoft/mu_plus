@@ -54,19 +54,19 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // In order you want them displayed.
 //
 DEVICE_STATE  mSupportedNotifications[] = {
-  (DEVICE_STATE)DEVICE_STATE_SECUREBOOT_OFF,
-  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_0,
-  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_1,
-  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_2,
-  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_3,
-  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_4,
-  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_5,
-  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_6,
-  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_7,
-  (DEVICE_STATE)DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED,
-  (DEVICE_STATE)DEVICE_STATE_SOURCE_DEBUG_ENABLED,
-  (DEVICE_STATE)DEVICE_STATE_MANUFACTURING_MODE,
-  (DEVICE_STATE)DEVICE_STATE_UNIT_TEST_MODE,
+  (DEVICE_STATE)DEVICE_STATE_SECUREBOOT_OFF,            // Red
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_0,           // Orange
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_1,           // Yellow
+  (DEVICE_STATE)DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED, // Green
+  (DEVICE_STATE)DEVICE_STATE_SOURCE_DEBUG_ENABLED,      // Blue
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_2,           // Indigo
+  (DEVICE_STATE)DEVICE_STATE_MANUFACTURING_MODE,        // Violet
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_3,           // Brown
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_4,           // Orange Check
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_5,           // Yellow Check
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_6,           // Indigo Check
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_7,           // Brown Check
+  (DEVICE_STATE)DEVICE_STATE_UNIT_TEST_MODE,            // Hazard Stripes
 
   (DEVICE_STATE)DEVICE_STATE_MAX  // this needs to be the last one
 };
@@ -197,6 +197,7 @@ DisplayDeviceState (
   DEVICE_STATE  *SupportedNotification = mSupportedNotifications;
   POINT         ul;
   INT32         SingleBannerHeight = ((HeightInPixels * HEIGHT_OF_SINGLE_BANNER) / 100);
+  INT32         CheckboardHeight   = (SingleBannerHeight + 3) / 4; // Avoid fifth row
 
   Notifications = GetDeviceState ();
   PrintValues (Notifications);
@@ -235,22 +236,22 @@ DisplayDeviceState (
         si.FillType                                      = FILL_CHECKERBOARD;
         si.FillTypeInfo.CheckerboardFill.Color1          = COLOR_ORANGE;
         si.FillTypeInfo.CheckerboardFill.Color2          = COLOR_BLACK;
-        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = SingleBannerHeight/4;
+        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = CheckboardHeight;
       } else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_5) {
         si.FillType                                      = FILL_CHECKERBOARD;
         si.FillTypeInfo.CheckerboardFill.Color1          = COLOR_YELLOW;
         si.FillTypeInfo.CheckerboardFill.Color2          = COLOR_BLACK;
-        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = SingleBannerHeight/4;
+        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = CheckboardHeight;
       } else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_6) {
         si.FillType                                      = FILL_CHECKERBOARD;
         si.FillTypeInfo.CheckerboardFill.Color1          = COLOR_INDIGO;
         si.FillTypeInfo.CheckerboardFill.Color2          = COLOR_BLACK;
-        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = SingleBannerHeight/4;
+        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = CheckboardHeight;
       } else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_7) {
         si.FillType                                      = FILL_CHECKERBOARD;
         si.FillTypeInfo.CheckerboardFill.Color1          = COLOR_BROWN;
         si.FillTypeInfo.CheckerboardFill.Color2          = COLOR_BLACK;
-        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = SingleBannerHeight/4;
+        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = CheckboardHeight;
       } else if (*SupportedNotification & DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED) {
         si.FillType                         = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_GREEN;
