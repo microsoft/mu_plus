@@ -17,12 +17,12 @@
 #define ID_AA64MMFR1_EL1_HPD_MASK     0xF000
 #define TT_HERITABLE_ATTRIBUTES_MASK  (TT_TABLE_AP_MASK | TT_TABLE_PXN | TT_TABLE_UXN)
 #define AARCH64_ATTRIBUTES_MASK       ((0xFFFULL << 52) | (0x3FFULL << 2))
+#define MIN_T0SZ                      16
+#define BITS_PER_LEVEL                9
 
 #define IS_VALID(page)                 ((page & 0x1) != 0)
 #define IS_TABLE(page, level)          ((level == 3) ? FALSE : (((page) & TT_TYPE_MASK) == TT_TYPE_TABLE_ENTRY))
 #define IS_BLOCK(page, level)          ((level == 3) ? (((page) & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY_LEVEL3) : ((page & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY))
-#define ROOT_TABLE_LEN(T0SZ)           (TT_ENTRY_COUNT >> ((T0SZ) - 16) % 9)
-#define ARM_TT_BASE_ADDRESS(page)      (page & TT_ADDRESS_MASK_BLOCK_ENTRY)
 #define ARM_TT_BLOCK_ATTRIBUTES(page)  (page & AARCH64_ATTRIBUTES_MASK)
 #define TT_ADDRESS_MASK  (0xFFFFFFFFFULL << 12)
 
@@ -73,6 +73,73 @@ typedef union {
 } TRANSLATION_TABLE_ENTRY_UNION;
 
 STATIC BOOLEAN  mHierarchicalControlEnabled = FALSE;
+
+STATIC BOOLEAN  mLpa2Enabled = FALSE;
+
+STATIC
+BOOLEAN
+TranslationRegimeIsDual (
+  VOID
+  )
+{
+  if (ArmReadCurrentEL () == AARCH64_EL2) {
+    return (ArmReadHcr () & ARM_HCR_E2H) != 0;
+  }
+
+  return TRUE;
+}
+
+STATIC
+BOOLEAN
+IsLpa2Enabled (
+  VOID
+  )
+{
+  UINT64  Tcr;
+
+  Tcr = ArmGetTCR ();
+
+  return !TranslationRegimeIsDual () ?
+         ((Tcr & TCR_DS_NVHE) != 0) :
+         ((Tcr & TCR_DS) != 0);
+}
+
+STATIC
+UINT64
+GetOutputAddress (
+  IN UINT64   Entry,
+  IN BOOLEAN  Lpa2Enabled
+  )
+{
+  if (Lpa2Enabled) {
+    return (Entry & TT_ADDRESS_MASK_BLOCK_ENTRY_LPA2) | ((Entry & TT_UPPER_ADDRESS_MASK) << (50 - 8));
+  }
+
+  return Entry & TT_ADDRESS_MASK_BLOCK_ENTRY;
+}
+
+STATIC
+UINTN
+GetRootTableEntryCount (
+  IN UINTN  T0Sz
+  )
+{
+  return TT_ENTRY_COUNT >> (T0Sz - MIN_T0SZ) % BITS_PER_LEVEL;
+}
+
+STATIC
+INTN
+GetRootTableLevel (
+  IN UINTN  T0Sz
+  )
+{
+  INTN  RootTableLevel;
+
+  RootTableLevel = (T0Sz < MIN_T0SZ) ? -1 : (INTN)(T0Sz - MIN_T0SZ) / BITS_PER_LEVEL;
+  ASSERT (RootTableLevel >= 0 || mLpa2Enabled);
+
+  return RootTableLevel;
+}
 
 #if !defined (__clang__) && !defined (__GNUC__)
 
@@ -133,7 +200,7 @@ IsHierarchicalControlEnabled (
   Recursively parse the translation table and populate the entries in the input Map.
 
   @param[in]      PageTableBaseAddress        The base address of the 512 page table entries in the specified level
-  @param[in]      Level                       Page level (0, 1, 2, 3)
+  @param[in]      Level                       Page level (-1, 0, 1, 2, 3)
   @param[in]      RegionStart                 The base linear address of the region covered by the page table entries
   @param[in]      ParentHeritableAttributes    The heritable attributes of parent table entries.
   @param[in, out] Map                         Pointer to an array that describes multiple linear address ranges.
@@ -143,12 +210,13 @@ IsHierarchicalControlEnabled (
   @param[in]      OneEntry                    Pointer to a library internal storage that holds one map entry which is
                                               used when Map array is at capacity.
   @param[in]      SelfMapped                  TRUE if the page tables are self-mapped, FALSE otherwise.
+  @param[in]      IsRootTable                 TRUE if parsing the root table level.
 **/
 STATIC
 VOID
 TranslationTableParseRecursive (
   IN     UINT64                             PageTableBaseAddress,
-  IN     UINTN                              Level,
+  IN     INTN                               Level,
   IN     UINT64                             RegionStart,
   IN     TRANSLATION_TABLE_ENTRY_HERITABLE  ParentHeritableAttributes,
   IN OUT PAGE_MAP_ENTRY                     *Map,
@@ -156,7 +224,8 @@ TranslationTableParseRecursive (
   IN     UINTN                              MapCapacity,
   IN     PAGE_MAP_ENTRY                     **LastEntry,
   IN     PAGE_MAP_ENTRY                     *OneEntry,
-  IN     BOOLEAN                            SelfMapped
+  IN     BOOLEAN                            SelfMapped,
+  IN     BOOLEAN                            IsRootTable
   )
 {
   TRANSLATION_TABLE_ENTRY_UNION  *PagingEntry;
@@ -188,14 +257,17 @@ TranslationTableParseRecursive (
                                                         SIZE_2MB * ((RegionStart >> 30) & 0x1FF) +
                                                         SIZE_4KB * ((RegionStart >> 21) & 0x1FF));
         break;
+      default:
+        PagingEntry = (TRANSLATION_TABLE_ENTRY_UNION *)(UINTN)PageTableBaseAddress;
+        break;
     }
   } else {
     PagingEntry = (TRANSLATION_TABLE_ENTRY_UNION *)(UINTN)PageTableBaseAddress;
   }
 
   RegionLength = TT_BLOCK_ENTRY_SIZE_AT_LEVEL (Level);
-  if (Level == 0) {
-    EntryCount = ROOT_TABLE_LEN (ArmGetTCR () & TCR_T0SZ_MASK);
+  if (IsRootTable) {
+    EntryCount = GetRootTableEntryCount (ArmGetTCR () & TCR_T0SZ_MASK);
   } else {
     EntryCount = TT_ENTRY_COUNT;
   }
@@ -206,7 +278,7 @@ TranslationTableParseRecursive (
       continue;
     }
 
-    if ((Level == 0) && ((Index == 0x1FF) || (Index == 0x1FE)) && SelfMapped) {
+    if (IsRootTable && ((Index == 0x1FF) || (Index == 0x1FE)) && SelfMapped) {
       // Skip self-map entries in root table
       continue;
     }
@@ -265,8 +337,8 @@ TranslationTableParseRecursive (
 
       if ((*LastEntry != NULL) &&
           ((*LastEntry)->LinearAddress + (*LastEntry)->Length == RegionStart) &&
-          (ARM_TT_BASE_ADDRESS ((*LastEntry)->PageEntry) + (*LastEntry)->Length
-           == ARM_TT_BASE_ADDRESS (ScratchEntry.Uint64)) &&
+          (GetOutputAddress ((*LastEntry)->PageEntry, mLpa2Enabled) + (*LastEntry)->Length
+           == GetOutputAddress (ScratchEntry.Uint64, mLpa2Enabled)) &&
           (ARM_TT_BLOCK_ATTRIBUTES ((*LastEntry)->PageEntry) == ARM_TT_BLOCK_ATTRIBUTES (ScratchEntry.Uint64))
           )
       {
@@ -287,7 +359,7 @@ TranslationTableParseRecursive (
         (*LastEntry)->PageEntry     = ScratchEntry.Uint64;
         (*MapCount)++;
       }
-    } else {
+    } else if (IS_TABLE (PagingEntry[Index].Uint64, Level)) {
       ScratchEntry.Uint64 = PagingEntry[Index].Ttet.Uint64 & TT_HERITABLE_ATTRIBUTES_MASK;
       // If the entry is a table and not the root, then pass the heritable access attributes
       // from the parent.
@@ -296,7 +368,7 @@ TranslationTableParseRecursive (
       }
 
       TranslationTableParseRecursive (
-        ARM_TT_BASE_ADDRESS (PagingEntry[Index].Ttet.Uint64),
+        GetOutputAddress (PagingEntry[Index].Ttet.Uint64, mLpa2Enabled),
         Level + 1,
         RegionStart,
         ScratchEntry.Tteh,
@@ -305,8 +377,12 @@ TranslationTableParseRecursive (
         MapCapacity,
         LastEntry,
         OneEntry,
-        SelfMapped
+        SelfMapped,
+        FALSE
         );
+    } else {
+      ASSERT (FALSE);
+      continue;
     }
   }
 }
@@ -333,6 +409,7 @@ CreateFlatPageTable (
   PAGE_MAP_ENTRY                     OneEntry;
   TRANSLATION_TABLE_ENTRY_HERITABLE  HeritableAttributes;
   UINTN                              T0SZ;
+  INTN                               RootTableLevel;
   BOOLEAN                            SelfMapped;
   UINT64                             Base;
 
@@ -346,17 +423,22 @@ CreateFlatPageTable (
 
   T0SZ = ArmGetTCR () & TCR_T0SZ_MASK;
 
+  mLpa2Enabled                = IsLpa2Enabled ();
   mHierarchicalControlEnabled = IsHierarchicalControlEnabled ();
   HeritableAttributes.Uint64  = 0;
   LastEntry                   = NULL;
   LocalEntryCount             = 0;
+  RootTableLevel              = GetRootTableLevel (T0SZ);
 
   Base       = (UINT64)(UINTN)ArmGetTTBR0BaseAddress ();
   SelfMapped = (((UINT64 *)Base)[0x1FF] & TT_ADDRESS_MASK) == Base ? TRUE : FALSE;
+  if (RootTableLevel < 0) {
+    SelfMapped = FALSE;
+  }
 
   TranslationTableParseRecursive (
     (UINTN)ArmGetTTBR0BaseAddress (),
-    0,
+    RootTableLevel,
     0,
     HeritableAttributes,
     Map->Entries,
@@ -364,7 +446,8 @@ CreateFlatPageTable (
     Map->EntryCount,
     &LastEntry,
     &OneEntry,
-    SelfMapped
+    SelfMapped,
+    TRUE
     );
 
   if (LocalEntryCount > Map->EntryCount) {

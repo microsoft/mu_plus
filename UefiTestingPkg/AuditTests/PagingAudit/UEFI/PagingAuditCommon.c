@@ -1606,7 +1606,7 @@ DumpPagingInfo (
   StringLength                  = 0;
 
   // Calculate the string size of the Loaded Image Table
-  Status = LoadedImageTableDump (FALSE, &StringLength);
+  Status = LoadedImageTableDump (TRUE, &StringLength);
 
   if (EFI_ERROR (Status) && (Status != EFI_NOT_STARTED)) {
     DEBUG ((DEBUG_ERROR, "%a - Error tabulating required string size for the loaded image info in the memory info database\n", __func__));
@@ -1718,6 +1718,43 @@ DumpPagingInfo (
              &mPteEntries[EntryGuard],
              FALSE
              );
+
+  if (Status == EFI_BUFFER_TOO_SMALL) {
+    DEBUG ((DEBUG_WARN, "%a - Page table entry buffers too small, reallocating and retrying\n", __func__));
+
+    for (Index = 0; Index < EntryMax; Index++) {
+      if (mPteEntries[Index] != NULL) {
+        FreePool (mPteEntries[Index]);
+        mPteEntries[Index] = NULL;
+      }
+    }
+
+    Status = LoadFlatPageTableData (
+               &mPteCounts[Entry1g],
+               &mPteCounts[Entry2m],
+               &mPteCounts[Entry4k],
+               &mPteCounts[EntryGuard],
+               &mPteEntries[Entry1g],
+               &mPteEntries[Entry2m],
+               &mPteEntries[Entry4k],
+               &mPteEntries[EntryGuard],
+               TRUE
+               );
+
+    if (!EFI_ERROR (Status)) {
+      Status = LoadFlatPageTableData (
+                 &mPteCounts[Entry1g],
+                 &mPteCounts[Entry2m],
+                 &mPteCounts[Entry4k],
+                 &mPteCounts[EntryGuard],
+                 &mPteEntries[Entry1g],
+                 &mPteEntries[Entry2m],
+                 &mPteEntries[Entry4k],
+                 &mPteEntries[EntryGuard],
+                 FALSE
+                 );
+    }
+  }
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a - Error collecting page table data\n", __func__));
