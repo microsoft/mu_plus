@@ -33,7 +33,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MemoryAttributesTable.h>
 
 #define    MEM_INFO_DATABASE_REALLOC_CHUNK    0x10000000
-#define    MEM_INFO_DATABASE_MAX_STRING_SIZE  0x400
+#define    MEM_INFO_DATABASE_MAX_STRING_SIZE  0x1000
 #define    MAX_STRING_SIZE                    0x1000
 
 #define IndexToAddress(a, b, c, d)  ((UINT64) ((UINT64)a << 39) + ((UINT64)b << 30) + ((UINT64)c <<  21) + ((UINT64)d << 12))
