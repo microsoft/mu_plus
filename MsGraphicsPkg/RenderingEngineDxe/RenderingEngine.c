@@ -432,7 +432,10 @@ SRESetMode (
 
   // Raise the TPL to avoid getting interrupted while we access shared data structures.
   //
-  PreviousTPL = gBS->RaiseTPL (TPL_CALLBACK);
+  PreviousTPL = EfiGetCurrentTpl ();
+  if (PreviousTPL < TPL_CALLBACK) {
+    PreviousTPL = gBS->RaiseTPL (TPL_CALLBACK);
+  }
 
   Status = mParentGop->SetMode (
                          mParentGop,
