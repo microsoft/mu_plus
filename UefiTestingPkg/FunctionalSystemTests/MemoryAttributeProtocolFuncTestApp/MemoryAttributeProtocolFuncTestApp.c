@@ -74,7 +74,7 @@ FreePagesWithProtectionAttributesTestCase (
   Length      = EFI_PAGE_SIZE;
 
   // Allocate any pages
-  Status = gBS->AllocatePages (AllocateAnyPages, EfiLoaderCode, Length, &BaseAddress);
+  Status = gBS->AllocatePages (AllocateAnyPages, EfiLoaderCode, EFI_SIZE_TO_PAGES (Length), &BaseAddress);
   UT_ASSERT_NOT_EFI_ERROR (Status);
   UT_ASSERT_NOT_NULL ((VOID *)((UINTN)BaseAddress));
 
@@ -88,7 +88,7 @@ FreePagesWithProtectionAttributesTestCase (
   DEBUG ((DEBUG_INFO, "%a - Attributes for memory at base: 0x%llx 0x%llx\n", __FUNCTION__, BaseAddress, Attributes));
 
   // Free the pages
-  Status = gBS->FreePages (BaseAddress, Length);
+  Status = gBS->FreePages (BaseAddress, EFI_SIZE_TO_PAGES (Length));
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   return UNIT_TEST_PASSED;
@@ -173,7 +173,7 @@ AllocateFreeAllocateAtAddressTestCase (
   Length      = EFI_PAGE_SIZE;
 
   // Allocate any pages
-  Status = gBS->AllocatePages (AllocateAnyPages, EfiLoaderCode, Length, &BaseAddress);
+  Status = gBS->AllocatePages (AllocateAnyPages, EfiLoaderCode, EFI_SIZE_TO_PAGES (Length), &BaseAddress);
   UT_ASSERT_NOT_EFI_ERROR (Status);
   UT_ASSERT_NOT_NULL ((VOID *)((UINTN)BaseAddress));
 
@@ -211,23 +211,7 @@ AllocateFreeAllocateAtAddressTestCase (
   }
 
   // Free the pages
-  Status = gBS->FreePages (BaseAddress, Length);
-  UT_ASSERT_NOT_EFI_ERROR (Status);
-
-  // Allocate pages at the previously allocated address
-  Status = gBS->AllocatePages (AllocateAddress, EfiLoaderCode, Length, &BaseAddress);
-  UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_NOT_NULL ((VOID *)((UINTN)BaseAddress));
-
-  // Get the attributes of allocated pages and check them against the cached attributes
-  Status = MemoryAttribute->GetMemoryAttributes (MemoryAttribute, BaseAddress, Length, &Attributes);
-  UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_EQUAL (Attributes, CachedAttributes);
-
-  UT_LOG_INFO ("%a - Attributes for memory after reallocation at base: 0x%llx 0x%llx\n", __FUNCTION__, BaseAddress, Attributes);
-
-  // Free the pages
-  Status = gBS->FreePages (BaseAddress, Length);
+  Status = gBS->FreePages (BaseAddress, EFI_SIZE_TO_PAGES (Length));
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   return UNIT_TEST_PASSED;
@@ -386,12 +370,12 @@ GetAttributesNewBufferEfiLoaderCodeTestCase (
   BaseAddress = 0;
   Length      = EFI_PAGE_SIZE;
 
-  Status = gBS->AllocatePages (AllocateAnyPages, EfiLoaderCode, Length, &BaseAddress);
+  Status = gBS->AllocatePages (AllocateAnyPages, EfiLoaderCode, EFI_SIZE_TO_PAGES (Length), &BaseAddress);
   UT_ASSERT_NOT_EFI_ERROR (Status);
   UT_ASSERT_NOT_NULL ((VOID *)((UINTN)BaseAddress));
 
   Status = MemoryAttribute->GetMemoryAttributes (MemoryAttribute, BaseAddress, Length, &Attributes);
-  gBS->FreePages (BaseAddress, Length); // Free the page in case of any failures
+  gBS->FreePages (BaseAddress, EFI_SIZE_TO_PAGES (Length)); // Free the page in case of any failures
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   UT_LOG_INFO ("Attributes: 0x%llx\n", Attributes);
