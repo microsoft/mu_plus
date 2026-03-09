@@ -64,6 +64,7 @@ FreePagesWithProtectionAttributesTestCase (
   EFI_PHYSICAL_ADDRESS           BaseAddress;
   UINTN                          Length;
   UINT64                         Attributes;
+  UINT64                         OriginalAttributes;
 
   Status = gBS->LocateProtocol (&gEfiMemoryAttributeProtocolGuid, NULL, (VOID **)&MemoryAttribute);
   UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -78,6 +79,10 @@ FreePagesWithProtectionAttributesTestCase (
   UT_ASSERT_NOT_EFI_ERROR (Status);
   UT_ASSERT_NOT_NULL ((VOID *)((UINTN)BaseAddress));
 
+  // Get the original Attributes of Allocation
+  Status = MemoryAttribute->GetMemoryAttributes (MemoryAttribute, BaseAddress, Length, &OriginalAttributes);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
   Status = MemoryAttribute->SetMemoryAttributes (MemoryAttribute, BaseAddress, Length, EFI_MEMORY_RP | EFI_MEMORY_XP | EFI_MEMORY_RO);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
@@ -86,6 +91,10 @@ FreePagesWithProtectionAttributesTestCase (
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   DEBUG ((DEBUG_INFO, "%a - Attributes for memory at base: 0x%llx 0x%llx\n", __FUNCTION__, BaseAddress, Attributes));
+
+  // Restore the orignal attributes
+  Status = MemoryAttribute->SetMemoryAttributes (MemoryAttribute, BaseAddress, Length, OriginalAttributes);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
 
   // Free the pages
   Status = gBS->FreePages (BaseAddress, EFI_SIZE_TO_PAGES (Length));
@@ -163,6 +172,7 @@ AllocateFreeAllocateAtAddressTestCase (
   UINTN                          Length;
   UINT64                         Attributes;
   UINT64                         CachedAttributes;
+  UINT64                         OriginalAttributes;
 
   Status = gBS->LocateProtocol (&gEfiMemoryAttributeProtocolGuid, NULL, (VOID **)&MemoryAttribute);
   UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -180,6 +190,9 @@ AllocateFreeAllocateAtAddressTestCase (
   // Get the attributes of allocated pages
   Status = MemoryAttribute->GetMemoryAttributes (MemoryAttribute, BaseAddress, Length, &Attributes);
   UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  // Save the original Attributes
+  OriginalAttributes = Attributes;
 
   UT_LOG_INFO ("%a - Attributes for memory at base: 0x%llx 0x%llx\n", __FUNCTION__, BaseAddress, Attributes);
 
@@ -210,6 +223,10 @@ AllocateFreeAllocateAtAddressTestCase (
     UT_ASSERT_NOT_EFI_ERROR (Status);
   }
 
+  // Restore the orignal attributes
+  Status = MemoryAttribute->SetMemoryAttributes (MemoryAttribute, BaseAddress, Length, OriginalAttributes);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
   // Free the pages
   Status = gBS->FreePages (BaseAddress, EFI_SIZE_TO_PAGES (Length));
   UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -235,6 +252,7 @@ UpdateAttributesRequiresPageSplitTestCase (
   EFI_MEMORY_ATTRIBUTE_PROTOCOL  *MemoryAttribute;
   EFI_PHYSICAL_ADDRESS           BaseAddress;
   UINT64                         Attributes;
+  UINT64                         OriginalAttributes;
 
   Status = GetUnsplitPageTableEntry (&BaseAddress);
   UT_ASSERT_NOT_EQUAL (BaseAddress, 0);
@@ -246,6 +264,8 @@ UpdateAttributesRequiresPageSplitTestCase (
   // Get the attributes of allocated 2MB page
   Status = MemoryAttribute->GetMemoryAttributes (MemoryAttribute, BaseAddress, PTE2MB, &Attributes);
   UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  OriginalAttributes = Attributes;
 
   UT_LOG_INFO ("Attributes for 2MB page at address: 0x%llx 0x%llx\n", BaseAddress, Attributes);
 
@@ -261,6 +281,10 @@ UpdateAttributesRequiresPageSplitTestCase (
 
   // Check that the 2MB page is no longer NX
   UT_ASSERT_EQUAL (GetSpitPageTableEntryNoExecute (BaseAddress), 0);
+
+  // Restore the orignal attributes
+  Status = MemoryAttribute->SetMemoryAttributes (MemoryAttribute, BaseAddress, PTE2MB, OriginalAttributes);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
 
   // Free the pages
   Status = gBS->FreePages (BaseAddress, EFI_SIZE_TO_PAGES (PTE2MB));
