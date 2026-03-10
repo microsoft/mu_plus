@@ -109,7 +109,7 @@ MsUiThemePpiEntry (
   }
 
   DEBUG ((DEBUG_VERBOSE, "Font Hob=%p\n", GuidHob));
-  GuidHob->Name = gMsUiThemeHobGuid;
+  CopyGuid (&GuidHob->Name, &gMsUiThemeHobGuid);
 
   HobData  = (EFI_PHYSICAL_ADDRESS *)(GuidHob+1);
   *HobData = (EFI_PHYSICAL_ADDRESS)(UINTN)NewFonts;
