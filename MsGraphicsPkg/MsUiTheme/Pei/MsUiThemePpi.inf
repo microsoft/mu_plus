@@ -33,6 +33,7 @@
 [LibraryClasses]
   DebugLib
   BaseMemoryLib
+  CompilerIntrinsicsLib
   PeimEntryPoint
   PeiServicesTablePointerLib
   PeiServicesLib
