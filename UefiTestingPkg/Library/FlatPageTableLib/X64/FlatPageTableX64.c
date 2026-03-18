@@ -12,10 +12,13 @@
 #include <Library/CpuPageTableLib.h>
 #include <Library/DebugLib.h>
 #include <Library/FlatPageTableLib.h>
+#include <Register/X86/CpuPageTable.h>
 
 #define X64_PRESENT_BIT  BIT0
 #define X64_RW_BIT       BIT1
 #define X64_NX_BIT       BIT63
+
+#define MAX_PAE_PDPTE_NUM  4
 
 #define REGION_LENGTH(l)  LShiftU64 (1, (l) * 9 + 3)
 
