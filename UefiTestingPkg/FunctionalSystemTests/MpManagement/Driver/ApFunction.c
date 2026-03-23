@@ -40,6 +40,8 @@ ApFunction (
   BOOLEAN                          BreakLoop;
   volatile MP_MANAGEMENT_METADATA  *MyBuffer;
 
+  MyBuffer = NULL;
+
   // First figure who am i.
   Status = mMpServices->WhoAmI (mMpServices, &ProcessorId);
   if (EFI_ERROR (Status)) {
@@ -138,8 +140,10 @@ ApFunction (
 Done:
   RestoreInterruptStatus (ProcessorId);
 
-  MyBuffer->ApStatus = AP_STATE_OFF;
-  MyBuffer->ApTask   = AP_TASK_IDLE;
+  if (MyBuffer != NULL) {
+    MyBuffer->ApStatus = AP_STATE_OFF;
+    MyBuffer->ApTask   = AP_TASK_IDLE;
+  }
 
   return;
 }
