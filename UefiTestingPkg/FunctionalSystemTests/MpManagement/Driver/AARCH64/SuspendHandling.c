@@ -144,7 +144,8 @@ CpuMpArchInit (
   VOID                    *HobData;
   UINTN                   HobDataSize;
 
-  Status = EFI_SUCCESS;
+  Status  = EFI_SUCCESS;
+  MaxCpus = 0;
 
   /* Query the suspend feature flags during init steps */
   Args.Arg0 = ARM_SMC_ID_PSCI_FEATURES;

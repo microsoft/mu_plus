@@ -38,7 +38,7 @@ ASM_PFX(AsmApEntryPoint):
   // Mask the non-affinity bits
   bic x0, x0, 0x00ff000000
   and x0, x0, 0xffffffffff
-  ldr x1, mCpuInfo            // x1 = mCpuInfo
+  LDR_LIT(x1, mCpuInfo)            // x1 = mCpuInfo
   mov x2, 0                   // x2 = processor index
 
 // TODO: This is, again, reverse engineering to correlate the CPU index with the MPIDRs...
@@ -51,7 +51,7 @@ ASM_PFX(AsmApEntryPoint):
   beq JumpToCFunction
   add x1, x1, #40             // x1 = x1 + sizeof (ARM_CORE_INFO)
   add x2, x2, 1               // x2++
-  ldr x3, mNumCpus
+  LDR_LIT(x3, mNumCpus)
   cmp x2, x3                  // check if x2 >= x3, we've reached the end of mCpuInfo
   bge ProcessorNotFound
   b   1b                      // Otherwise, keep looping
@@ -59,8 +59,8 @@ ASM_PFX(AsmApEntryPoint):
 JumpToCFunction:
 // Calculate stack address
   // x2 contains the index for the current processor
-  ldr x0, gApStacksBase
-  ldr x1, gApStackSize
+  LDR_LIT(x0, gApStacksBase)
+  LDR_LIT(x1, gApStackSize)
   add x2, x2, 1               // x2 = ProcessorIndex + 1, preemptively adding 1 so that the calculated sp will be at the bottom of the stack.
   mul x3, x2, x1              // x3 = (ProcessorIndex + 1) * gApStackSize
   add sp, x0, x3              // sp = gApStacksBase + x3

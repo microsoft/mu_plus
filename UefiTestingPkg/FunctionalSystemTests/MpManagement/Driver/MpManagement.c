@@ -179,6 +179,7 @@ MpMgmtBspSuspend (
   EFI_STATUS  Status;
   EFI_HANDLE  Handle;
 
+  Handle = NULL;
   if (BspPowerState >= AP_POWER_NUM) {
     DEBUG ((DEBUG_ERROR, "%a The power state is not supported %d\n", __FUNCTION__, BspPowerState));
     Status = EFI_INVALID_PARAMETER;
