@@ -63,6 +63,7 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages            ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable  ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerFlush        ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel              ## CONSUMES
 
 [Depex]
   TRUE

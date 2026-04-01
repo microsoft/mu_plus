@@ -531,6 +531,17 @@ WriteALogFile (
   Status   = AdvancedLoggerAccessLibGetNextFormattedLine (&LogDevice->AccessEntry);
 
   while (Status == EFI_SUCCESS) {
+    //
+    // Filter messages by PcdDebugPrintErrorLevel before writing to the log file.
+    // This ensures the file logger respects the same debug level mask as DebugPrint(),
+    // filtering out messages (e.g. DEBUG_VERBOSE from Rust drivers) that bypass the
+    // DebugLib level check.
+    //
+    if ((LogDevice->AccessEntry.DebugLevel & PcdGet32 (PcdDebugPrintErrorLevel)) == 0) {
+      Status = AdvancedLoggerAccessLibGetNextFormattedLine (&LogDevice->AccessEntry);
+      continue;
+    }
+
     WriteSize = LogDevice->AccessEntry.MessageLen;
     if (WriteSize > RoomLeft) {
       WriteSize = RoomLeft;
