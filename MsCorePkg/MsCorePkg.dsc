@@ -70,7 +70,7 @@
 
   BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
   JsonLiteParserLib|MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
-  FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
+  FltUsedLib|MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
   MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
 
@@ -161,6 +161,7 @@
   MsCorePkg/Library/BaseSecureBootKeyStoreLib/BaseSecureBootKeyStoreLib.inf
   MsCorePkg/Library/MuSecureBootKeySelectorLib/MuSecureBootKeySelectorLib.inf
   MsCorePkg/HelloWorldRustDxe/HelloWorldRustDxe.inf
+  MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
 
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
