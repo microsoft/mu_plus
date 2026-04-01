@@ -1,5 +1,7 @@
 ## @file
-#  Lib to include if using floats
+#  This library provides the _fltused symbol which is required to by MSVC and clang
+#  when floating point operations are used. This library should be linked in for
+#  any module that uses floating point operations.
 #
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
