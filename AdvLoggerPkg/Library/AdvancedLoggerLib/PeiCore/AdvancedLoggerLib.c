@@ -207,7 +207,7 @@ InstallPermanentMemoryBuffer (
       // Must be PeiCore allocated small memory buffer
       //
       Status = PeiServicesAllocatePages (
-                 EfiBootServicesData,
+                 EfiRuntimeServicesData,
                  FixedPcdGet32 (PcdAdvancedLoggerPages),
                  &NewLogBuffer
                  );

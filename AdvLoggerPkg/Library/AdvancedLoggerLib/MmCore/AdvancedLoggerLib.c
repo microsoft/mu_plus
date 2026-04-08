@@ -117,13 +117,6 @@ AdvancedLoggerGetLoggerInfo (
     //
   }
 
-  //
-  // Check for buffer migration before validation, as migration changes buffer size/address.
-  //
-  if (mLoggerInfo != NULL) {
-    AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize);
-  }
-
   if (((mLoggerInfo) != NULL) && !ValidateInfoBlock ()) {
     mLoggerInfo = NULL;
     DEBUG ((DEBUG_ERROR, "MmCore %a: LoggerInfo marked invalid\n", __func__));

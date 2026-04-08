@@ -42,7 +42,6 @@
 
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
 
 [Depex]
   TRUE
