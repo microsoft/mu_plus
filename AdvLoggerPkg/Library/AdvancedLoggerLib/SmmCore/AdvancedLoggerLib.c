@@ -11,7 +11,6 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
-#include <Protocol/SmmReadyToLock.h>
 #include <AdvancedLoggerInternalProtocol.h>
 
 #include <Pi/PiSmmCis.h>
@@ -28,7 +27,6 @@ STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo;
 STATIC UINT32                mBufferSize  = 0;
 STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress  = 0;
 STATIC BOOLEAN               mInitialized = FALSE;
-STATIC BOOLEAN               mReadyToLock = FALSE;
 
 VOID
 EFIAPI
@@ -119,38 +117,6 @@ ValidateInfoBlock (
 }
 
 /**
-  SMM ReadyToLock notification handler.
-
-  Ensures any move needed to the new logger buffer is done before ReadyToLock completes.
-
-  @param[in] Protocol   Protocol GUID pointer.
-  @param[in] Interface  Protocol interface pointer.
-  @param[in] Handle     The handle on which the interface was installed.
-
-  @retval EFI_SUCCESS   The notification handler completed successfully.
-
-**/
-STATIC
-EFI_STATUS
-EFIAPI
-OnSmmReadyToLock (
-  IN CONST EFI_GUID  *Protocol,
-  IN VOID            *Interface,
-  IN EFI_HANDLE      Handle
-  )
-{
-  if (mLoggerInfo != NULL) {
-    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
-      mAdvLoggerProtocol.LoggerInfo = mLoggerInfo;
-    }
-  }
-
-  mReadyToLock = TRUE;
-
-  return EFI_SUCCESS;
-}
-
-/**
     Get the Logger Information Block published by DxeCore.
  **/
 STATIC
@@ -210,12 +176,6 @@ AdvancedLoggerGetLoggerInfo (
 {
   SmmInitializeLoggerInfo ();
 
-  if ((mLoggerInfo != NULL) && !mReadyToLock && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM) &&
-      AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize))
-  {
-    DEBUG ((DEBUG_INFO, "MmCore %a: Logger Update. LoggerInfo=%p\n", __func__, mLoggerInfo));
-  }
-
   return mLoggerInfo;
 }
 
@@ -256,9 +216,6 @@ SmmCoreAdvancedLoggerLibConstructor (
 {
   EFI_HANDLE  Handle;
   EFI_STATUS  Status;
-  VOID        *Registration;
-
-  Registration = NULL;
 
   ASSERT ((gBS != NULL) && (gSmst != NULL));
 
@@ -280,17 +237,6 @@ SmmCoreAdvancedLoggerLibConstructor (
 
   DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __func__, mLoggerInfo, Status));
   ASSERT_EFI_ERROR (Status);
-
-  if (!FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-    Status = gSmst->SmmRegisterProtocolNotify (
-                      &gEfiSmmReadyToLockProtocolGuid,
-                      OnSmmReadyToLock,
-                      &Registration
-                      );
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: Failed to register ReadyToLock notify - %r\n", __func__, Status));
-    }
-  }
 
   return EFI_SUCCESS;
 }
