@@ -928,10 +928,6 @@ ProcessDialogInput (
                            CanvasRect
                            );
 
-      // Show the on-screen keyboard for input.
-      //
-      mOSKProtocol->ShowKeyboard (mOSKProtocol, TRUE);
-
       // Render the canvas and continue processing input.
       //
       State = DialogCanvas->Base.Draw (
@@ -940,6 +936,10 @@ ProcessDialogInput (
                                    NULL,
                                    &pContext
                                    );
+
+      // Show the on-screen keyboard for input.
+      //
+      mOSKProtocol->ShowKeyboard (mOSKProtocol, TRUE);
 
       // Indicate that the dialog has been moved up to make room for the OSK.
       //
