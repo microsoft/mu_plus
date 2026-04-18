@@ -40,69 +40,6 @@ CONST   CHAR8                 *AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_CNT] = {
   "[TFA  ]",
 };
 
-/**
-  Follow the logger info redirection chain and update the provided logger info pointer.
-
-  @param[in,out]  LoggerInfo    Pointer to a logger info pointer to update.
-  @param[out]     LowAddress    Optional pointer to update with the low address of the current logger.
-  @param[out]     HighAddress   Optional pointer to update with the high address of the current logger.
-
-  @retval         TRUE          A new logger was found and LoggerInfo was updated to the new address.
-  @retval         FALSE         A new logger was not found and no modification was made to LoggerInfo.
-**/
-STATIC
-BOOLEAN
-AdvancedLoggerCheckForNewerLogger (
-  IN OUT ADVANCED_LOGGER_INFO  **LoggerInfo,
-  OUT    EFI_PHYSICAL_ADDRESS  *LowAddress  OPTIONAL,
-  OUT    EFI_PHYSICAL_ADDRESS  *HighAddress  OPTIONAL
-  )
-{
-  ADVANCED_LOGGER_INFO  *CurrentLoggerInfo;
-  ADVANCED_LOGGER_INFO  *NextLoggerInfo;
-  UINTN                 Depth;
-
-  if ((LoggerInfo == NULL) || (*LoggerInfo == NULL)) {
-    return FALSE;
-  }
-
-  CurrentLoggerInfo = *LoggerInfo;
-  Depth             = 0;
-
-  // Follow the chain to find the current logger
-  while ((CurrentLoggerInfo->NewLoggerInfoAddress != 0) && (Depth < ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH)) {
-    NextLoggerInfo = ALI_FROM_PA (CurrentLoggerInfo->NewLoggerInfoAddress);
-
-    if (NextLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
-      return FALSE;
-    }
-
-    CurrentLoggerInfo = NextLoggerInfo;
-    Depth++;
-  }
-
-  if (Depth >= ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH) {
-    return FALSE;
-  }
-
-  // Update if we found a newer logger
-  if (CurrentLoggerInfo != *LoggerInfo) {
-    *LoggerInfo = CurrentLoggerInfo;
-
-    if (LowAddress != NULL) {
-      *LowAddress = PA_FROM_PTR (LOG_BUFFER_FROM_ALI (CurrentLoggerInfo));
-    }
-
-    if (HighAddress != NULL) {
-      *HighAddress = PA_FROM_PTR (LOG_MAX_ADDRESS (CurrentLoggerInfo));
-    }
-
-    return TRUE;
-  }
-
-  return FALSE;
-}
-
 // Define a structure to hold debug level information
 typedef struct {
   CONST CHAR8    *Name;
@@ -316,8 +253,6 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
   if (BlockEntry == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-
-  AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mLowAddress, &mHighAddress);
 
   if (mLoggerInfo->LogCurrentOffset == mLoggerInfo->LogBufferOffset) {
     return EFI_END_OF_FILE;
@@ -617,8 +552,6 @@ AdvancedLoggerAccessLibConstructor (
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
     mLowAddress  = PA_FROM_PTR (LOG_BUFFER_FROM_ALI (mLoggerInfo));
     mHighAddress = PA_FROM_PTR (LOG_MAX_ADDRESS (mLoggerInfo));
-
-    AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mLowAddress, &mHighAddress);
 
     // Leave this debug message as ERROR.
 

@@ -34,7 +34,6 @@
   DebugLib
   PcdLib
   SafeIntLib
-  SmmServicesTableLib
   UefiBootServicesTableLib
 
 [Guids]
@@ -42,12 +41,8 @@
 
 [Protocols]
   gAdvancedLoggerProtocolGuid               ## CONSUMES
-  gEfiSmmReadyToLockProtocolGuid            ## NOTIFY
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize
-
-[FeaturePcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
 
 [Depex]
