@@ -13,7 +13,6 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
-#include <Protocol/MmReadyToLock.h>
 
 #include <Library/AdvLoggerAccessLib.h>
 #include <Library/BaseLib.h>
@@ -21,7 +20,6 @@
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
-#include <Library/MmServicesTableLib.h>
 #include <Library/SafeIntLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
@@ -29,71 +27,7 @@ STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo        = NULL;
 STATIC UINT32                mBufferSize         = 0;
 STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress         = 0;
 STATIC UINTN                 mLoggerTransferSize = 0;
-STATIC BOOLEAN               mReadyToLock        = FALSE;
 extern UINTN                 mVariableBufferPayloadSize;
-
-/**
-  Follow the logger info redirection chain and update the provided logger info pointer.
-
-  @param[in,out]  LoggerInfo    Pointer to a logger info pointer to update.
-  @param[out]     MaxAddress    Optional pointer to update with the max address of the current logger.
-  @param[out]     BufferSize    Optional pointer to update with the buffer size of the current logger.
-
-  @retval         TRUE          A new logger was found and LoggerInfo was updated to the new address.
-  @retval         FALSE         A new logger was not found and no modification was made to LoggerInfo.
-**/
-STATIC
-BOOLEAN
-AdvancedLoggerCheckForNewerLogger (
-  IN OUT ADVANCED_LOGGER_INFO  **LoggerInfo,
-  OUT    EFI_PHYSICAL_ADDRESS  *MaxAddress  OPTIONAL,
-  OUT    UINT32                *BufferSize  OPTIONAL
-  )
-{
-  ADVANCED_LOGGER_INFO  *CurrentLoggerInfo;
-  ADVANCED_LOGGER_INFO  *NextLoggerInfo;
-  UINTN                 Depth;
-
-  if ((LoggerInfo == NULL) || (*LoggerInfo == NULL)) {
-    return FALSE;
-  }
-
-  CurrentLoggerInfo = *LoggerInfo;
-  Depth             = 0;
-
-  // Follow the chain to find the current logger
-  while ((CurrentLoggerInfo->NewLoggerInfoAddress != 0) && (Depth < ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH)) {
-    NextLoggerInfo = ALI_FROM_PA (CurrentLoggerInfo->NewLoggerInfoAddress);
-
-    if (NextLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
-      return FALSE;
-    }
-
-    CurrentLoggerInfo = NextLoggerInfo;
-    Depth++;
-  }
-
-  if (Depth >= ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH) {
-    return FALSE;
-  }
-
-  // Update if we found a newer logger
-  if (CurrentLoggerInfo != *LoggerInfo) {
-    *LoggerInfo = CurrentLoggerInfo;
-
-    if (MaxAddress != NULL) {
-      *MaxAddress = LOG_MAX_ADDRESS (CurrentLoggerInfo);
-    }
-
-    if (BufferSize != NULL) {
-      *BufferSize = CurrentLoggerInfo->LogBufferSize;
-    }
-
-    return TRUE;
-  }
-
-  return FALSE;
-}
 
 /**
     CheckAddress
@@ -143,38 +77,6 @@ ValidateInfoBlock (
 }
 
 /**
-  MM ReadyToLock notification handler.
-
-  Ensures any move needed to the new logger buffer is done before ReadyToLock completes.
-
-  @param[in] Protocol   Protocol GUID pointer.
-  @param[in] Interface  Protocol interface pointer.
-  @param[in] Handle     The handle on which the interface was installed.
-
-  @retval EFI_SUCCESS   The notification handler completed successfully.
-
-**/
-STATIC
-EFI_STATUS
-EFIAPI
-OnMmReadyToLock (
-  IN CONST EFI_GUID  *Protocol,
-  IN VOID            *Interface,
-  IN EFI_HANDLE      Handle
-  )
-{
-  if ((mLoggerInfo != NULL) && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
-      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated at ReadyToLock. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
-    }
-  }
-
-  mReadyToLock = TRUE;
-
-  return EFI_SUCCESS;
-}
-
-/**
     AdvLoggerInit - Obtain the address of the logger info block.
 
     @param          NONE
@@ -187,7 +89,6 @@ AdvLoggerAccessInit (
   )
 {
   EFI_HOB_GUID_TYPE    *GuidHob;
-  VOID                 *Registration;
   ADVANCED_LOGGER_PTR  *LogPtr;
   EFI_STATUS           Status;
   UINTN                TempSize;
@@ -209,12 +110,6 @@ AdvLoggerAccessInit (
 
   if (mLoggerInfo != NULL) {
     mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
-
-    if (!FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-      if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
-        DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
-      }
-    }
   }
 
   //
@@ -244,15 +139,6 @@ AdvLoggerAccessInit (
   //
 
   DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, code=%r\n", __FUNCTION__, mLoggerInfo, Status));
-
-  Status = gMmst->MmRegisterProtocolNotify (
-                    &gEfiMmReadyToLockProtocolGuid,
-                    OnMmReadyToLock,
-                    &Registration
-                    );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: Failed to register ReadyToLock notify - %r\n", __func__, Status));
-  }
 }
 
 /**
@@ -307,12 +193,6 @@ AdvLoggerAccessGetVariable (
   UINT8       *LogBufferStart;
   UINT8       *LogBufferEnd;
   UINTN       LogBufferSize;
-
-  if ((mLoggerInfo != NULL) && !mReadyToLock && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
-      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated during access. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
-    }
-  }
 
   if ((!ValidateInfoBlock ()) || (mLoggerTransferSize == 0)) {
     return EFI_UNSUPPORTED;

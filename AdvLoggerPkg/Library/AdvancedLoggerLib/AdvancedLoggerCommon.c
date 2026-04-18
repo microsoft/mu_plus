@@ -20,101 +20,6 @@
 #include "../AdvancedLoggerCommon.h"
 
 /**
-  Follow the logger info redirection chain to find the current logger info.
-
-  This is primarily used to support migrating an advanced logger buffer to a new location.
-
-  @param[in]  LoggerInfo    Pointer to a logger info structure to start the chain walk.
-
-  @return               Pointer to the current logger info structure (with NewLoggerInfoAddress == 0).
-                        Returns NULL if the input is NULL or if the chain is invalid.
-**/
-ADVANCED_LOGGER_INFO *
-AdvancedLoggerGetCurrentLoggerInfo (
-  IN ADVANCED_LOGGER_INFO  *LoggerInfo
-  )
-{
-  ADVANCED_LOGGER_INFO  *CurrentLoggerInfo;
-  ADVANCED_LOGGER_INFO  *NextLoggerInfo;
-  UINTN                 Depth;
-
-  if (LoggerInfo == NULL) {
-    return NULL;
-  }
-
-  CurrentLoggerInfo = LoggerInfo;
-  Depth             = 0;
-
-  while ((CurrentLoggerInfo->NewLoggerInfoAddress != 0) && (Depth < ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH)) {
-    NextLoggerInfo = ALI_FROM_PA (CurrentLoggerInfo->NewLoggerInfoAddress);
-
-    if (NextLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
-      return CurrentLoggerInfo;
-    }
-
-    CurrentLoggerInfo = NextLoggerInfo;
-    Depth++;
-  }
-
-  if (Depth >= ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH) {
-    return NULL;
-  }
-
-  return CurrentLoggerInfo;
-}
-
-/**
-  Follow the logger info redirection chain and update the provided logger info pointer.
-
-  This function follows the logger address chain to find the current logger info
-  and updates the input pointer if a new logger is found.
-
-  The function does not attempt to make any validation statement about the logger info
-  structures and it is expected NULL may be provided as input.
-
-  @param[in,out]  LoggerInfo    Pointer to a logger info pointer to update.
-  @param[out]     MaxAddress    Optional pointer to update with the max address of the current logger.
-  @param[out]     BufferSize    Optional pointer to update with the buffer size of the current logger.
-
-  @retval         TRUE          A new logger was found and LoggerInfo was updated to the new address.
-  @retval         FALSE         A new logger was not found and no modification was made to LoggerInfo.
-**/
-BOOLEAN
-AdvancedLoggerCheckForNewerLogger (
-  IN OUT ADVANCED_LOGGER_INFO  **LoggerInfo,
-  OUT    EFI_PHYSICAL_ADDRESS  *MaxAddress  OPTIONAL,
-  OUT    UINT32                *BufferSize  OPTIONAL
-  )
-{
-  ADVANCED_LOGGER_INFO  *CurrentLoggerInfo;
-
-  if ((LoggerInfo == NULL) || (*LoggerInfo == NULL)) {
-    return FALSE;
-  }
-
-  CurrentLoggerInfo = AdvancedLoggerGetCurrentLoggerInfo (*LoggerInfo);
-  if (CurrentLoggerInfo == NULL) {
-    return FALSE;
-  }
-
-  if (CurrentLoggerInfo != *LoggerInfo) {
-    *LoggerInfo = CurrentLoggerInfo;
-
-    if (MaxAddress != NULL) {
-      *MaxAddress = LOG_MAX_ADDRESS (CurrentLoggerInfo);
-    }
-
-    if (BufferSize != NULL) {
-      *BufferSize = CurrentLoggerInfo->LogBufferSize;
-    }
-
-    return TRUE;
-  }
-
-  return FALSE;
-}
-
-/**
   Write data from buffer into the in memory logging buffer.
 
   Writes NumberOfBytes data bytes from Buffer to the logging buffer.
@@ -154,8 +59,6 @@ AdvancedLoggerMemoryLoggerWrite (
   }
 
   LoggerInfo = AdvancedLoggerGetLoggerInfo ();
-
-  LoggerInfo = AdvancedLoggerGetCurrentLoggerInfo (LoggerInfo);
 
   if (LoggerInfo != NULL) {
     EntrySize = MESSAGE_ENTRY_SIZE_V2 (OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText), NumberOfBytes);
