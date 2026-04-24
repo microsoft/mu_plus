@@ -37,15 +37,20 @@ AdvancedLoggerLibConstructor (
 
   LoggerInfo = ALI_FROM_PA (FixedPcdGet64 (PcdAdvancedLoggerBase));
   if (LoggerInfo != NULL) {
-    ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
-    LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
-    LoggerInfo->Version            = ADVANCED_LOGGER_INFO_VER;
-    LoggerInfo->LogBufferSize      = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
-    LoggerInfo->LogBufferOffset    = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
-    LoggerInfo->LogCurrentOffset   = LoggerInfo->LogBufferOffset;
+    // Check if the LoggerInfo has already been initalized in a previous phase to
+    //  prevent overwritting any logs already collected
+    if (LoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
+      ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
+      LoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+      LoggerInfo->Version          = ADVANCED_LOGGER_INFO_VER;
+      LoggerInfo->LogBufferSize    = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
+      LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+      LoggerInfo->LogCurrentOffset = LoggerInfo->LogBufferOffset;
+      LoggerInfo->HwPrintLevel     = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
+      LoggerInfo->InPermanentRAM   = TRUE;
+    }
+
     LoggerInfo->HdwPortInitialized = TRUE;
-    LoggerInfo->HwPrintLevel       = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
-    LoggerInfo->InPermanentRAM     = TRUE;
     AdvancedLoggerHdwPortInitialize ();
     DEBUG ((DEBUG_INFO, "%a: Advanced Logger initialized at fixed RAM address %p\n", __func__, LoggerInfo));
 
