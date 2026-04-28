@@ -7,7 +7,6 @@ members = [
   "HidPkg/Crates/HiiKeyboardLayout",
   "HidPkg/UefiHidDxe",
   "HidPkg/UefiHidDxeV2",
-  "MsCorePkg/HelloWorldRustDxe",
   "MsWheaPkg/Crates/MuTelemetryHelperLib",
 ]
 

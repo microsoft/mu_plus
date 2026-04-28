@@ -146,7 +146,6 @@
     "RustHostUnitTestPlugin": {
         "Coverage": .75,
         "CoverageOverrides": {
-            "HelloWorldRustDxe": 0.0,
             "RustBootServicesAllocatorDxe": 0.03
         }
     }
