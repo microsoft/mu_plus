@@ -14,7 +14,7 @@
 //!
 //!    //Initialize Boot Services
 //!    unsafe {
-//!        init_telemetry((*system_table).boot_services.as_ref().unwrap());
+//!        init_telemetry((*system_table).boot_services);
 //!    }
 //!
 //!    //if (some_failure) {
@@ -34,16 +34,14 @@
 //!
 #![cfg_attr(target_os = "uefi", no_std)]
 
-mod status_code_runtime;
-
-use boot_services::{BootServices, StandardBootServices};
 use mu_pi::{
     protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue},
     status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR},
 };
 use mu_rust_helpers::{guid, guid::guid};
+use patina::boot_services::{BootServices, StandardBootServices};
+use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
 use r_efi::efi;
-use status_code_runtime::{ReportStatusCode, StatusCodeRuntimeProtocol};
 
 static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
 
@@ -139,37 +137,38 @@ fn log_telemetry_internal<B: BootServices>(
         additional_info2: extra_data2,
     };
 
-    StatusCodeRuntimeProtocol::report_status_code(
-        boot_services,
+    let protocol = unsafe { boot_services.locate_protocol::<StatusCodeRuntimeProtocol>(None)? };
+
+    let caller_id = component_id.unwrap_or(&guid::CALLER_ID);
+
+    protocol.report_status_code_with_data(
         status_code_type,
         class_id,
         0,
-        component_id,
+        caller_id,
         MS_WHEA_RSC_DATA_TYPE_GUID,
         error_data,
     )
 }
 
 #[cfg(not(tarpaulin_include))]
-pub fn init_telemetry(efi_boot_services: &efi::BootServices) {
-    BOOT_SERVICES.initialize(efi_boot_services)
+pub fn init_telemetry(efi_boot_services: *mut efi::BootServices) {
+    BOOT_SERVICES.init(efi_boot_services)
 }
 
 #[cfg(test)]
 mod test {
-    use boot_services::MockBootServices;
     use mu_pi::protocols::{
         status_code,
         status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue},
     };
     use mu_rust_helpers::guid::guid;
+    use patina::boot_services::MockBootServices;
     use r_efi::efi;
 
-    use crate::{
-        log_telemetry_internal, status_code_runtime::StatusCodeRuntimeProtocol, MsWheaRscInternalErrorData,
-        MS_WHEA_ERROR_STATUS_TYPE_FATAL,
-    };
+    use crate::{MS_WHEA_ERROR_STATUS_TYPE_FATAL, MsWheaRscInternalErrorData, log_telemetry_internal};
     use core::mem::size_of;
+    use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
 
     const DATA_SIZE: usize = size_of::<EfiStatusCodeData>() + size_of::<MsWheaRscInternalErrorData>();
     const MOCK_CALLER_ID: efi::Guid = guid!("d0d1d2d3-d4d5-d6d7-d8d9-dadbdcdddedf");
@@ -185,23 +184,21 @@ mod test {
         assert_eq!(value, MOCK_STATUS_CODE_VALUE);
         assert_eq!(instance, 0);
         assert_eq!(unsafe { *caller_id }, MOCK_CALLER_ID);
-        if r#type == MS_WHEA_ERROR_STATUS_TYPE_FATAL {
-            efi::Status::SUCCESS
-        } else {
-            efi::Status::INVALID_PARAMETER
-        }
+        if r#type == MS_WHEA_ERROR_STATUS_TYPE_FATAL { efi::Status::SUCCESS } else { efi::Status::INVALID_PARAMETER }
     }
 
-    static MOCK_STATUS_CODE_RUNTIME_INTERFACE: status_code::Protocol =
-        status_code::Protocol { report_status_code: mock_report_status_code };
+    static MOCK_STATUS_CODE_RUNTIME_INTERFACE: status_code::Protocol = {
+        let f: status_code::ReportStatusCode = mock_report_status_code;
+        status_code::Protocol { report_status_code: f }
+    };
 
     #[test]
     fn try_log_telemetry() {
         let mut mock_boot_services: MockBootServices = MockBootServices::new();
 
-        mock_boot_services.expect_locate_protocol().returning(|_: &StatusCodeRuntimeProtocol, registration| unsafe {
+        mock_boot_services.expect_locate_protocol().returning(|registration| unsafe {
             assert_eq!(registration, None);
-            Ok((&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::Protocol as *mut status_code::Protocol)
+            Ok((&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::Protocol as *mut StatusCodeRuntimeProtocol)
                 .as_mut()
                 .unwrap())
         });
@@ -209,9 +206,6 @@ mod test {
         // Test sizes of "repr(C)" structs
         assert_eq!(size_of::<MsWheaRscInternalErrorData>(), 48);
         assert_eq!(size_of::<[u8; 68]>(), DATA_SIZE);
-
-        // Test Deref trait
-        assert_eq!(*StatusCodeRuntimeProtocol, status_code::PROTOCOL_GUID);
         assert_eq!(
             Ok(()),
             log_telemetry_internal(
@@ -244,7 +238,7 @@ mod test {
     fn test_protocol_not_found() {
         let mut mock_boot_services: MockBootServices = MockBootServices::new();
 
-        mock_boot_services.expect_locate_protocol().returning(|_: &StatusCodeRuntimeProtocol, registration| {
+        mock_boot_services.expect_locate_protocol::<StatusCodeRuntimeProtocol>().returning(|registration| {
             assert_eq!(registration, None);
             //Simulate "marker protocol" without an Interface
             Err(efi::Status::NOT_FOUND)
