@@ -751,12 +751,25 @@ impl HidReportReceiver for KeyboardHidHandler {
                         self.key_queue.keystroke(*key, key_queue::KeyAction::KeyUp);
                     }
 
-                    // If the released key was the repeat key, cancel repeat.
+                    // If the released key was the repeat key, cancel repeat and pick a new
+                    // candidate from the remaining held keys.
                     if let Some(repeat_usage) = self.repeat_key
                         && released_keys.contains(&repeat_usage)
                     {
                         self.boot_services.set_timer(self.repeat_timer_event, efi::TIMER_CANCEL, 0);
                         self.repeat_key = None;
+
+                        // Find a repeatable key among the still-held keys.
+                        let new_candidate =
+                            self.current_keys.iter().rev().find(|k| self.key_queue.is_repeatable_key(**k)).copied();
+                        if let Some(usage) = new_candidate {
+                            self.repeat_key = Some(usage);
+                            self.boot_services.set_timer(
+                                self.repeat_timer_event,
+                                efi::TIMER_RELATIVE,
+                                REPEAT_KEY_DELAY,
+                            );
+                        }
                     }
 
                     // Track the last newly pressed repeatable key to set as the repeat candidate.
@@ -1679,6 +1692,42 @@ mod test {
         // Timer should have been cancelled
         assert_eq!(LAST_TIMER_TYPE.load(std::sync::atomic::Ordering::SeqCst), efi::TIMER_CANCEL);
         assert!(keyboard_handler.repeat_key.is_none());
+    }
+
+    #[test]
+    fn release_repeat_key_should_handoff_to_remaining_held_key() {
+        let boot_services = create_fake_static_boot_service();
+        boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
+        boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+        boot_services.expect_restore_tpl().returning(|_| ());
+
+        let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
+        let mut hid_io = MockHidIo::new();
+        hid_io.expect_set_output_report().returning(|_, _| Ok(()));
+        hid_io
+            .expect_get_report_descriptor()
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+
+        keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
+        keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
+
+        // press 'a' + 'b' simultaneously
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x05, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+        assert!(keyboard_handler.repeat_key.is_some());
+
+        // release 'b' (the repeat key), 'a' still held
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+
+        // 'a' should now be the repeat key
+        assert_eq!(keyboard_handler.repeat_key, Some(hidparser::report_data_types::Usage::from(0x00070004u32)));
     }
 
     #[test]
