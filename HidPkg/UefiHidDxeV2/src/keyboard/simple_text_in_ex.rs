@@ -626,6 +626,7 @@ mod test {
 
         // used in keyboard init and uninstall
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
         boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
@@ -781,6 +782,7 @@ mod test {
 
         // used in keyboard init and uninstall
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
         extern "efiapi" fn mock_set_report(
             _this: *const hid_io::protocol::Protocol,
@@ -868,6 +870,7 @@ mod test {
 
         // used in keyboard init and uninstall
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_signal_event().returning(|event| {
             if event == NOTIFY_EVENT {
                 SimpleTextInExFfi::process_key_notifies(event, CONTEXT_PTR.load(Ordering::SeqCst));
@@ -1015,6 +1018,7 @@ mod test {
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
 
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
         boot_services.expect_restore_tpl().returning(|_| ());
 

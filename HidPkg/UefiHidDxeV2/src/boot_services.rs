@@ -79,6 +79,8 @@ pub trait UefiBootServices {
         controller_handle: efi::Handle,
     ) -> efi::Status;
 
+    fn set_timer(&self, event: efi::Event, r#type: efi::TimerDelay, trigger_time: u64) -> efi::Status;
+
     fn locate_protocol(
         &self,
         protocol: *mut efi::Guid,
@@ -195,6 +197,9 @@ impl UefiBootServices for StandardUefiBootServices {
     ) -> efi::Status {
         (self.boot_services().locate_protocol)(protocol, registration, interface)
     }
+    fn set_timer(&self, event: efi::Event, r#type: efi::TimerDelay, trigger_time: u64) -> efi::Status {
+        (self.boot_services().set_timer)(event, r#type, trigger_time)
+    }
 }
 
 #[cfg(test)]
@@ -284,6 +289,10 @@ mod test {
         efi::Status::SUCCESS
     }
 
+    extern "efiapi" fn mock_set_timer(_event: efi::Event, _type: efi::TimerDelay, _trigger_time: u64) -> efi::Status {
+        efi::Status::SUCCESS
+    }
+
     #[test]
     fn standard_uefi_boot_services_should_wrap_boot_services() {
         let boot_services = MaybeUninit::<efi::BootServices>::zeroed();
@@ -299,6 +308,7 @@ mod test {
         boot_services.open_protocol = mock_open_protocol;
         boot_services.close_protocol = mock_close_protocol;
         boot_services.locate_protocol = mock_locate_protocol;
+        boot_services.set_timer = mock_set_timer;
 
         const TEST_GUID: efi::Guid = efi::Guid::from_fields(0, 0, 0, 0, 0, &[0, 0, 0, 0, 0, 0]);
         let mut event = 1 as efi::Event;
@@ -373,5 +383,6 @@ mod test {
             ),
             efi::Status::SUCCESS
         );
+        assert_eq!(test_boot_services.set_timer(event, efi::TIMER_CANCEL, 0), efi::Status::SUCCESS);
     }
 }
