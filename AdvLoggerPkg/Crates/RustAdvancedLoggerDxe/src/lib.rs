@@ -39,9 +39,9 @@ use core::{
     ptr,
     sync::atomic::{AtomicPtr, Ordering},
 };
+use patina::BinaryGuid;
+use patina::{boot_services, uefi_protocol::ProtocolInterface};
 use r_efi::efi;
-
-use boot_services::{self, protocol_handler::Protocol};
 
 //Global static logger instance - this is a singleton.
 static LOGGER: AdvancedLogger = AdvancedLogger::new();
@@ -58,12 +58,8 @@ pub const DEBUG_VERBOSE: usize = 0x00400000;
 pub const DEBUG_ERROR: usize = 0x80000000;
 
 // AdvancedLogger protocol definition. Mirrors C definition in AdvLoggerPkg/Include/Protocol/AdvancedLogger.h
-const ADVANCED_LOGGER_PROTOCOL_GUID: efi::Guid =
-    efi::Guid::from_fields(0x434f695c, 0xef26, 0x4a12, 0x9e, 0xba, &[0xdd, 0xef, 0x00, 0x97, 0x49, 0x7c]);
-
+const ADVANCED_LOGGER_PROTOCOL_GUID: BinaryGuid = BinaryGuid::from_string("434f695c-ef26-4a12-9eba-ddef0097497c");
 type AdvancedLoggerWriteProtocol = extern "efiapi" fn(*const AdvancedLoggerProtocolInterface, usize, *const u8, usize);
-
-const ADVANCED_LOGGER_PROTOCOL: AdvancedLoggerProtocol = AdvancedLoggerProtocol {};
 
 #[repr(C)]
 struct AdvancedLoggerProtocolInterface {
@@ -72,20 +68,15 @@ struct AdvancedLoggerProtocolInterface {
     write_log: AdvancedLoggerWriteProtocol,
 }
 
-struct AdvancedLoggerProtocol;
-
-unsafe impl Protocol for AdvancedLoggerProtocol {
-    type Interface = AdvancedLoggerProtocolInterface;
-    fn protocol_guid(&self) -> &'static efi::Guid {
-        &ADVANCED_LOGGER_PROTOCOL_GUID
-    }
+unsafe impl ProtocolInterface for AdvancedLoggerProtocolInterface {
+    const PROTOCOL_GUID: BinaryGuid = ADVANCED_LOGGER_PROTOCOL_GUID;
 }
 
-impl Deref for AdvancedLoggerProtocol {
+impl Deref for AdvancedLoggerProtocolInterface {
     type Target = efi::Guid;
 
     fn deref(&self) -> &Self::Target {
-        self.protocol_guid()
+        &ADVANCED_LOGGER_PROTOCOL_GUID
     }
 }
 
@@ -103,7 +94,8 @@ impl AdvancedLogger {
 
     // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
     fn init(&self, boot_services_impl: &impl boot_services::BootServices) {
-        let protocol_ptr = match unsafe { boot_services_impl.locate_protocol(&ADVANCED_LOGGER_PROTOCOL, None) } {
+        let protocol_ptr = match unsafe { boot_services_impl.locate_protocol::<AdvancedLoggerProtocolInterface>(None) }
+        {
             Ok(interface) => interface as *mut AdvancedLoggerProtocolInterface,
             Err(_status) => ptr::null_mut(),
         };
@@ -143,7 +135,7 @@ impl fmt::Write for LogTransactor<'_> {
 /// # Safety
 /// Parameter `efi_boot_services` should be a valid pointer of [`efi::BootServices`] with a static lifetime.
 pub unsafe fn init_debug(efi_boot_services: *mut efi::BootServices) {
-    let standard_boot_services = unsafe { boot_services::StandardBootServices::new(&*efi_boot_services) };
+    let standard_boot_services = boot_services::StandardBootServices::new(efi_boot_services);
     LOGGER.init(&standard_boot_services);
 }
 
@@ -252,12 +244,12 @@ macro_rules! debugln {
 mod tests {
     extern crate std;
     use crate::{
-        debug, AdvancedLogger, AdvancedLoggerProtocol, AdvancedLoggerProtocolInterface, DEBUG_ERROR, DEBUG_INFO,
-        DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
+        AdvancedLogger, AdvancedLoggerProtocolInterface, DEBUG_ERROR, DEBUG_INFO, DEBUG_INIT, DEBUG_VERBOSE,
+        DEBUG_WARN, LOGGER, debug,
     };
     use core::{slice::from_raw_parts, sync::atomic::Ordering};
+    use patina::boot_services::MockBootServices;
     use std::{println, str};
-
     static ADVANCED_LOGGER_INSTANCE: AdvancedLoggerProtocolInterface =
         AdvancedLoggerProtocolInterface { signature: 0, version: 0, write_log: mock_advanced_logger_write };
 
@@ -287,8 +279,8 @@ mod tests {
 
     #[test]
     fn init_should_initialize_logger() {
-        let mut mock_boot_services = boot_services::MockBootServices::new();
-        mock_boot_services.expect_locate_protocol().returning(|_: &AdvancedLoggerProtocol, registration| unsafe {
+        let mut mock_boot_services = MockBootServices::new();
+        mock_boot_services.expect_locate_protocol().returning(|registration| unsafe {
             assert_eq!(registration, None);
             Ok((&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
                 as *mut AdvancedLoggerProtocolInterface)
@@ -305,8 +297,8 @@ mod tests {
 
     #[test]
     fn debug_macro_should_log_things() {
-        let mut mock_boot_services = boot_services::MockBootServices::new();
-        mock_boot_services.expect_locate_protocol().returning(|_: &AdvancedLoggerProtocol, registration| unsafe {
+        let mut mock_boot_services = MockBootServices::new();
+        mock_boot_services.expect_locate_protocol().returning(|registration| unsafe {
             assert_eq!(registration, None);
             Ok((&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
                 as *mut AdvancedLoggerProtocolInterface)

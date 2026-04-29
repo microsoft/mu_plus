@@ -20,7 +20,7 @@ mu_rust_helpers = { version = "3" }
 MuTelemetryHelperLib = { path = "MsWheaPkg/Crates/MuTelemetryHelperLib" }
 RustAdvancedLoggerDxe = { path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe" }
 RustBootServicesAllocatorDxe = { path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe" }
-mu_uefi_boot_services = { version = "2" }
+patina = { version = "21" }
 mockall = {version = "0.14.0"}
 
 memoffset = "0.9.0"
