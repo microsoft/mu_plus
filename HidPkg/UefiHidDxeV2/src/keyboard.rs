@@ -370,7 +370,7 @@ impl KeyboardHidHandler {
         );
         if status.is_error() {
             drop(unsafe { Box::from_raw(context_ptr) });
-            Err(status)?;
+            return Err(status);
         }
 
         self.repeat_timer_event = repeat_timer;
@@ -504,7 +504,10 @@ impl KeyboardHidHandler {
         }
         // Cancel any active repeat timer.
         if !self.repeat_timer_event.is_null() {
-            self.boot_services.set_timer(self.repeat_timer_event, efi::TIMER_CANCEL, 0);
+            let status = self.boot_services.set_timer(self.repeat_timer_event, efi::TIMER_CANCEL, 0);
+            if status.is_error() {
+                debugln!(DEBUG_ERROR, "Failed to cancel repeat_timer during reset, status: {:x?}", status);
+            }
         }
         self.repeat_key = None;
         Ok(())
@@ -837,14 +840,15 @@ impl Drop for KeyboardHidHandler {
 // repeat rate) to re-enqueue the held key into the key queue. Runs at TPL_NOTIFY for mutual exclusion with other
 // keyboard handler access.
 extern "efiapi" fn on_repeat_timer(_event: efi::Event, context: *mut c_void) {
-    let context = unsafe { (context as *mut RepeatTimerContext).as_mut() }.expect("bad repeat timer context pointer");
+    let Some(context) = (unsafe { (context as *mut RepeatTimerContext).as_mut() }) else {
+        debugln!(DEBUG_ERROR, "on_repeat_timer invoked with null context pointer");
+        return;
+    };
 
-    if context.keyboard_handler.is_null() {
+    let Some(keyboard_handler) = (unsafe { context.keyboard_handler.as_mut() }) else {
         debugln!(DEBUG_ERROR, "on_repeat_timer invoked with invalid handler");
         return;
-    }
-
-    let keyboard_handler = unsafe { context.keyboard_handler.as_mut() }.expect("bad keyboard handler");
+    };
 
     let Some(repeat_usage) = keyboard_handler.repeat_key else {
         return;

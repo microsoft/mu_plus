@@ -428,7 +428,7 @@ impl KeyQueue {
                     return !KEYBOARD_MODIFIERS.contains(&descriptor.modifier)
                         && !TOGGLE_MODIFIERS.contains(&descriptor.modifier);
                 }
-                HiiKey::NsKey(_ns_descriptor) if _ns_descriptor.descriptor.key == efi_key => {
+                HiiKey::NsKey(ns_descriptor) if ns_descriptor.descriptor.key == efi_key => {
                     return false;
                 }
                 _ => continue,
