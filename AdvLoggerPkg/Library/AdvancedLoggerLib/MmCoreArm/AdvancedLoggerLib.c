@@ -56,7 +56,8 @@ InitializeLoggerHeaderIfNeeded (
   LoggerInfo->LogBufferOffset    = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
   LoggerInfo->LogCurrentOffset   = LoggerInfo->LogBufferOffset;
   LoggerInfo->HwPrintLevel       = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
-  LoggerInfo->HdwPortInitialized = TRUE;
+      AdvancedLoggerHdwPortInitialize ();
+      LoggerInfo->HdwPortInitialized = TRUE;
   LoggerInfo->InPermanentRAM     = TRUE;
 }
 
