@@ -43,6 +43,10 @@ InitializeLoggerHeaderIfNeeded (
 {
   UINTN  LogBufferSize;
 
+  if (LoggerInfo == NULL) {
+    return;
+  }
+
   if (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE) {
     return;
   }
@@ -56,8 +60,8 @@ InitializeLoggerHeaderIfNeeded (
   LoggerInfo->LogBufferOffset    = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
   LoggerInfo->LogCurrentOffset   = LoggerInfo->LogBufferOffset;
   LoggerInfo->HwPrintLevel       = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
-      AdvancedLoggerHdwPortInitialize ();
-      LoggerInfo->HdwPortInitialized = TRUE;
+  AdvancedLoggerHdwPortInitialize ();
+  LoggerInfo->HdwPortInitialized = TRUE;
   LoggerInfo->InPermanentRAM     = TRUE;
 }
 
