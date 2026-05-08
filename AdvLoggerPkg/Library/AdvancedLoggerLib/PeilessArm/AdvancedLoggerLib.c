@@ -36,7 +36,10 @@ AdvancedLoggerLibConstructor (
   LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet64 (PcdAdvancedLoggerPages));
 
   LoggerInfo = ALI_FROM_PA (FixedPcdGet64 (PcdAdvancedLoggerBase));
-  if (LoggerInfo != NULL) {
+  //
+  // Buffer must be large enough to hold the header plus some payload.INFO).
+  //
+  if ((LoggerInfo != NULL) && (LogBufferSize > sizeof (ADVANCED_LOGGER_INFO))) {
     ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
     LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
     LoggerInfo->Version            = ADVANCED_LOGGER_INFO_VER;

@@ -122,7 +122,10 @@ InitializeDebugAgent (
     CarBase       = (EFI_PHYSICAL_ADDRESS)FixedPcdGet64 (PcdAdvancedLoggerCarBase);
 
     NewLogBuffer = AllocateRamForSEC (CarBase, LogBufferSize);
-    if (NewLogBuffer != 0ULL) {
+    //
+    // Buffer must be large enough to hold the header plus some payload.INFO).
+    //
+    if ((NewLogBuffer != 0ULL) && (LogBufferSize > sizeof (ADVANCED_LOGGER_INFO))) {
       LoggerInfo = ALI_FROM_PA (NewLogBuffer);
       ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
       LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;

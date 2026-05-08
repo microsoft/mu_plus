@@ -53,6 +53,13 @@ InitializeLoggerHeaderIfNeeded (
 
   LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages));
 
+  //
+  // Buffer must be large enough to hold the header plus some payload
+  //
+  if (LogBufferSize <= sizeof (ADVANCED_LOGGER_INFO)) {
+    return;
+  }
+
   ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
   LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
   LoggerInfo->Version            = ADVANCED_LOGGER_INFO_VER;
