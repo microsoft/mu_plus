@@ -33,7 +33,7 @@
   a one-time initialization of the header so that subsequent logging calls
   have a valid buffer to write into.
 
-  @param  LoggerInfo  Caller-supplied non-NULL pointer to the fixed buffer.
+  @param[in]  LoggerInfo  Caller-supplied non-NULL pointer to the fixed buffer.
 **/
 STATIC
 VOID
