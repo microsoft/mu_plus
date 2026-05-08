@@ -103,8 +103,8 @@ AdvancedLoggerGetLoggerInfo (
   }
 
   //
-  // First StMM caller in a boot lays down the header; subsequent callers
-  // (re-entries, DxeCore, etc.) find a valid signature and skip init.
+  // Check if the log has been initialized by a previous entity (e.g. TF-A)
+  // or a previous log in StMM. If not, initialize.
   //
   InitializeLoggerHeaderIfNeeded (LoggerInfo);
 
