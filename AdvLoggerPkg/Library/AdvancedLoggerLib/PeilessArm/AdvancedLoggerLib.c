@@ -37,7 +37,7 @@ AdvancedLoggerLibConstructor (
 
   LoggerInfo = ALI_FROM_PA (FixedPcdGet64 (PcdAdvancedLoggerBase));
   //
-  // Buffer must be large enough to hold the header plus some payload.INFO).
+  // Buffer must be large enough to hold the header plus some payload.
   //
   if ((LoggerInfo != NULL) && (LogBufferSize > sizeof (ADVANCED_LOGGER_INFO))) {
     ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));

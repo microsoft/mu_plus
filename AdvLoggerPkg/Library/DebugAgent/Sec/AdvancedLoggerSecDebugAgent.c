@@ -123,7 +123,7 @@ InitializeDebugAgent (
 
     NewLogBuffer = AllocateRamForSEC (CarBase, LogBufferSize);
     //
-    // Buffer must be large enough to hold the header plus some payload.INFO).
+    // Buffer must be large enough to hold the header plus some payload.
     //
     if ((NewLogBuffer != 0ULL) && (LogBufferSize > sizeof (ADVANCED_LOGGER_INFO))) {
       LoggerInfo = ALI_FROM_PA (NewLogBuffer);
