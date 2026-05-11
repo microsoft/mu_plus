@@ -1531,6 +1531,7 @@ GopRegisteredCallback (
                   );
 
   if (EFI_ERROR (Status)) {
+    mGop = NULL;
     goto Exit;
   }
 
