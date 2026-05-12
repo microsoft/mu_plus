@@ -1518,9 +1518,6 @@ GopRegisteredCallback (
     goto Exit;
   }
 
-  mAbsPointerMode.AbsoluteMaxX = mGop->Mode->Info->HorizontalResolution;
-  mAbsPointerMode.AbsoluteMaxY = mGop->Mode->Info->VerticalResolution;
-
   // Determine if the Simple Rendering Engine Protocol is available on the same Console Out handle.  The
   // Rendering Engine driver provides both Graphics Output and Rendering Engine protocols.
   //
@@ -1531,8 +1528,12 @@ GopRegisteredCallback (
                   );
 
   if (EFI_ERROR (Status)) {
+    mGop = NULL;
     goto Exit;
   }
+
+  mAbsPointerMode.AbsoluteMaxX = mGop->Mode->Info->HorizontalResolution;
+  mAbsPointerMode.AbsoluteMaxY = mGop->Mode->Info->VerticalResolution;
 
   // Now that we found the Graphics Output Protocol, complete the second half of driver initialization.
   //
