@@ -148,7 +148,7 @@ impl KeyQueue {
 
     // Processes the given keystroke and updates the KeyQueue accordingly.
     pub(crate) fn keystroke(&mut self, key: Usage, action: KeyAction) {
-        let Some(ref active_layout) = self.layout else {
+        let Some(active_layout) = &self.layout else {
             //nothing to do if no layout. This is unexpected: layout should be initialized with default if not present.
             debugln!(DEBUG_WARN, "key_queue::keystroke: Received keystroke without layout.");
             return;
@@ -408,6 +408,33 @@ impl KeyQueue {
     // queue in addition to the normal key queue.
     pub(crate) fn add_notify_key(&mut self, key_data: OrdKeyData) {
         self.registered_keys.insert(key_data);
+    }
+
+    // Returns whether the given usage represents a key that should support key repeat.
+    // Modifier keys (Shift, Ctrl, Alt, etc.), toggle keys (CapsLock, NumLock, ScrollLock), and
+    // non-spacing (dead) keys are excluded.
+    pub(crate) fn is_repeatable_key(&self, usage: Usage) -> bool {
+        let Some(active_layout) = &self.layout else {
+            return false;
+        };
+
+        let Some(efi_key) = usage_to_efi_key(usage) else {
+            return false;
+        };
+
+        for key in &active_layout.keys {
+            match key {
+                HiiKey::Key(descriptor) if descriptor.key == efi_key => {
+                    return !KEYBOARD_MODIFIERS.contains(&descriptor.modifier)
+                        && !TOGGLE_MODIFIERS.contains(&descriptor.modifier);
+                }
+                HiiKey::NsKey(ns_descriptor) if ns_descriptor.descriptor.key == efi_key => {
+                    return false;
+                }
+                _ => continue,
+            }
+        }
+        false
     }
 
     // Remove a previously added notify key; keystrokes matching this key data will no longer be added to the notify
