@@ -33,14 +33,18 @@ pub fn initialize(controller: efi::Handle, driver_binding: &driver_binding::Prot
 
     // retrieve the HidIo instance for the given controller.
     let mut hid_io_ptr: *mut hid_io::protocol::Protocol = core::ptr::null_mut();
-    let status = (boot_services.open_protocol)(
-        controller,
-        &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
-        core::ptr::addr_of_mut!(hid_io_ptr) as *mut *mut c_void,
-        driver_binding.driver_binding_handle,
-        controller,
-        system::OPEN_PROTOCOL_BY_DRIVER,
-    );
+    // SAFETY: `boot_services` references a valid Boot Services table and the arguments below are valid
+    // for opening the HidIo protocol on `controller`.
+    let status = unsafe {
+        (boot_services.open_protocol)(
+            controller,
+            &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
+            core::ptr::addr_of_mut!(hid_io_ptr) as *mut *mut c_void,
+            driver_binding.driver_binding_handle,
+            controller,
+            system::OPEN_PROTOCOL_BY_DRIVER,
+        )
+    };
     if status.is_error() {
         debugln!(DEBUG_ERROR, "[hid::initialize] Unexpected error opening HidIo protocol: {:#?}", status);
         return Err(status);
@@ -185,12 +189,16 @@ fn release_hid_io(controller: efi::Handle, driver_binding: &driver_binding::Prot
     let boot_services = unsafe { BOOT_SERVICES.as_mut().expect("BOOT_SERVICES not properly initialized") };
 
     // release HidIo
-    match (boot_services.close_protocol)(
-        controller,
-        &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
-        driver_binding.driver_binding_handle,
-        controller,
-    ) {
+    // SAFETY: `boot_services` references a valid Boot Services table and the arguments below match the
+    // HidIo protocol opened on `controller`.
+    match unsafe {
+        (boot_services.close_protocol)(
+            controller,
+            &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
+            driver_binding.driver_binding_handle,
+            controller,
+        )
+    } {
         efi::Status::SUCCESS => (),
         err => {
             debugln!(

@@ -174,13 +174,17 @@ impl PointerHandler {
 
         // create event for wait_for_input.
         let mut wait_for_pointer_input_event: efi::Event = core::ptr::null_mut();
-        let status = (boot_services.create_event)(
-            system::EVT_NOTIFY_WAIT,
-            system::TPL_NOTIFY,
-            Some(wait_for_pointer),
-            context_ptr as *mut c_void,
-            core::ptr::addr_of_mut!(wait_for_pointer_input_event),
-        );
+        // SAFETY: `boot_services` references a valid Boot Services table; `context_ptr` and the event
+        // out-pointer are valid for the duration of the call.
+        let status = unsafe {
+            (boot_services.create_event)(
+                system::EVT_NOTIFY_WAIT,
+                system::TPL_NOTIFY,
+                Some(wait_for_pointer),
+                context_ptr as *mut c_void,
+                core::ptr::addr_of_mut!(wait_for_pointer_input_event),
+            )
+        };
         if status.is_error() {
             drop(unsafe { Box::from_raw(context_ptr) });
             return Err(status);
@@ -190,12 +194,16 @@ impl PointerHandler {
         // install the absolute_pointer protocol.
         let mut controller = controller;
         let absolute_pointer_ptr = raw_field!(context_ptr, PointerContext, absolute_pointer);
-        let status = (boot_services.install_protocol_interface)(
-            core::ptr::addr_of_mut!(controller),
-            &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
-            efi::NATIVE_INTERFACE,
-            absolute_pointer_ptr as *mut c_void,
-        );
+        // SAFETY: `boot_services` references a valid Boot Services table; the controller and interface
+        // pointers are valid for installing the Absolute Pointer protocol.
+        let status = unsafe {
+            (boot_services.install_protocol_interface)(
+                core::ptr::addr_of_mut!(controller),
+                &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
+                efi::NATIVE_INTERFACE,
+                absolute_pointer_ptr as *mut c_void,
+            )
+        };
 
         if status.is_error() {
             let _ = deinitialize(context_ptr);
@@ -353,17 +361,23 @@ impl PointerHandler {
         let mut overall_status = efi::Status::SUCCESS;
 
         // close the wait_for_input event
-        let status = (boot_services.close_event)(unsafe { (*absolute_pointer_ptr).wait_for_input });
+        // SAFETY: `boot_services` references a valid Boot Services table; the event handle was created
+        // during pointer installation.
+        let status = unsafe { (boot_services.close_event)((*absolute_pointer_ptr).wait_for_input) };
         if status.is_error() {
             overall_status = status;
         }
 
         // uninstall absolute pointer protocol
-        let status = (boot_services.uninstall_protocol_interface)(
-            unsafe { (*pointer_context).controller },
-            &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
-            absolute_pointer_ptr as *mut c_void,
-        );
+        // SAFETY: `boot_services` references a valid Boot Services table; the controller and interface
+        // pointers match the protocol installed during pointer installation.
+        let status = unsafe {
+            (boot_services.uninstall_protocol_interface)(
+                (*pointer_context).controller,
+                &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
+                absolute_pointer_ptr as *mut c_void,
+            )
+        };
         if status.is_error() {
             overall_status = status;
         }
@@ -425,14 +439,18 @@ pub fn attempt_to_retrieve_hid_context(
     let boot_services = unsafe { BOOT_SERVICES.as_mut().expect("BOOT_SERVICES not properly initialized") };
 
     let mut absolute_pointer_ptr: *mut absolute_pointer::Protocol = core::ptr::null_mut();
-    let status = (boot_services.open_protocol)(
-        controller,
-        &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
-        core::ptr::addr_of_mut!(absolute_pointer_ptr) as *mut *mut c_void,
-        driver_binding.driver_binding_handle,
-        controller,
-        system::OPEN_PROTOCOL_GET_PROTOCOL,
-    );
+    // SAFETY: `boot_services` references a valid Boot Services table; the arguments below are valid for
+    // opening the Absolute Pointer protocol on `controller`.
+    let status = unsafe {
+        (boot_services.open_protocol)(
+            controller,
+            &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
+            core::ptr::addr_of_mut!(absolute_pointer_ptr) as *mut *mut c_void,
+            driver_binding.driver_binding_handle,
+            controller,
+            system::OPEN_PROTOCOL_GET_PROTOCOL,
+        )
+    };
 
     match status {
         efi::Status::SUCCESS => {
@@ -461,7 +479,9 @@ extern "efiapi" fn wait_for_pointer(event: efi::Event, context: *mut c_void) {
     let pointer_context = unsafe { (context as *mut PointerContext).as_mut().expect("Pointer Context is bad.") };
 
     if pointer_context.handler.state_changed {
-        (boot_services.signal_event)(event);
+        // SAFETY: `boot_services` references a valid Boot Services table; `event` is the wait event passed
+        // to this notify callback.
+        unsafe { (boot_services.signal_event)(event) };
     }
 }
 

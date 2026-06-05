@@ -68,11 +68,12 @@ impl BootServicesAllocator {
             0..=8 => {
                 //allocate the pointer directly since UEFI pool allocations are 8-byte aligned already.
                 let mut ptr: *mut c_void = core::ptr::null_mut();
-                match (boot_services.allocate_pool)(
-                    efi::BOOT_SERVICES_DATA,
-                    layout.size(),
-                    core::ptr::addr_of_mut!(ptr),
-                ) {
+                // SAFETY: `allocate_pool` is a valid boot services function pointer (the caller guarantees
+                // `boot_services` references a valid Boot Services table). `ptr` is a valid, properly aligned
+                // local that lives for the duration of the call and is only read on SUCCESS.
+                match unsafe {
+                    (boot_services.allocate_pool)(efi::BOOT_SERVICES_DATA, layout.size(), core::ptr::addr_of_mut!(ptr))
+                } {
                     efi::Status::SUCCESS => ptr as *mut u8,
                     _ => core::ptr::null_mut(),
                 }
@@ -87,11 +88,16 @@ impl BootServicesAllocator {
                 let expanded_size = expanded_layout.size() + expanded_layout.align();
 
                 let mut orig_ptr: *mut c_void = core::ptr::null_mut();
-                let final_ptr = match (boot_services.allocate_pool)(
-                    efi::BOOT_SERVICES_DATA,
-                    expanded_size,
-                    core::ptr::addr_of_mut!(orig_ptr),
-                ) {
+                // SAFETY: `allocate_pool` is a valid boot services function pointer (the caller guarantees
+                // `boot_services` references a valid Boot Services table). `orig_ptr` is a valid, properly
+                // aligned local that lives for the duration of the call and is only read on SUCCESS.
+                let final_ptr = match unsafe {
+                    (boot_services.allocate_pool)(
+                        efi::BOOT_SERVICES_DATA,
+                        expanded_size,
+                        core::ptr::addr_of_mut!(orig_ptr),
+                    )
+                } {
                     efi::Status::SUCCESS => orig_ptr as *mut u8,
                     _ => return core::ptr::null_mut(),
                 };
@@ -121,7 +127,10 @@ impl BootServicesAllocator {
         match layout.align() {
             0..=8 => {
                 //pointer was allocated directly, so free it directly.
-                let _ = (boot_services.free_pool)(ptr as *mut c_void);
+                // SAFETY: `free_pool` is a valid boot services function pointer (the caller guarantees
+                // `boot_services` references a valid Boot Services table). `ptr` was returned by a prior
+                // `allocate_pool` call for an allocation with alignment <= 8, so it is the original pointer.
+                let _ = unsafe { (boot_services.free_pool)(ptr as *mut c_void) };
             }
             _ => {
                 //pointer was potentially adjusted for alignment. Recover tracking structure to retrieve the original
@@ -134,7 +143,10 @@ impl BootServicesAllocator {
                     ptr.add(tracking_offset).cast::<AllocationTracker>().as_mut().expect("tracking pointer is invalid")
                 };
                 debug_assert_eq!(tracker.signature, ALLOC_TRACKER_SIG);
-                let _ = (boot_services.free_pool)(tracker.orig_ptr);
+                // SAFETY: `free_pool` is a valid boot services function pointer (the caller guarantees
+                // `boot_services` references a valid Boot Services table). `tracker.orig_ptr` is the original
+                // pointer returned by `allocate_pool`, recovered from the tracking structure.
+                let _ = unsafe { (boot_services.free_pool)(tracker.orig_ptr) };
             }
         }
     }

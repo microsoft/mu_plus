@@ -219,7 +219,10 @@ impl KeyQueue {
         {
             debugln!(DEBUG_WARN, "Ctrl-Alt-Del pressed, resetting system.");
             if let Some(runtime_services) = unsafe { RUNTIME_SERVICES.as_mut() } {
-                (runtime_services.reset_system)(efi::RESET_WARM, efi::Status::SUCCESS, 0, core::ptr::null_mut());
+                // SAFETY: `runtime_services` references a valid Runtime Services table.
+                unsafe {
+                    (runtime_services.reset_system)(efi::RESET_WARM, efi::Status::SUCCESS, 0, core::ptr::null_mut());
+                }
             }
             panic!("Reset failed.");
         }

@@ -350,16 +350,18 @@ mod test {
         let this_ptr = binding_ptr as *mut protocols::driver_binding::Protocol;
 
         let controller_handle = 0x4321 as efi::Handle;
+        // SAFETY: `this_ptr` points to the driver binding protocol installed above, and the controller
+        // handle and null context are valid arguments for these test invocations.
         assert_eq!(
-            (driver_binding_ref.uefi_binding.supported)(this_ptr, controller_handle, core::ptr::null_mut()),
+            unsafe { (driver_binding_ref.uefi_binding.supported)(this_ptr, controller_handle, core::ptr::null_mut()) },
             efi::Status::SUCCESS
         );
         assert_eq!(
-            (driver_binding_ref.uefi_binding.start)(this_ptr, controller_handle, core::ptr::null_mut()),
+            unsafe { (driver_binding_ref.uefi_binding.start)(this_ptr, controller_handle, core::ptr::null_mut()) },
             efi::Status::SUCCESS
         );
         assert_eq!(
-            (driver_binding_ref.uefi_binding.stop)(this_ptr, controller_handle, 0, core::ptr::null_mut()),
+            unsafe { (driver_binding_ref.uefi_binding.stop)(this_ptr, controller_handle, 0, core::ptr::null_mut()) },
             efi::Status::SUCCESS
         );
     }

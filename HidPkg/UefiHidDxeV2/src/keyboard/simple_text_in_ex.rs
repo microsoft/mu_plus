@@ -418,7 +418,9 @@ impl SimpleTextInExFfi {
             if let Some(mut pending_key) = pending_key {
                 let key_ptr = &mut pending_key as *mut protocols::simple_text_input_ex::KeyData;
                 for callback in pending_callbacks {
-                    let _ = callback(key_ptr);
+                    // SAFETY: `callback` is a valid key notification function registered through the
+                    // Simple Text Input Ex protocol, and `key_ptr` points to a valid `KeyData` on the stack.
+                    let _ = unsafe { callback(key_ptr) };
                 }
             } else {
                 // no pending notifies to process

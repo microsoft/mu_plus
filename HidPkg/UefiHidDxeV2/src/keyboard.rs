@@ -431,12 +431,16 @@ impl KeyboardHidHandler {
         };
 
         let mut hii_handle: hii::Handle = ptr::null_mut();
-        let status = (hii_database_protocol.new_package_list)(
-            hii_database_protocol_ptr,
-            hii_keyboard_layout::get_default_keyboard_pkg_list_buffer().as_ptr() as *const hii::PackageListHeader,
-            ptr::null_mut(),
-            ptr::addr_of_mut!(hii_handle),
-        );
+        // SAFETY: `hii_database_protocol_ptr` points to a valid HII Database Protocol obtained from a
+        // successful `locate_protocol` call, and the keyboard package list buffer is valid.
+        let status = unsafe {
+            (hii_database_protocol.new_package_list)(
+                hii_database_protocol_ptr,
+                hii_keyboard_layout::get_default_keyboard_pkg_list_buffer().as_ptr() as *const hii::PackageListHeader,
+                ptr::null_mut(),
+                ptr::addr_of_mut!(hii_handle),
+            )
+        };
 
         if status.is_error() {
             debugln!(
@@ -447,10 +451,14 @@ impl KeyboardHidHandler {
             Err(status)?;
         }
 
-        let status = (hii_database_protocol.set_keyboard_layout)(
-            hii_database_protocol_ptr,
-            &hii_keyboard_layout::DEFAULT_KEYBOARD_LAYOUT_GUID as *const efi::Guid as *mut efi::Guid,
-        );
+        // SAFETY: `hii_database_protocol_ptr` points to a valid HII Database Protocol obtained from a
+        // successful `locate_protocol` call.
+        let status = unsafe {
+            (hii_database_protocol.set_keyboard_layout)(
+                hii_database_protocol_ptr,
+                &hii_keyboard_layout::DEFAULT_KEYBOARD_LAYOUT_GUID as *const efi::Guid as *mut efi::Guid,
+            )
+        };
         if status.is_error() {
             debugln!(DEBUG_ERROR, "keyboard::install_default_layout: Failed to set keyboard layout: {:x?}", status);
             Err(status)?;
@@ -658,7 +666,10 @@ extern "efiapi" fn reset_notification_function(key_data: *mut protocols::simple_
     //DEL scan code received with shift state indicating CTRL-ALT also pressed.
     debugln!(DEBUG_WARN, "Ctrl-Alt-Del pressed, resetting system.");
     if let Some(runtime_services) = unsafe { RUNTIME_SERVICES.load(Ordering::SeqCst).as_ref() } {
-        (runtime_services.reset_system)(efi::RESET_COLD, efi::Status::SUCCESS, 0, core::ptr::null_mut());
+        // SAFETY: `runtime_services` is a valid Runtime Services table loaded from the global pointer.
+        unsafe {
+            (runtime_services.reset_system)(efi::RESET_COLD, efi::Status::SUCCESS, 0, core::ptr::null_mut());
+        }
     }
     panic!("Reset failed.");
 }
@@ -897,12 +908,16 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
 
         // retrieve keyboard layout size
         let mut layout_buffer_len: u16 = 0;
-        match (hii_database_protocol.get_keyboard_layout)(
-            hii_database_protocol_ptr,
-            ptr::null_mut(),
-            &mut layout_buffer_len as *mut u16,
-            ptr::null_mut(),
-        ) {
+        // SAFETY: `hii_database_protocol_ptr` points to a valid HII Database Protocol obtained from a
+        // successful `locate_protocol` call; `layout_buffer_len` is a valid local.
+        match unsafe {
+            (hii_database_protocol.get_keyboard_layout)(
+                hii_database_protocol_ptr,
+                ptr::null_mut(),
+                &mut layout_buffer_len as *mut u16,
+                ptr::null_mut(),
+            )
+        } {
             efi::Status::NOT_FOUND => break 'layout_processing,
             status if status != efi::Status::BUFFER_TOO_SMALL => {
                 debugln!(
@@ -917,12 +932,16 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
         }
 
         let mut keyboard_layout_buffer = vec![0u8; layout_buffer_len as usize];
-        let status = (hii_database_protocol.get_keyboard_layout)(
-            hii_database_protocol_ptr,
-            ptr::null_mut(),
-            &mut layout_buffer_len as *mut u16,
-            keyboard_layout_buffer.as_mut_ptr() as *mut protocols::hii_database::KeyboardLayout<0>,
-        );
+        // SAFETY: `hii_database_protocol_ptr` points to a valid HII Database Protocol obtained from a
+        // successful `locate_protocol` call; `keyboard_layout_buffer` is sized per the prior length query.
+        let status = unsafe {
+            (hii_database_protocol.get_keyboard_layout)(
+                hii_database_protocol_ptr,
+                ptr::null_mut(),
+                &mut layout_buffer_len as *mut u16,
+                keyboard_layout_buffer.as_mut_ptr() as *mut protocols::hii_database::KeyboardLayout<0>,
+            )
+        };
 
         if status.is_error() {
             debugln!(DEBUG_ERROR, "Unexpected return from get_keyboard_layout: {:x?}", status);
@@ -1559,11 +1578,11 @@ mod test {
         assert_eq!(OrdKeyData(key_data), OrdKeyData(callback_key_data.unwrap()));
         assert!(callbacks.contains(
             &(mock_key_notify_callback
-                as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
+                as unsafe extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
         ));
         assert!(callbacks.contains(
             &(mock_key_notify_callback2
-                as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
+                as unsafe extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
         ));
 
         let (callback_key_data, callbacks) = keyboard_handler.pending_callbacks();
@@ -1586,7 +1605,9 @@ mod test {
                     char if char == 'a' as u16 || char == 'c' as u16 => {
                         assert!(callbacks.contains(
                             &(mock_key_notify_callback
-                                as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
+                                as unsafe extern "efiapi" fn(
+                                    *mut protocols::simple_text_input_ex::KeyData,
+                                ) -> efi::Status)
                         ));
                     }
                     _ => panic!("unexpected pending callback key"),

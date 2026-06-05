@@ -15,18 +15,17 @@ members = [
 HidIo = { path = "HidPkg/Crates/HidIo" }
 hidparser = { version = "1" }
 HiiKeyboardLayout = { path = "HidPkg/Crates/HiiKeyboardLayout" }
-mu_pi = { version = "6" }
-mu_rust_helpers = { version = "3" }
+memoffset = "0.9.0"
+mockall = {version = "0.14.0"}
+mu_pi = { version = "7" }
+mu_rust_helpers = { version = "4" }
 MuTelemetryHelperLib = { path = "MsWheaPkg/Crates/MuTelemetryHelperLib" }
+num-derive = { version = "0.4", default-features = false }
+num-traits = { version = "0.2", default-features = false }
+patina = { version = "22" }
+r-efi = "^6"
 RustAdvancedLoggerDxe = { path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe" }
 RustBootServicesAllocatorDxe = { path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe" }
-patina = { version = "21" }
-mockall = {version = "0.14.0"}
-
-memoffset = "0.9.0"
-num-traits = { version = "0.2", default-features = false }
-num-derive = { version = "0.4", default-features = false }
-r-efi = "5.0.0"
 rustversion = "1.0.14"
-spin = "0.10.0"
 scroll = { version = "0.13", default-features = false, features = ["derive"] }
+spin = "0.10.0"
