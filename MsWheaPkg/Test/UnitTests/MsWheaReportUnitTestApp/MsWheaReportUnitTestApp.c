@@ -574,35 +574,29 @@ Cleanup:
   return Status;
 } // MsWheaVerifyFlashStorage ()
 
-/// ================================================================================================
-/// ================================================================================================
-///
-/// PRE REQ FUNCTIONS
-///
-/// ================================================================================================
-/// ================================================================================================
-
 /**
-  Clear all the HwErrRec entries on flash
+  Worker routine that clears HwErrRec entries on flash.
 
-  @param[in] Context                  Test context applied for this test case
+  @param[in] ShallowClean             If TRUE, clean until the first not found, which means all existing entries should be cleared.
+                                      If FALSE, clean all the HwErrRec#### variables.
+                                      If you are not sure what this means, just set it to FALSE to clean all entries.
 
-  @retval UNIT_TEST_PASSED            The entry point executed successfully.
-  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+  @retval EFI_SUCCESS                 All entries in the scope cleared (or none present).
+  @retval EFI_NOT_FOUND               No more entries were found while iterating.
+  @retval other                       An error returned by the variable services.
 
 **/
-UNIT_TEST_STATUS
-EFIAPI
-MsWheaCommonClean (
-  IN UNIT_TEST_CONTEXT  Context
+STATIC
+EFI_STATUS
+MsWheaCommonCleanWorker (
+  IN BOOLEAN     ShallowClean
   )
 {
-  UINT32            Index = 0;
-  CHAR16            VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
-  UINTN             Size     = 0;
-  EFI_STATUS        Status   = EFI_SUCCESS;
-  UNIT_TEST_STATUS  utStatus = UNIT_TEST_RUNNING;
-  UINT32            Attributes;
+  UINT32      Index = 0;
+  CHAR16      VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
+  UINTN       Size   = 0;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINT32      Attributes;
 
   DEBUG ((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
@@ -617,8 +611,13 @@ MsWheaCommonClean (
                     NULL
                     );
     if (Status == EFI_NOT_FOUND) {
-      // Do nothing
-      continue;
+      if (ShallowClean) {
+        // Stop cleaning when the first not found entry is encountered
+        break;
+      } else {
+        // Do nothing
+        continue;
+      }
     } else if (Status != EFI_BUFFER_TOO_SMALL) {
       // We have other problems here..
       break;
@@ -650,15 +649,69 @@ MsWheaCommonClean (
     }
   }
 
+  DEBUG ((DEBUG_ERROR, "%a exit...\n", __FUNCTION__));
+  return Status;
+}
+
+/// ================================================================================================
+/// ================================================================================================
+///
+/// PRE REQ FUNCTIONS
+///
+/// ================================================================================================
+/// ================================================================================================
+
+/**
+  Clear all the HwErrRec entries on flash
+
+  @param[in] Context                  Test context applied for this test case
+
+  @retval UNIT_TEST_PASSED            The entry point executed successfully.
+  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+
+**/
+UNIT_TEST_STATUS
+EFIAPI
+MsWheaCommonClean (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+
+  Status = MsWheaCommonCleanWorker (FALSE);
+
   if ((Status == EFI_SUCCESS) || (Status == EFI_NOT_FOUND)) {
-    utStatus = UNIT_TEST_PASSED;
-  } else {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
+    return UNIT_TEST_PASSED;
   }
 
-  DEBUG ((DEBUG_ERROR, "%a exit...\n", __FUNCTION__));
-  return utStatus;
+  return UNIT_TEST_ERROR_TEST_FAILED;
 } // MsWheaCommonClean ()
+
+/**
+  Clear all the HwErrRec entries on flash
+
+  @param[in] Context                  Test context applied for this test case
+
+  @retval UNIT_TEST_PASSED            The entry point executed successfully.
+  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+
+**/
+UNIT_TEST_STATUS
+EFIAPI
+MsWheaShallowClean (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+
+  Status = MsWheaCommonCleanWorker (TRUE);
+
+  if ((Status == EFI_SUCCESS) || (Status == EFI_NOT_FOUND)) {
+    return UNIT_TEST_PASSED;
+  }
+
+  return UNIT_TEST_ERROR_TEST_FAILED;
+} // MsWheaShallowClean ()
 
 /// ================================================================================================
 /// ================================================================================================
@@ -683,60 +736,8 @@ MsWheaCommonCleanUp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT32      Index = 0;
-  CHAR16      VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
-  UINTN       Size   = 0;
-  EFI_STATUS  Status = EFI_SUCCESS;
-  UINT32      Attributes;
-
-  DEBUG ((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
-
-  for (Index = 0; Index <= MAX_UINT16; Index++) {
-    Size = 0;
-    UnicodeSPrint (VarName, sizeof (VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, Index);
-    Status = gRT->GetVariable (
-                    VarName,
-                    &gEfiHardwareErrorVariableGuid,
-                    NULL,
-                    &Size,
-                    NULL
-                    );
-    if (Status == EFI_NOT_FOUND) {
-      // Do nothing
-      continue;
-    } else if (Status != EFI_BUFFER_TOO_SMALL) {
-      // We have other problems here..
-      break;
-    }
-
-    Attributes = EFI_VARIABLE_NON_VOLATILE |
-                 EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                 EFI_VARIABLE_RUNTIME_ACCESS;
-
-    if (PcdGetBool (PcdVariableHardwareErrorRecordAttributeSupported)) {
-      Attributes |= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
-    }
-
-    Status = gRT->SetVariable (
-                    VarName,
-                    &gEfiHardwareErrorVariableGuid,
-                    Attributes,
-                    0,
-                    NULL
-                    );
-    if (Status != EFI_SUCCESS) {
-      UT_LOG_ERROR (
-        "MS WHEA Clean variables failed: SetVar: Name: %s, Status: %08X, Size: %d\n",
-        VarName,
-        Status,
-        Size
-        );
-      break;
-    }
-  }
-
-  DEBUG ((DEBUG_ERROR, "%a exit...\n", __FUNCTION__));
-} // MsWheaCommonClean ()
+  MsWheaCommonCleanWorker (FALSE);
+} // MsWheaCommonCleanUp ()
 
 /// ================================================================================================
 /// ================================================================================================
@@ -1372,7 +1373,7 @@ MsWheaReportUnitTestAppEntryPoint (
     "Non-fatal error Ex report",
     "MsWhea.Miscellaneous.MsWheaNonFatalExEntries",
     MsWheaNonFatalExEntries,
-    MsWheaCommonClean,
+    MsWheaShallowClean,
     NULL,
     MsWheaContext
     );
@@ -1382,7 +1383,7 @@ MsWheaReportUnitTestAppEntryPoint (
     "Wildcard error report",
     "MsWhea.Miscellaneous.MsWheaWildcardEntries",
     MsWheaWildcardEntries,
-    MsWheaCommonClean,
+    MsWheaShallowClean,
     NULL,
     MsWheaContext
     );
@@ -1392,7 +1393,7 @@ MsWheaReportUnitTestAppEntryPoint (
     "Short error report",
     "MsWhea.Miscellaneous.MsWheaShortEntries",
     MsWheaShortEntries,
-    MsWheaCommonClean,
+    MsWheaShallowClean,
     NULL,
     MsWheaContext
     );
@@ -1402,7 +1403,7 @@ MsWheaReportUnitTestAppEntryPoint (
     "Stress test should fill up reserved variable space",
     "MsWhea.Miscellaneous.MsWheaStressEntries",
     MsWheaStressEntries,
-    MsWheaCommonClean,
+    MsWheaShallowClean,
     NULL,
     MsWheaContext
     );
@@ -1412,8 +1413,8 @@ MsWheaReportUnitTestAppEntryPoint (
     "Variable service test should verify Reclaim and quota manipulation",
     "MsWhea.Miscellaneous.MsWheaVariableServicesTest",
     MsWheaVariableServicesTest,
-    MsWheaCommonClean,
-    MsWheaCommonCleanUp,
+    MsWheaShallowClean,
+    NULL,
     MsWheaContext
     );
 
@@ -1422,7 +1423,7 @@ MsWheaReportUnitTestAppEntryPoint (
     "TPL test for all supported TPLs",
     "MsWhea.Miscellaneous.MsWheaReportTplTest",
     MsWheaReportTplTest,
-    MsWheaCommonClean,
+    MsWheaShallowClean,
     MsWheaCommonCleanUp,
     MsWheaContext
     );
