@@ -36,12 +36,16 @@ pub fn initialize_driver_binding(image_handle: efi::Handle) -> Result<(), efi::S
         driver_binding_handle,
     }));
 
-    let status = (boot_services.install_protocol_interface)(
-        core::ptr::addr_of_mut!(driver_binding_handle),
-        &driver_binding::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
-        efi::NATIVE_INTERFACE,
-        driver_binding_ptr as *mut c_void,
-    );
+    // SAFETY: `boot_services` references a valid Boot Services table and the arguments below are valid
+    // for installing the driver binding protocol.
+    let status = unsafe {
+        (boot_services.install_protocol_interface)(
+            core::ptr::addr_of_mut!(driver_binding_handle),
+            &driver_binding::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
+            efi::NATIVE_INTERFACE,
+            driver_binding_ptr as *mut c_void,
+        )
+    };
 
     if status.is_error() {
         drop(unsafe { Box::from_raw(driver_binding_ptr) });
@@ -77,14 +81,18 @@ extern "efiapi" fn uefi_hid_driver_binding_supported(
 
     // Check to see if this controller is supported by attempting to open HidIo on it.
     let mut hid_io_ptr: *mut hid_io::protocol::Protocol = core::ptr::null_mut();
-    let status = (boot_services.open_protocol)(
-        controller,
-        &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
-        core::ptr::addr_of_mut!(hid_io_ptr) as *mut *mut c_void,
-        driver_binding.driver_binding_handle,
-        controller,
-        efi::OPEN_PROTOCOL_BY_DRIVER,
-    );
+    // SAFETY: `boot_services` references a valid Boot Services table and the arguments below are valid
+    // for opening the HidIo protocol on `controller`.
+    let status = unsafe {
+        (boot_services.open_protocol)(
+            controller,
+            &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
+            core::ptr::addr_of_mut!(hid_io_ptr) as *mut *mut c_void,
+            driver_binding.driver_binding_handle,
+            controller,
+            efi::OPEN_PROTOCOL_BY_DRIVER,
+        )
+    };
 
     // if HidIo could not be opened then it is either in use or not present.
     if status.is_error() {
@@ -93,12 +101,16 @@ extern "efiapi" fn uefi_hid_driver_binding_supported(
 
     // HidIo is available, so this controller is supported. Further checking that requires actual device interaction is
     // done in uefi_hid_driver_binding_start. close the protocol used for the supported test and exit with success.
-    let status = (boot_services.close_protocol)(
-        controller,
-        &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
-        driver_binding.driver_binding_handle,
-        controller,
-    );
+    // SAFETY: `boot_services` references a valid Boot Services table and the arguments below match the
+    // protocol opened above.
+    let status = unsafe {
+        (boot_services.close_protocol)(
+            controller,
+            &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
+            driver_binding.driver_binding_handle,
+            controller,
+        )
+    };
     if status.is_error() {
         debugln!(DEBUG_ERROR, "Unexpected error from CloseProtocol: {:?}", status);
         //message, but no further action to handle.
