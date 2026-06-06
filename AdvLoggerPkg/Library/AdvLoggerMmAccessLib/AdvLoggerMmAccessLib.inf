@@ -34,16 +34,12 @@
   BaseMemoryLib
   DebugLib
   HobLib
-  MmServicesTableLib
   PcdLib
   SafeIntLib
 
 [Guids]
   gAdvancedLoggerHobGuid
   gAdvLoggerAccessGuid                      ## CONSUMES
-
-[Protocols]
-  gEfiMmReadyToLockProtocolGuid             ## NOTIFY
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize

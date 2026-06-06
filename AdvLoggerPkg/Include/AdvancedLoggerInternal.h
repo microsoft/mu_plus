@@ -46,11 +46,6 @@
 #define ADVANCED_LOGGER_PHASE_CNT          11
 
 //
-// The maximum depth to follow when traversing chains of advanced logger info structures
-//
-#define ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH  3
-
-//
 // These Pcds are used to carve out a PEI memory buffer from the temporary RAM.
 //
 //  PcdAdvancedLoggerBase -        NULL = UEFI starts with PEI, and SEC provides no memory log buffer
@@ -84,7 +79,9 @@ typedef volatile struct {
   EFI_TIME                Time;                   // Uefi Time Field
   UINT32                  HwPrintLevel;           // Logging level to be printed at hw port
   UINT32                  Reserved3;              //
-  EFI_PHYSICAL_ADDRESS    NewLoggerInfoAddress;   // If non-zero, this field holds the address of new logger info that should be used
+  EFI_PHYSICAL_ADDRESS    Deprecated;             // Deprecated field that should be preserved for binary compatibility
+                                                  // and not reused. Previous description: If non-zero, this field
+                                                  // holds the address of new logger info that should be used
 } ADVANCED_LOGGER_INFO;
 
 typedef struct {

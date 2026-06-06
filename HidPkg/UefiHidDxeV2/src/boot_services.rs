@@ -79,6 +79,8 @@ pub trait UefiBootServices {
         controller_handle: efi::Handle,
     ) -> efi::Status;
 
+    fn set_timer(&self, event: efi::Event, r#type: efi::TimerDelay, trigger_time: u64) -> efi::Status;
+
     fn locate_protocol(
         &self,
         protocol: *mut efi::Guid,
@@ -116,6 +118,11 @@ impl StandardUefiBootServices {
 unsafe impl Sync for StandardUefiBootServices {}
 unsafe impl Send for StandardUefiBootServices {}
 
+// The methods below are a thin safe-abstraction layer over the raw UEFI Boot Services. They forward
+// raw-pointer arguments directly to the corresponding UEFI service functions; validity of those
+// pointers is the caller's responsibility (as documented on the trait), so the lint that asks for the
+// methods to be marked `unsafe` is allowed here.
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 impl UefiBootServices for StandardUefiBootServices {
     fn create_event(
         &self,
@@ -125,7 +132,9 @@ impl UefiBootServices for StandardUefiBootServices {
         notify_context: *mut c_void,
         event: *mut efi::Event,
     ) -> efi::Status {
-        (self.boot_services().create_event)(r#type, notify_tpl, notify_function, notify_context, event)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing valid arguments to this UEFI service.
+        unsafe { (self.boot_services().create_event)(r#type, notify_tpl, notify_function, notify_context, event) }
     }
     fn create_event_ex(
         &self,
@@ -136,19 +145,37 @@ impl UefiBootServices for StandardUefiBootServices {
         event_group: *const efi::Guid,
         event: *mut efi::Event,
     ) -> efi::Status {
-        (self.boot_services().create_event_ex)(r#type, notify_tpl, notify_function, notify_context, event_group, event)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing valid arguments to this UEFI service.
+        unsafe {
+            (self.boot_services().create_event_ex)(
+                r#type,
+                notify_tpl,
+                notify_function,
+                notify_context,
+                event_group,
+                event,
+            )
+        }
     }
     fn close_event(&self, event: efi::Event) -> efi::Status {
-        (self.boot_services().close_event)(event)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing a valid event handle.
+        unsafe { (self.boot_services().close_event)(event) }
     }
     fn signal_event(&self, event: efi::Event) -> efi::Status {
-        (self.boot_services().signal_event)(event)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing a valid event handle.
+        unsafe { (self.boot_services().signal_event)(event) }
     }
     fn raise_tpl(&self, new_tpl: efi::Tpl) -> efi::Tpl {
-        (self.boot_services().raise_tpl)(new_tpl)
+        // SAFETY: `boot_services()` returns a valid Boot Services table.
+        unsafe { (self.boot_services().raise_tpl)(new_tpl) }
     }
     fn restore_tpl(&self, old_tpl: efi::Tpl) {
-        (self.boot_services().restore_tpl)(old_tpl)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; `old_tpl` was obtained from a
+        // prior `raise_tpl` call.
+        unsafe { (self.boot_services().restore_tpl)(old_tpl) }
     }
     fn install_protocol_interface(
         &self,
@@ -157,7 +184,9 @@ impl UefiBootServices for StandardUefiBootServices {
         interface_type: efi::InterfaceType,
         interface: *mut c_void,
     ) -> efi::Status {
-        (self.boot_services().install_protocol_interface)(handle, protocol, interface_type, interface)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing valid arguments to this UEFI service.
+        unsafe { (self.boot_services().install_protocol_interface)(handle, protocol, interface_type, interface) }
     }
     fn uninstall_protocol_interface(
         &self,
@@ -165,7 +194,9 @@ impl UefiBootServices for StandardUefiBootServices {
         protocol: *mut efi::Guid,
         interface: *mut c_void,
     ) -> efi::Status {
-        (self.boot_services().uninstall_protocol_interface)(handle, protocol, interface)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing valid arguments to this UEFI service.
+        unsafe { (self.boot_services().uninstall_protocol_interface)(handle, protocol, interface) }
     }
     fn open_protocol(
         &self,
@@ -176,7 +207,18 @@ impl UefiBootServices for StandardUefiBootServices {
         controller_handle: efi::Handle,
         attributes: u32,
     ) -> efi::Status {
-        (self.boot_services().open_protocol)(handle, protocol, interface, agent_handle, controller_handle, attributes)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing valid arguments to this UEFI service.
+        unsafe {
+            (self.boot_services().open_protocol)(
+                handle,
+                protocol,
+                interface,
+                agent_handle,
+                controller_handle,
+                attributes,
+            )
+        }
     }
     fn close_protocol(
         &self,
@@ -185,7 +227,9 @@ impl UefiBootServices for StandardUefiBootServices {
         agent_handle: efi::Handle,
         controller_handle: efi::Handle,
     ) -> efi::Status {
-        (self.boot_services().close_protocol)(handle, protocol, agent_handle, controller_handle)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing valid arguments to this UEFI service.
+        unsafe { (self.boot_services().close_protocol)(handle, protocol, agent_handle, controller_handle) }
     }
     fn locate_protocol(
         &self,
@@ -193,7 +237,14 @@ impl UefiBootServices for StandardUefiBootServices {
         registration: *mut c_void,
         interface: *mut *mut c_void,
     ) -> efi::Status {
-        (self.boot_services().locate_protocol)(protocol, registration, interface)
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing valid arguments to this UEFI service.
+        unsafe { (self.boot_services().locate_protocol)(protocol, registration, interface) }
+    }
+    fn set_timer(&self, event: efi::Event, r#type: efi::TimerDelay, trigger_time: u64) -> efi::Status {
+        // SAFETY: `boot_services()` returns a valid Boot Services table; the caller is responsible for
+        // passing a valid event handle.
+        unsafe { (self.boot_services().set_timer)(event, r#type, trigger_time) }
     }
 }
 
@@ -284,6 +335,10 @@ mod test {
         efi::Status::SUCCESS
     }
 
+    extern "efiapi" fn mock_set_timer(_event: efi::Event, _type: efi::TimerDelay, _trigger_time: u64) -> efi::Status {
+        efi::Status::SUCCESS
+    }
+
     #[test]
     fn standard_uefi_boot_services_should_wrap_boot_services() {
         let boot_services = MaybeUninit::<efi::BootServices>::zeroed();
@@ -299,6 +354,7 @@ mod test {
         boot_services.open_protocol = mock_open_protocol;
         boot_services.close_protocol = mock_close_protocol;
         boot_services.locate_protocol = mock_locate_protocol;
+        boot_services.set_timer = mock_set_timer;
 
         const TEST_GUID: efi::Guid = efi::Guid::from_fields(0, 0, 0, 0, 0, &[0, 0, 0, 0, 0, 0]);
         let mut event = 1 as efi::Event;
@@ -373,5 +429,6 @@ mod test {
             ),
             efi::Status::SUCCESS
         );
+        assert_eq!(test_boot_services.set_timer(event, efi::TIMER_CANCEL, 0), efi::Status::SUCCESS);
     }
 }

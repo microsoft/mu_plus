@@ -160,7 +160,6 @@
   MsCorePkg/Library/SecureBootKeyStoreLibNull/SecureBootKeyStoreLibNull.inf
   MsCorePkg/Library/BaseSecureBootKeyStoreLib/BaseSecureBootKeyStoreLib.inf
   MsCorePkg/Library/MuSecureBootKeySelectorLib/MuSecureBootKeySelectorLib.inf
-  MsCorePkg/HelloWorldRustDxe/HelloWorldRustDxe.inf
   MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
 
 [Components.IA32]

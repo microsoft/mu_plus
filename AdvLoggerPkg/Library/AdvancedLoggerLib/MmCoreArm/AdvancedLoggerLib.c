@@ -24,6 +24,55 @@
 //
 
 /**
+  Initialize the AdvancedLogger header at PcdAdvancedLoggerBase if a previous
+  firmware phase has not already done so.
+
+  On boot flows where StandaloneMM runs before any phase that would normally
+  lay down the ADVANCED_LOGGER_INFO header (e.g. BL31 -> StMM -> BL33/UEFI),
+  the buffer signature will be invalid on first entry. This routine performs
+  a one-time initialization of the header so that subsequent logging calls
+  have a valid buffer to write into.
+
+  @param[in]  LoggerInfo  Caller-supplied non-NULL pointer to the fixed buffer.
+**/
+STATIC
+VOID
+InitializeLoggerHeaderIfNeeded (
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo
+  )
+{
+  UINTN  LogBufferSize;
+
+  if (LoggerInfo == NULL) {
+    return;
+  }
+
+  if (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE) {
+    return;
+  }
+
+  LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages));
+
+  //
+  // Buffer must be large enough to hold the header plus some payload
+  //
+  if (LogBufferSize <= sizeof (ADVANCED_LOGGER_INFO)) {
+    return;
+  }
+
+  ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
+  LoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+  LoggerInfo->Version          = ADVANCED_LOGGER_INFO_VER;
+  LoggerInfo->LogBufferSize    = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
+  LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+  LoggerInfo->LogCurrentOffset = LoggerInfo->LogBufferOffset;
+  LoggerInfo->HwPrintLevel     = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
+  AdvancedLoggerHdwPortInitialize ();
+  LoggerInfo->HdwPortInitialized = TRUE;
+  LoggerInfo->InPermanentRAM     = TRUE;
+}
+
+/**
   The logger Information Block is carved from the Trust Zone at a specific fixed address.
 
   This address is obtained from the PcdAdvancedLoggerBase.  The size of the Advanced Logger
@@ -63,6 +112,12 @@ AdvancedLoggerGetLoggerInfo (
   if (LoggerInfo == NULL) {
     return NULL;
   }
+
+  //
+  // Check if the log has been initialized by a previous entity (e.g. TF-A)
+  // or a previous log in StMM. If not, initialize.
+  //
+  InitializeLoggerHeaderIfNeeded (LoggerInfo);
 
   //
   // LogBuffer and LogCurrent, and LogBufferSize, could be written

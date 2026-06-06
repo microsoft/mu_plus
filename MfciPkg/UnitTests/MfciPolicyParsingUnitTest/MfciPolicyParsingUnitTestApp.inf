@@ -40,5 +40,6 @@
   BaseMemoryLib
   DebugLib
   UefiApplicationEntryPoint
+  UefiLib
   UnitTestLib
   MfciPolicyParsingLib

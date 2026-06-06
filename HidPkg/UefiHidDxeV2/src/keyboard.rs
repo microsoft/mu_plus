@@ -46,6 +46,11 @@ use crate::{
     keyboard::key_queue::OrdKeyData,
 };
 
+// Repeat key delay: 500ms in 100ns units.
+const REPEAT_KEY_DELAY: u64 = 5_000_000;
+// Repeat key rate: 20ms in 100ns units (~50 keys/sec).
+const REPEAT_KEY_RATE: u64 = 200_000;
+
 // usages supported by this module
 const KEYBOARD_MODIFIER_USAGE_MIN: u32 = 0x000700E0;
 const KEYBOARD_MODIFIER_USAGE_MAX: u32 = 0x000700E7;
@@ -91,6 +96,11 @@ struct LayoutChangeContext {
     keyboard_handler: *mut KeyboardHidHandler,
 }
 
+#[repr(C)]
+struct RepeatTimerContext {
+    keyboard_handler: *mut KeyboardHidHandler,
+}
+
 /// Keyboard HID Handler
 pub struct KeyboardHidHandler {
     boot_services: &'static dyn UefiBootServices,
@@ -108,6 +118,9 @@ pub struct KeyboardHidHandler {
     key_notify_event: efi::Event,
     layout_change_event: efi::Event,
     layout_context: *mut LayoutChangeContext,
+    repeat_timer_event: efi::Event,
+    repeat_context: *mut RepeatTimerContext,
+    repeat_key: Option<Usage>,
 }
 
 impl KeyboardHidHandler {
@@ -129,6 +142,9 @@ impl KeyboardHidHandler {
             key_notify_event: core::ptr::null_mut(),
             layout_change_event: core::ptr::null_mut(),
             layout_context: core::ptr::null_mut(),
+            repeat_timer_event: core::ptr::null_mut(),
+            repeat_context: core::ptr::null_mut(),
+            repeat_key: None,
         }
     }
 
@@ -325,6 +341,7 @@ impl KeyboardHidHandler {
                 //Mark the instance invalid by setting the keyboard_handler raw pointer to null, but leak the LayoutContext
                 //instance. Leaking context allows context usage in the callback should it fire.
                 debugln!(DEBUG_ERROR, "Failed to close layout_change_event event, status: {:x?}", status);
+                // Event still exists in firmware; null out handler to prevent stale access and leak context.
                 unsafe {
                     (*self.layout_context).keyboard_handler = ptr::null_mut();
                 }
@@ -334,6 +351,59 @@ impl KeyboardHidHandler {
             drop(unsafe { Box::from_raw(self.layout_context) });
             self.layout_context = ptr::null_mut();
             self.layout_change_event = ptr::null_mut();
+        }
+        Ok(())
+    }
+
+    // Creates the repeat key timer event used for keystroke repeat when a key is held.
+    fn install_repeat_timer(&mut self) -> Result<(), efi::Status> {
+        let context = RepeatTimerContext { keyboard_handler: self as *mut Self };
+        let context_ptr = Box::into_raw(Box::new(context));
+
+        let mut repeat_timer: efi::Event = ptr::null_mut();
+        let status = self.boot_services.create_event(
+            efi::EVT_TIMER | efi::EVT_NOTIFY_SIGNAL,
+            efi::TPL_NOTIFY,
+            Some(on_repeat_timer),
+            context_ptr as *mut c_void,
+            ptr::addr_of_mut!(repeat_timer),
+        );
+        if status.is_error() {
+            drop(unsafe { Box::from_raw(context_ptr) });
+            return Err(status);
+        }
+
+        self.repeat_timer_event = repeat_timer;
+        self.repeat_context = context_ptr;
+        Ok(())
+    }
+
+    // Closes the repeat timer event and frees the context.
+    fn uninstall_repeat_timer(&mut self) -> Result<(), efi::Status> {
+        if !self.repeat_timer_event.is_null() {
+            let status = self.boot_services.set_timer(self.repeat_timer_event, efi::TIMER_CANCEL, 0);
+            if status.is_error() {
+                debugln!(DEBUG_ERROR, "Failed to cancel repeat_timer, status: {:x?}", status);
+                // Timer may still fire; null out handler to prevent stale access and leak context.
+                unsafe {
+                    (*self.repeat_context).keyboard_handler = ptr::null_mut();
+                }
+                return Err(status);
+            }
+            self.repeat_key = None;
+
+            let status = self.boot_services.close_event(self.repeat_timer_event);
+            if status.is_error() {
+                debugln!(DEBUG_ERROR, "Failed to close repeat_timer event, status: {:x?}", status);
+                // Event still exists in firmware; null out handler to prevent stale access and leak context.
+                unsafe {
+                    (*self.repeat_context).keyboard_handler = ptr::null_mut();
+                }
+                return Err(status);
+            }
+            drop(unsafe { Box::from_raw(self.repeat_context) });
+            self.repeat_context = ptr::null_mut();
+            self.repeat_timer_event = ptr::null_mut();
         }
         Ok(())
     }
@@ -361,12 +431,16 @@ impl KeyboardHidHandler {
         };
 
         let mut hii_handle: hii::Handle = ptr::null_mut();
-        let status = (hii_database_protocol.new_package_list)(
-            hii_database_protocol_ptr,
-            hii_keyboard_layout::get_default_keyboard_pkg_list_buffer().as_ptr() as *const hii::PackageListHeader,
-            ptr::null_mut(),
-            ptr::addr_of_mut!(hii_handle),
-        );
+        // SAFETY: `hii_database_protocol_ptr` points to a valid HII Database Protocol obtained from a
+        // successful `locate_protocol` call, and the keyboard package list buffer is valid.
+        let status = unsafe {
+            (hii_database_protocol.new_package_list)(
+                hii_database_protocol_ptr,
+                hii_keyboard_layout::get_default_keyboard_pkg_list_buffer().as_ptr() as *const hii::PackageListHeader,
+                ptr::null_mut(),
+                ptr::addr_of_mut!(hii_handle),
+            )
+        };
 
         if status.is_error() {
             debugln!(
@@ -377,10 +451,14 @@ impl KeyboardHidHandler {
             Err(status)?;
         }
 
-        let status = (hii_database_protocol.set_keyboard_layout)(
-            hii_database_protocol_ptr,
-            &hii_keyboard_layout::DEFAULT_KEYBOARD_LAYOUT_GUID as *const efi::Guid as *mut efi::Guid,
-        );
+        // SAFETY: `hii_database_protocol_ptr` points to a valid HII Database Protocol obtained from a
+        // successful `locate_protocol` call.
+        let status = unsafe {
+            (hii_database_protocol.set_keyboard_layout)(
+                hii_database_protocol_ptr,
+                &hii_keyboard_layout::DEFAULT_KEYBOARD_LAYOUT_GUID as *const efi::Guid as *mut efi::Guid,
+            )
+        };
         if status.is_error() {
             debugln!(DEBUG_ERROR, "keyboard::install_default_layout: Failed to set keyboard layout: {:x?}", status);
             Err(status)?;
@@ -432,6 +510,14 @@ impl KeyboardHidHandler {
         if extended_verification {
             self.led_state.clear();
         }
+        // Cancel any active repeat timer.
+        if !self.repeat_timer_event.is_null() {
+            let status = self.boot_services.set_timer(self.repeat_timer_event, efi::TIMER_CANCEL, 0);
+            if status.is_error() {
+                debugln!(DEBUG_ERROR, "Failed to cancel repeat_timer during reset, status: {:x?}", status);
+            }
+        }
+        self.repeat_key = None;
         Ok(())
     }
 
@@ -580,7 +666,10 @@ extern "efiapi" fn reset_notification_function(key_data: *mut protocols::simple_
     //DEL scan code received with shift state indicating CTRL-ALT also pressed.
     debugln!(DEBUG_WARN, "Ctrl-Alt-Del pressed, resetting system.");
     if let Some(runtime_services) = unsafe { RUNTIME_SERVICES.load(Ordering::SeqCst).as_ref() } {
-        (runtime_services.reset_system)(efi::RESET_COLD, efi::Status::SUCCESS, 0, core::ptr::null_mut());
+        // SAFETY: `runtime_services` is a valid Runtime Services table loaded from the global pointer.
+        unsafe {
+            (runtime_services.reset_system)(efi::RESET_COLD, efi::Status::SUCCESS, 0, core::ptr::null_mut());
+        }
     }
     panic!("Reset failed.");
 }
@@ -592,6 +681,7 @@ impl HidReportReceiver for KeyboardHidHandler {
         self.reset(true)?;
         self.install_protocol_interfaces(controller)?;
         self.initialize_keyboard_layout()?;
+        self.install_repeat_timer()?;
 
         // Register a Ctrl-Alt-Delete handler to reset the system. Register only for DEL scan code; CTRL-ALT
         // shift state will be qualified in the callback.
@@ -671,11 +761,44 @@ impl HidReportReceiver for KeyboardHidHandler {
                             pressed_keys.push(changed_key);
                         }
                     }
-                    for key in released_keys {
-                        self.key_queue.keystroke(key, key_queue::KeyAction::KeyUp);
+                    for key in &released_keys {
+                        self.key_queue.keystroke(*key, key_queue::KeyAction::KeyUp);
                     }
-                    for key in pressed_keys {
-                        self.key_queue.keystroke(key, key_queue::KeyAction::KeyDown);
+
+                    // If the released key was the repeat key, cancel repeat and pick a new
+                    // candidate from the remaining held keys.
+                    if let Some(repeat_usage) = self.repeat_key
+                        && released_keys.contains(&repeat_usage)
+                    {
+                        self.boot_services.set_timer(self.repeat_timer_event, efi::TIMER_CANCEL, 0);
+                        self.repeat_key = None;
+
+                        // Find a repeatable key among the still-held keys.
+                        let new_candidate =
+                            self.current_keys.iter().rev().find(|k| self.key_queue.is_repeatable_key(**k)).copied();
+                        if let Some(usage) = new_candidate {
+                            self.repeat_key = Some(usage);
+                            self.boot_services.set_timer(
+                                self.repeat_timer_event,
+                                efi::TIMER_RELATIVE,
+                                REPEAT_KEY_DELAY,
+                            );
+                        }
+                    }
+
+                    // Track the last newly pressed repeatable key to set as the repeat candidate.
+                    let mut new_repeat_key: Option<Usage> = None;
+                    for key in &pressed_keys {
+                        self.key_queue.keystroke(*key, key_queue::KeyAction::KeyDown);
+                        if self.key_queue.is_repeatable_key(*key) {
+                            new_repeat_key = Some(*key);
+                        }
+                    }
+
+                    // If a new repeatable key was pressed, arm the repeat delay timer.
+                    if let Some(usage) = new_repeat_key {
+                        self.repeat_key = Some(usage);
+                        self.boot_services.set_timer(self.repeat_timer_event, efi::TIMER_RELATIVE, REPEAT_KEY_DELAY);
                     }
 
                     //after processing all the key strokes, check if any keys were pressed that should trigger the notifier callback
@@ -703,6 +826,10 @@ impl HidReportReceiver for KeyboardHidHandler {
 
 impl Drop for KeyboardHidHandler {
     fn drop(&mut self) {
+        // Close repeat timer first — its callback may reference protocol events.
+        if let Err(status) = self.uninstall_repeat_timer() {
+            debugln!(DEBUG_ERROR, "KeyboardHidHandler::drop: Failed to close repeat_timer: {:?}", status);
+        }
         if let Some(controller) = self.controller {
             if let Err(status) = simple_text_in::SimpleTextInFfi::uninstall(self.boot_services, self.agent, controller)
             {
@@ -718,6 +845,36 @@ impl Drop for KeyboardHidHandler {
             debugln!(DEBUG_ERROR, "KeyboardHidHandler::drop: Failed to close layout_change_event: {:?}", status);
         }
     }
+}
+
+// Handles the repeat timer event. When a repeatable key is held, this fires after the initial delay (and then at the
+// repeat rate) to re-enqueue the held key into the key queue. Runs at TPL_NOTIFY for mutual exclusion with other
+// keyboard handler access.
+extern "efiapi" fn on_repeat_timer(_event: efi::Event, context: *mut c_void) {
+    let Some(context) = (unsafe { (context as *mut RepeatTimerContext).as_mut() }) else {
+        debugln!(DEBUG_ERROR, "on_repeat_timer invoked with null context pointer");
+        return;
+    };
+
+    let Some(keyboard_handler) = (unsafe { context.keyboard_handler.as_mut() }) else {
+        debugln!(DEBUG_ERROR, "on_repeat_timer invoked with invalid handler");
+        return;
+    };
+
+    let Some(repeat_usage) = keyboard_handler.repeat_key else {
+        return;
+    };
+
+    // Re-process the held key as a new KeyDown event. This picks up the current modifier/toggle state.
+    keyboard_handler.key_queue.keystroke(repeat_usage, key_queue::KeyAction::KeyDown);
+
+    // Signal key notify event if the repeated keystroke matched a registered callback.
+    if keyboard_handler.key_queue.peek_notify_key().is_some() {
+        keyboard_handler.boot_services.signal_event(keyboard_handler.key_notify_event);
+    }
+
+    // Re-arm the timer at the repeat rate for the next repeat.
+    keyboard_handler.boot_services.set_timer(keyboard_handler.repeat_timer_event, efi::TIMER_RELATIVE, REPEAT_KEY_RATE);
 }
 
 // handles keyboard layout change event that occurs when a new keyboard layout is set.
@@ -751,12 +908,16 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
 
         // retrieve keyboard layout size
         let mut layout_buffer_len: u16 = 0;
-        match (hii_database_protocol.get_keyboard_layout)(
-            hii_database_protocol_ptr,
-            ptr::null_mut(),
-            &mut layout_buffer_len as *mut u16,
-            ptr::null_mut(),
-        ) {
+        // SAFETY: `hii_database_protocol_ptr` points to a valid HII Database Protocol obtained from a
+        // successful `locate_protocol` call; `layout_buffer_len` is a valid local.
+        match unsafe {
+            (hii_database_protocol.get_keyboard_layout)(
+                hii_database_protocol_ptr,
+                ptr::null_mut(),
+                &mut layout_buffer_len as *mut u16,
+                ptr::null_mut(),
+            )
+        } {
             efi::Status::NOT_FOUND => break 'layout_processing,
             status if status != efi::Status::BUFFER_TOO_SMALL => {
                 debugln!(
@@ -771,12 +932,16 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
         }
 
         let mut keyboard_layout_buffer = vec![0u8; layout_buffer_len as usize];
-        let status = (hii_database_protocol.get_keyboard_layout)(
-            hii_database_protocol_ptr,
-            ptr::null_mut(),
-            &mut layout_buffer_len as *mut u16,
-            keyboard_layout_buffer.as_mut_ptr() as *mut protocols::hii_database::KeyboardLayout<0>,
-        );
+        // SAFETY: `hii_database_protocol_ptr` points to a valid HII Database Protocol obtained from a
+        // successful `locate_protocol` call; `keyboard_layout_buffer` is sized per the prior length query.
+        let status = unsafe {
+            (hii_database_protocol.get_keyboard_layout)(
+                hii_database_protocol_ptr,
+                ptr::null_mut(),
+                &mut layout_buffer_len as *mut u16,
+                keyboard_layout_buffer.as_mut_ptr() as *mut protocols::hii_database::KeyboardLayout<0>,
+            )
+        };
 
         if status.is_error() {
             debugln!(DEBUG_ERROR, "Unexpected return from get_keyboard_layout: {:x?}", status);
@@ -907,6 +1072,7 @@ mod test {
         let boot_services = create_fake_static_boot_service();
         boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
@@ -931,6 +1097,7 @@ mod test {
         let boot_services = create_fake_static_boot_service();
         boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
@@ -1055,6 +1222,7 @@ mod test {
         boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
         boot_services.expect_restore_tpl().returning(|_| ());
         boot_services.expect_close_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
 
         static mut HANDLER: *mut KeyboardHidHandler = core::ptr::null_mut();
 
@@ -1184,6 +1352,7 @@ mod test {
         let boot_services = create_fake_static_boot_service();
         boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
@@ -1231,6 +1400,7 @@ mod test {
         let boot_services = create_fake_static_boot_service();
         boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
@@ -1296,6 +1466,7 @@ mod test {
         let boot_services = create_fake_static_boot_service();
         boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
@@ -1407,11 +1578,11 @@ mod test {
         assert_eq!(OrdKeyData(key_data), OrdKeyData(callback_key_data.unwrap()));
         assert!(callbacks.contains(
             &(mock_key_notify_callback
-                as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
+                as unsafe extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
         ));
         assert!(callbacks.contains(
             &(mock_key_notify_callback2
-                as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
+                as unsafe extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
         ));
 
         let (callback_key_data, callbacks) = keyboard_handler.pending_callbacks();
@@ -1434,7 +1605,9 @@ mod test {
                     char if char == 'a' as u16 || char == 'c' as u16 => {
                         assert!(callbacks.contains(
                             &(mock_key_notify_callback
-                                as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
+                                as unsafe extern "efiapi" fn(
+                                    *mut protocols::simple_text_input_ex::KeyData,
+                                ) -> efi::Status)
                         ));
                     }
                     _ => panic!("unexpected pending callback key"),
@@ -1458,5 +1631,282 @@ mod test {
         let (callback_key_data, callbacks) = keyboard_handler.pending_callbacks();
         assert!(callback_key_data.is_none());
         assert!(callbacks.is_empty());
+    }
+
+    #[test]
+    fn key_press_should_arm_repeat_timer() {
+        use std::sync::atomic::{AtomicU32, AtomicU64};
+
+        static SET_TIMER_TYPE: AtomicU32 = AtomicU32::new(0);
+        static SET_TIMER_TIME: AtomicU64 = AtomicU64::new(0);
+
+        let boot_services = create_fake_static_boot_service();
+        boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, timer_type, trigger_time| {
+            SET_TIMER_TYPE.store(timer_type, std::sync::atomic::Ordering::SeqCst);
+            SET_TIMER_TIME.store(trigger_time, std::sync::atomic::Ordering::SeqCst);
+            efi::Status::SUCCESS
+        });
+        boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+        boot_services.expect_restore_tpl().returning(|_| ());
+
+        let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
+        let mut hid_io = MockHidIo::new();
+        hid_io.expect_set_output_report().returning(|_, _| Ok(()));
+        hid_io
+            .expect_get_report_descriptor()
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+
+        keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
+        keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
+
+        // press the 'a' key
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+
+        // Repeat timer should have been armed with TIMER_RELATIVE and delay
+        assert_eq!(SET_TIMER_TYPE.load(std::sync::atomic::Ordering::SeqCst), efi::TIMER_RELATIVE);
+        assert_eq!(SET_TIMER_TIME.load(std::sync::atomic::Ordering::SeqCst), super::REPEAT_KEY_DELAY);
+        assert!(keyboard_handler.repeat_key.is_some());
+    }
+
+    #[test]
+    fn key_release_should_cancel_repeat_timer() {
+        use std::sync::atomic::AtomicU32;
+
+        static LAST_TIMER_TYPE: AtomicU32 = AtomicU32::new(0xFF);
+
+        let boot_services = create_fake_static_boot_service();
+        boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, timer_type, _| {
+            LAST_TIMER_TYPE.store(timer_type, std::sync::atomic::Ordering::SeqCst);
+            efi::Status::SUCCESS
+        });
+        boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+        boot_services.expect_restore_tpl().returning(|_| ());
+
+        let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
+        let mut hid_io = MockHidIo::new();
+        hid_io.expect_set_output_report().returning(|_, _| Ok(()));
+        hid_io
+            .expect_get_report_descriptor()
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+
+        keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
+        keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
+
+        // press the 'a' key
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+        assert!(keyboard_handler.repeat_key.is_some());
+
+        // release the 'a' key
+        let report: &[u8] = &[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+
+        // Timer should have been cancelled
+        assert_eq!(LAST_TIMER_TYPE.load(std::sync::atomic::Ordering::SeqCst), efi::TIMER_CANCEL);
+        assert!(keyboard_handler.repeat_key.is_none());
+    }
+
+    #[test]
+    fn release_repeat_key_should_handoff_to_remaining_held_key() {
+        let boot_services = create_fake_static_boot_service();
+        boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
+        boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+        boot_services.expect_restore_tpl().returning(|_| ());
+
+        let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
+        let mut hid_io = MockHidIo::new();
+        hid_io.expect_set_output_report().returning(|_, _| Ok(()));
+        hid_io
+            .expect_get_report_descriptor()
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+
+        keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
+        keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
+
+        // press 'a' + 'b' simultaneously
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x05, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+        assert!(keyboard_handler.repeat_key.is_some());
+
+        // release 'b' (the repeat key), 'a' still held
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+
+        // 'a' should now be the repeat key
+        assert_eq!(keyboard_handler.repeat_key, Some(hidparser::report_data_types::Usage::from(0x00070004u32)));
+    }
+
+    #[test]
+    fn modifier_keys_should_not_trigger_repeat() {
+        let boot_services = create_fake_static_boot_service();
+        boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
+        boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+        boot_services.expect_restore_tpl().returning(|_| ());
+
+        let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
+        let mut hid_io = MockHidIo::new();
+        hid_io.expect_set_output_report().returning(|_, _| Ok(()));
+        hid_io
+            .expect_get_report_descriptor()
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+
+        keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
+        keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
+
+        // press left shift only (modifier byte bit 1)
+        let report: &[u8] = &[0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+
+        // Modifier keys should not trigger repeat
+        assert!(keyboard_handler.repeat_key.is_none());
+    }
+
+    #[test]
+    fn new_key_press_should_replace_repeat_key() {
+        let boot_services = create_fake_static_boot_service();
+        boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
+        boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+        boot_services.expect_restore_tpl().returning(|_| ());
+
+        let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
+        let mut hid_io = MockHidIo::new();
+        hid_io.expect_set_output_report().returning(|_, _| Ok(()));
+        hid_io
+            .expect_get_report_descriptor()
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+
+        keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
+        keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
+
+        // press 'a' key
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+        let first_repeat = keyboard_handler.repeat_key;
+        assert!(first_repeat.is_some());
+
+        // press 'a' + 'b' (add 'b' while holding 'a')
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x05, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+
+        // repeat key should now be 'b' (the newly pressed key), not 'a'
+        assert!(keyboard_handler.repeat_key.is_some());
+        assert_ne!(keyboard_handler.repeat_key, first_repeat);
+    }
+
+    #[test]
+    fn repeat_timer_callback_should_enqueue_key() {
+        let boot_services = create_fake_static_boot_service();
+        boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
+        boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+        boot_services.expect_restore_tpl().returning(|_| ());
+
+        let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
+        let mut hid_io = MockHidIo::new();
+        hid_io.expect_set_output_report().returning(|_, _| Ok(()));
+        hid_io
+            .expect_get_report_descriptor()
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+
+        keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
+        keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
+
+        // press 'a' key
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+
+        // consume the initial keystroke
+        let initial_key = keyboard_handler.pop_key().unwrap();
+        assert_eq!(initial_key.key.unicode_char, 'a' as u16);
+        assert!(keyboard_handler.pop_key().is_none());
+
+        // Simulate the repeat timer callback firing by calling it directly
+        let context = keyboard_handler.repeat_context;
+        super::on_repeat_timer(ptr::null_mut(), context as *mut c_void);
+
+        // Should have enqueued a repeat keystroke
+        let repeat_key = keyboard_handler.pop_key().unwrap();
+        assert_eq!(repeat_key.key.unicode_char, 'a' as u16);
+    }
+
+    #[test]
+    fn reset_should_cancel_repeat_timer() {
+        use std::sync::atomic::AtomicU32;
+
+        static LAST_TIMER_TYPE: AtomicU32 = AtomicU32::new(0xFF);
+
+        let boot_services = create_fake_static_boot_service();
+        boot_services.expect_create_event().returning(|_, _, _, _, event| unsafe {
+            event.write(3 as efi::Event);
+            efi::Status::SUCCESS
+        });
+        boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, timer_type, _| {
+            LAST_TIMER_TYPE.store(timer_type, std::sync::atomic::Ordering::SeqCst);
+            efi::Status::SUCCESS
+        });
+        boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
+        boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+        boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+        boot_services.expect_restore_tpl().returning(|_| ());
+        boot_services.expect_close_event().returning(|_| efi::Status::SUCCESS);
+
+        let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
+        let mut hid_io = MockHidIo::new();
+        hid_io.expect_set_output_report().returning(|_, _| Ok(()));
+        hid_io
+            .expect_get_report_descriptor()
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+
+        keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
+        keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
+
+        // press 'a' to set up repeat
+        let report: &[u8] = &[0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
+        keyboard_handler.receive_report(report, &hid_io);
+        assert!(keyboard_handler.repeat_key.is_some());
+
+        // reset should cancel repeat
+        keyboard_handler.reset(false).unwrap();
+        assert_eq!(LAST_TIMER_TYPE.load(std::sync::atomic::Ordering::SeqCst), efi::TIMER_CANCEL);
+        assert!(keyboard_handler.repeat_key.is_none());
     }
 }

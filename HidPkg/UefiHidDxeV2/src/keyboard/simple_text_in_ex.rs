@@ -418,7 +418,9 @@ impl SimpleTextInExFfi {
             if let Some(mut pending_key) = pending_key {
                 let key_ptr = &mut pending_key as *mut protocols::simple_text_input_ex::KeyData;
                 for callback in pending_callbacks {
-                    let _ = callback(key_ptr);
+                    // SAFETY: `callback` is a valid key notification function registered through the
+                    // Simple Text Input Ex protocol, and `key_ptr` points to a valid `KeyData` on the stack.
+                    let _ = unsafe { callback(key_ptr) };
                 }
             } else {
                 // no pending notifies to process
@@ -626,6 +628,7 @@ mod test {
 
         // used in keyboard init and uninstall
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
         boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
@@ -781,6 +784,7 @@ mod test {
 
         // used in keyboard init and uninstall
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
         extern "efiapi" fn mock_set_report(
             _this: *const hid_io::protocol::Protocol,
@@ -868,6 +872,7 @@ mod test {
 
         // used in keyboard init and uninstall
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_signal_event().returning(|event| {
             if event == NOTIFY_EVENT {
                 SimpleTextInExFfi::process_key_notifies(event, CONTEXT_PTR.load(Ordering::SeqCst));
@@ -1015,6 +1020,7 @@ mod test {
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
 
         boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
+        boot_services.expect_set_timer().returning(|_, _, _| efi::Status::SUCCESS);
         boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
         boot_services.expect_restore_tpl().returning(|_| ());
 
