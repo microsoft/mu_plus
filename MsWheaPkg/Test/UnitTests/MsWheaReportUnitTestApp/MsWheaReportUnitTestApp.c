@@ -589,7 +589,7 @@ Cleanup:
 STATIC
 EFI_STATUS
 MsWheaCommonCleanWorker (
-  IN BOOLEAN     ShallowClean
+  IN BOOLEAN  ShallowClean
   )
 {
   UINT32      Index = 0;
