@@ -279,9 +279,9 @@ ParseInValidXml1 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  XmlNode     *ResultData = NULL;
-  EFI_STATUS  Status;
-  CHAR8       BadString[] = "This is not valid xml"; // Not even close
+  XmlNode      *ResultData = NULL;
+  EFI_STATUS   Status;
+  CONST CHAR8  *BadString = "This is not valid xml";  // Not even close
 
   Status = CreateXmlTree (BadString, AsciiStrLen (BadString), &ResultData);
   if (ResultData != NULL) {
@@ -303,9 +303,9 @@ ParseInValidXml2 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  XmlNode     *ResultData = NULL;
-  EFI_STATUS  Status;
-  CHAR8       BadString[] = "<Node1><Node2></Node1>";  // malformed XML
+  XmlNode      *ResultData = NULL;
+  EFI_STATUS   Status;
+  CONST CHAR8  *BadString = "<Node1><Node2></Node1>";   // malformed XML
 
   Status = CreateXmlTree (BadString, AsciiStrLen (BadString), &ResultData);
   if (ResultData != NULL) {
@@ -327,9 +327,9 @@ ParseInValidXml3 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  XmlNode     *ResultData = NULL;
-  EFI_STATUS  Status;
-  CHAR8       BadString[] = "<Node1><Node2><Node3 /></Node1>";  // malformed xml - Missing Node 2 closure
+  XmlNode      *ResultData = NULL;
+  EFI_STATUS   Status;
+  CONST CHAR8  *BadString = "<Node1><Node2><Node3 /></Node1>";   // malformed xml - Missing Node 2 closure
 
   Status = CreateXmlTree (BadString, AsciiStrLen (BadString), &ResultData);
   if (ResultData != NULL) {
@@ -351,10 +351,10 @@ TestNodeCount (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  XmlNode     *ResultData   = NULL;
-  UINTN       TotalElements = 0;
-  EFI_STATUS  Status;
-  CHAR8       MyString[] = "<Node1><Node2><Node3 /><Node4 /></Node2> </Node1>"; // 4 nodes with depth of 3
+  XmlNode      *ResultData   = NULL;
+  UINTN        TotalElements = 0;
+  EFI_STATUS   Status;
+  CONST CHAR8  *MyString = "<Node1><Node2><Node3 /><Node4 /></Node2> </Node1>";  // 4 nodes with depth of 3
 
   Status = CreateXmlTree (MyString, AsciiStrLen (MyString), &ResultData);
   UT_ASSERT_NOT_NULL (ResultData);
@@ -378,10 +378,10 @@ TestNodeMaxDepth (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  XmlNode     *ResultData = NULL;
-  UINTN       MaxDepth    = 0;
-  EFI_STATUS  Status;
-  CHAR8       MyString[] = "<Node1><Node2><Node3 /><Node4 /></Node2><Node5><Node6><Node7 /></Node6></Node5></Node1>"; // 4 nodes with depth of 4
+  XmlNode      *ResultData = NULL;
+  UINTN        MaxDepth    = 0;
+  EFI_STATUS   Status;
+  CONST CHAR8  *MyString = "<Node1><Node2><Node3 /><Node4 /></Node2><Node5><Node6><Node7 /></Node6></Node5></Node1>";  // 4 nodes with depth of 4
 
   Status = CreateXmlTree (MyString, AsciiStrLen (MyString), &ResultData);
   UT_ASSERT_NOT_NULL (ResultData);
@@ -405,10 +405,10 @@ TestAttributeCount (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  XmlNode     *ResultData = NULL;
-  UINTN       Count       = 0;
-  EFI_STATUS  Status;
-  CHAR8       MyString[] = "<Node1 att1='test1'><Node2 att2='test2'><Node3 att3='test3' att4='test4'  /></Node2></Node1>"; // 4 attributes total
+  XmlNode      *ResultData = NULL;
+  UINTN        Count       = 0;
+  EFI_STATUS   Status;
+  CONST CHAR8  *MyString = "<Node1 att1='test1'><Node2 att2='test2'><Node3 att3='test3' att4='test4'  /></Node2></Node1>";  // 4 attributes total
 
   Status = CreateXmlTree (MyString, AsciiStrLen (MyString), &ResultData);
   UT_ASSERT_NOT_NULL (ResultData);
@@ -432,10 +432,10 @@ TestAttributeMax (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  XmlNode     *ResultData = NULL;
-  UINTN       Count       = 0;
-  EFI_STATUS  Status;
-  CHAR8       MyString[] = "<Node1 att1='test1'><Node2 att2='test2'><Node3 att3='test3' att4='test4'  /></Node2></Node1>"; // 4 attributes total
+  XmlNode      *ResultData = NULL;
+  UINTN        Count       = 0;
+  EFI_STATUS   Status;
+  CONST CHAR8  *MyString = "<Node1 att1='test1'><Node2 att2='test2'><Node3 att3='test3' att4='test4'  /></Node2></Node1>";  // 4 attributes total
 
   Status = CreateXmlTree (MyString, AsciiStrLen (MyString), &ResultData);
   UT_ASSERT_NOT_NULL (ResultData);
