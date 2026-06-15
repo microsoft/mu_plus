@@ -169,6 +169,7 @@ BmpDisplayEntrypoint (
   CursorModified          = FALSE;
   BmpFileData             = NULL;
   OriginalVideoBufferData = NULL;
+  Blt                     = NULL;
 
   Status = ParseCommandLine (&BmpFilePath);
   if (EFI_ERROR (Status) || (BmpFilePath == NULL)) {
@@ -253,7 +254,6 @@ BmpDisplayEntrypoint (
   //
   // Translate the GOP image buffer to a BLT buffer
   //
-  Blt         = NULL;
   ImageWidth  = 0;
   ImageHeight = 0;
   Status      =  TranslateBmpToGopBlt (
