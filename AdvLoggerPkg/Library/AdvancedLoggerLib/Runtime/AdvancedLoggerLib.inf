@@ -47,3 +47,10 @@
 
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortRuntimeDisable
+
+[BuildOptions]
+  # Tell the shared AdvancedLoggerCommon.c that this is the DXE runtime instance, which
+  # clears its logger info pointer at ExitBootServices. This lets the hardware port runtime
+  # gating distinguish runtime from early boot when the logger info block is NULL.
+  *_*_*_CC_FLAGS  = -D ADVANCED_LOGGER_RUNTIME=1

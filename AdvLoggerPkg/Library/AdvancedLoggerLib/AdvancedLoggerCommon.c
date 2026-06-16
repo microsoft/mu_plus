@@ -19,6 +19,13 @@
 
 #include "../AdvancedLoggerCommon.h"
 
+#ifdef ADVANCED_LOGGER_RUNTIME
+//
+// Defined by the DXE runtime AdvancedLoggerLib instance; TRUE after ExitBootServices.
+//
+extern BOOLEAN  gAdvancedLoggerAtRuntime;
+#endif
+
 /**
   Write data from buffer into the in memory logging buffer.
 
@@ -161,6 +168,8 @@ AdvancedLoggerWrite (
 {
   ADVANCED_LOGGER_INFO  *LoggerInfo;
   UINT32                HwPortDebugLevel;
+  BOOLEAN               HwPortWriteAllowed;
+  BOOLEAN               AtRuntime;
 
   // All messages go to the in memory log.
   LoggerInfo = AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
@@ -177,7 +186,50 @@ AdvancedLoggerWrite (
 
  #endif
 
-    if (DebugLevel & HwPortDebugLevel) {
+    //
+    // By default hardware port writes are always allowed, preserving the historical
+    // behavior of writing debug output to the serial port at both boot time and OS runtime.
+    //
+    // The underlying hardware serial port implementation on some platforms cannot be safely
+    // called at OS runtime (after ExitBootServices). Such a platform sets the FeatureFlag PCD
+    // PcdAdvancedLoggerHdwPortRuntimeDisable to TRUE to restrict hardware port writes to boot
+    // time only. The runtime detection below is therefore only needed for those opt-in
+    // platforms; for everyone else the PCD is a compile-time FALSE and this whole block is
+    // optimized away, leaving behavior and code size unchanged.
+    //
+    HwPortWriteAllowed = TRUE;
+    if (FeaturePcdGet (PcdAdvancedLoggerHdwPortRuntimeDisable)) {
+      //
+      // Determine whether we are at OS runtime using whichever signal is available, so that
+      // hardware port writes are suppressed only at runtime and early-boot serial output is
+      // preserved.
+      //
+      // When the logger info block is available, its AtRuntime field is authoritative.
+      // A NULL block usually indicates very early boot (before the block is locatable);
+      // the exception is the DXE runtime instance, which also returns NULL at runtime
+      // because it clears its logger info pointer at ExitBootServices.
+      //
+      if (LoggerInfo != NULL) {
+        AtRuntime = LoggerInfo->AtRuntime;
+      } else {
+ #ifdef ADVANCED_LOGGER_RUNTIME
+        //
+        // The DXE runtime instance clears its logger info pointer at ExitBootServices, so a
+        // NULL block is ambiguous between early boot and runtime; consult the runtime flag.
+        //
+        AtRuntime = gAdvancedLoggerAtRuntime;
+ #else
+        //
+        // For all other instances a NULL block indicates very early boot.
+        //
+        AtRuntime = FALSE;
+ #endif
+      }
+
+      HwPortWriteAllowed = (BOOLEAN)(!AtRuntime);
+    }
+
+    if ((DebugLevel & HwPortDebugLevel) && HwPortWriteAllowed) {
       AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
     }
   }

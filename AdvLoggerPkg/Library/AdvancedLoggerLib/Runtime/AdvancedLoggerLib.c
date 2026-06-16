@@ -26,6 +26,16 @@ STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress            = 0;
 STATIC EFI_BOOT_SERVICES     *mBS                   = NULL;
 STATIC EFI_EVENT             mExitBootServicesEvent = NULL;
 
+//
+// TRUE after ExitBootServices. This instance clears its logger info pointer at
+// ExitBootServices (see OnExitBootServicesNotification), making a NULL logger info block
+// ambiguous between early boot and runtime. AdvancedLoggerCommon.c (compiled with
+// -D ADVANCED_LOGGER_RUNTIME for this instance) consults this flag, only when a platform
+// sets PcdAdvancedLoggerHdwPortRuntimeDisable, to suppress hardware port writes at runtime
+// while preserving boot-time output.
+//
+BOOLEAN  gAdvancedLoggerAtRuntime = FALSE;
+
 /**
     CheckAddress
 
@@ -148,8 +158,9 @@ OnExitBootServicesNotification (
   //
   // Runtime logging is currently not supported, so clear mLoggerInfo.
   //
-  mLoggerInfo = NULL;
-  mBS         = NULL;
+  gAdvancedLoggerAtRuntime = TRUE;
+  mLoggerInfo              = NULL;
+  mBS                      = NULL;
 }
 
 /**
