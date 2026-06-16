@@ -23,6 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 #define SMMU_CR0          0x0020
 #define SMMU_CR0ACK       0x0024
+#define SMMU_GBPA         0x0044
 #define SMMU_GERROR       0x0060
 #define SMMU_STRTAB_BASE  0x0080
 
@@ -32,6 +33,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define SMMU_CR0_SMMUEN  BIT0   // SMMU Enable bit
 #define SMMU_CR0_EVTQEN  BIT2   // Event Queue Enable bit
 #define SMMU_CR0_CMDQEN  BIT3   // Command Queue Enable bit
+
+//
+// SMMUv3 GBPA Register Bits
+//
+#define SMMU_GBPA_ABORT  BIT20  // Global Bypass Abort bit (abort all DMA when SMMUEN == 0)
 
 //
 // STRTAB_BASE lower bits mask (bits [5:0] are reserved/config)

@@ -1,12 +1,16 @@
 /** @file -- DMAProtectionTestArch.c
 
 This file contains architecture specific DMA protection tests for ARM SMMU (SMMUv3):
-1) Check the CR0 registers of the SMMUv3 nodes to verify SMMU translation is enabled
+1) Check the CR0 registers of the SMMUv3 nodes to verify SMMU translation is enabled.
+   An SMMU that is not enabled (SMMUEN == 0) is still considered DMA-safe only if
+   it is configured for global abort (GBPA.ABORT == 1), so all DMA is aborted.
 2) Check that Command Queue is enabled (CMDQEN bit in CR0)
 3) Check that Event Queue is enabled (EVTQEN bit in CR0)
 4) Check that Stream Table Base is configured (STRTAB_BASE is not NULL)
 5) Check that GERROR register is 0 (no global errors)
-6) Check RMR (Reserved Memory Range) regions from IORT are set as reserved in memory map
+6) Check RMR (Reserved Memory Range) regions from IORT are found in the EFI memory map
+   and marked with an acceptable memory type (EfiReservedMemoryType or
+   EfiRuntimeServicesData).
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -32,12 +36,20 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 /**
   Test to verify that the Reserved Memory Range (RMR) regions defined in the IORT
-  are properly marked as reserved in the EFI memory map.
+  are found in the EFI memory map and marked with an acceptable memory type.
+
+  For each RMR region, the test verifies that:
+    1) An EFI memory map descriptor fully encompasses the RMR region, and
+    2) That descriptor's memory type is acceptable, i.e. EfiReservedMemoryType
+       or EfiRuntimeServicesData.
+
+  If an RMR region is not found in the memory map, or is found but is not one of
+  the acceptable memory types, the test fails.
 
   @param[in] Context  The unit test context (not used).
 
-  @retval UNIT_TEST_PASSED           All RMR regions are properly marked as reserved.
-  @retval UNIT_TEST_ERROR_TEST_FAILED A RMR region was not found or not marked as reserved.
+  @retval UNIT_TEST_PASSED            All RMR regions were found with an acceptable memory type.
+  @retval UNIT_TEST_ERROR_TEST_FAILED A RMR region was not found, or had an unacceptable memory type.
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -57,6 +69,8 @@ CheckExcludedRegions (
   RMRListNode                  *Head;
   RMRListNode                  *Current;
   BOOLEAN                      Found;
+  BOOLEAN                      FoundInMemoryMap;
+  UINT32                       FoundMemoryType;
   UNIT_TEST_STATUS             TestStatus;
 
   //
@@ -105,6 +119,8 @@ CheckExcludedRegions (
   } else {
     UT_LOG_ERROR ("GetMemoryMap Failed\n");
     DEBUG ((DEBUG_ERROR, "%a: GetMemoryMap Failed\n", __func__));
+    TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
+    UT_ASSERT_STATUS_EQUAL (Status, TestStatus);
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -116,8 +132,10 @@ CheckExcludedRegions (
   TestStatus      = UNIT_TEST_PASSED;
 
   while (Current != NULL) {
-    Found      = FALSE;
-    EfiMemNext = EfiMemoryMap;
+    Found            = FALSE;
+    FoundInMemoryMap = FALSE;
+    FoundMemoryType  = 0;
+    EfiMemNext       = EfiMemoryMap;
 
     UT_LOG_INFO ("Checking RMR region: Base=0x%lX, Length=0x%lX\n", Current->BaseAddress, Current->Length);
     DEBUG ((DEBUG_INFO, "%a: Checking RMR region: Base=0x%lX, Length=0x%lX\n", __func__, Current->BaseAddress, Current->Length));
@@ -127,6 +145,9 @@ CheckExcludedRegions (
       if ((EfiMemNext->PhysicalStart <= Current->BaseAddress) &&
           ((EfiMemNext->PhysicalStart + (EFI_PAGE_SIZE * EfiMemNext->NumberOfPages)) >= (Current->BaseAddress + Current->Length)))
       {
+        FoundInMemoryMap = TRUE;
+        FoundMemoryType  = EfiMemNext->Type;
+
         UT_LOG_INFO (
           "Found encompassing memory range: Base=0x%lX, Length=0x%lX, Type=%d\n",
           EfiMemNext->PhysicalStart,
@@ -142,22 +163,9 @@ CheckExcludedRegions (
           EfiMemNext->Type
           ));
 
-        // Verify memory range is marked as reserved
-        if (EfiMemNext->Type == EfiReservedMemoryType) {
-          UT_LOG_INFO (
-            "RMR between 0x%lX and 0x%lX found with reserved memory type %d\n",
-            Current->BaseAddress,
-            Current->BaseAddress + Current->Length,
-            EfiMemNext->Type
-            );
-          DEBUG ((
-            DEBUG_INFO,
-            "%a: RMR between 0x%lX and 0x%lX found with reserved memory type %d\n",
-            __func__,
-            Current->BaseAddress,
-            Current->BaseAddress + Current->Length,
-            EfiMemNext->Type
-            ));
+        if ((EfiMemNext->Type == EfiReservedMemoryType) ||
+            (EfiMemNext->Type == EfiRuntimeServicesData))
+        {
           Found = TRUE;
         }
 
@@ -168,18 +176,40 @@ CheckExcludedRegions (
       EfiMemNext = NEXT_MEMORY_DESCRIPTOR (EfiMemNext, EfiDescriptorSize);
     }
 
+    //
+    // Report whether the RMR region was located in the UEFI memory map,
+    // and if found, the memory type (even if it is not reserved).
+    //
+    if (!FoundInMemoryMap) {
+      UT_LOG_INFO (
+        "RMR region Base=0x%lX, Length=0x%lX was NOT found in the UEFI memory map\n",
+        Current->BaseAddress,
+        Current->Length
+        );
+      DEBUG ((
+        DEBUG_INFO,
+        "%a: RMR region Base=0x%lX, Length=0x%lX was NOT found in the UEFI memory map\n",
+        __func__,
+        Current->BaseAddress,
+        Current->Length
+        ));
+      TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
+    }
+
     if (!Found) {
       UT_LOG_ERROR (
-        "RMR between 0x%lX and 0x%lX NOT found with reserved memory type!\n",
+        "RMR between 0x%lX and 0x%lX NOT found with an acceptable memory type (Reserved or RuntimeServicesData)! Memory type found: %d\n",
         Current->BaseAddress,
-        Current->BaseAddress + Current->Length
+        Current->BaseAddress + Current->Length,
+        FoundMemoryType
         );
       DEBUG ((
         DEBUG_ERROR,
-        "%a: RMR between 0x%lX and 0x%lX NOT found with reserved memory type!\n",
+        "%a: RMR between 0x%lX and 0x%lX NOT found with an acceptable memory type (Reserved or RuntimeServicesData)! Memory type found: %d\n",
         __func__,
         Current->BaseAddress,
-        Current->BaseAddress + Current->Length
+        Current->BaseAddress + Current->Length,
+        FoundMemoryType
         ));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
     }
@@ -187,24 +217,32 @@ CheckExcludedRegions (
     Current = Current->Next;
   }
 
-  UT_LOG_INFO ("%a: Result=%d\n", __func__, TestStatus);
-  DEBUG ((DEBUG_INFO, "%a: Result=%d\n", __func__, TestStatus));
+  UT_LOG_INFO ("%a: Result=%d (%a)\n", __func__, TestStatus, (TestStatus == UNIT_TEST_PASSED) ? "PASSED" : "FAILED");
+  DEBUG ((DEBUG_INFO, "%a: Result=%d (%a)\n", __func__, TestStatus, (TestStatus == UNIT_TEST_PASSED) ? "PASSED" : "FAILED"));
 
+  UT_ASSERT_STATUS_EQUAL (TestStatus, UNIT_TEST_PASSED);
   return TestStatus;
 } // CheckExcludedRegions()
 
 /**
-  Test to verify that all SMMUv3 units found in the IORT have translation enabled.
-  This checks:
+  Test to verify that all SMMUv3 units found in the IORT are configured to be
+  DMA-safe.
+
+  For each SMMUv3 unit, if translation is enabled (CR0.SMMUEN == 1) this checks:
   1) CR0 register's SMMUEN bit to confirm the SMMU is actively translating
   2) CR0 register's CMDQEN bit to confirm the command queue is enabled
   3) CR0 register's EVTQEN bit to confirm the event queue is enabled
   4) STRTAB_BASE register is not NULL (stream table must be configured)
   5) GERROR register is 0 (no global errors)
 
+  If translation is not enabled (CR0.SMMUEN == 0), the SMMU is still considered
+  DMA-safe (and the checks above are skipped) only if it is configured for global
+  abort (GBPA.ABORT == 1), so all DMA is aborted. Otherwise the SMMU is considered
+  unsafe and the test fails.
+
   @param[in] Context  The unit test context (not used).
 
-  @retval UNIT_TEST_PASSED           All SMMU units are properly configured.
+  @retval UNIT_TEST_PASSED            All SMMU units are properly configured.
   @retval UNIT_TEST_ERROR_TEST_FAILED An SMMU unit is not properly configured.
 **/
 UNIT_TEST_STATUS
@@ -225,6 +263,8 @@ CheckIOMMUEnabled (
   UINT64                       StrTabBase;
   UINT64                       StrTabBaseAddr;
   UINT32                       GError;
+  UINT32                       GbpaValue;
+  UINT32                       AbortBit;
   UNIT_TEST_STATUS             TestStatus;
 
   //
@@ -253,6 +293,7 @@ CheckIOMMUEnabled (
 
   //
   // Step 4: For each SMMU, check:
+  //         - SMMU GBPA Set (GBPA.ABORT == 1), or:
   //         - SMMU Enable bit (SMMUEN) in CR0 register
   //         - Command Queue Enable bit (CMDQEN) in CR0 register
   //         - Event Queue Enable bit (EVTQEN) in CR0 register
@@ -277,9 +318,29 @@ CheckIOMMUEnabled (
     UT_LOG_INFO ("SMMUEN bit: %d\n", SmmuEnBit);
     DEBUG ((DEBUG_INFO, "%a: SMMUEN bit: %d\n", __func__, SmmuEnBit));
     if (SmmuEnBit == 0) {
-      UT_LOG_ERROR ("SMMUEN bit is disabled for SMMUv3 at base address 0x%lX\n", SmmuBaseAddresses[Iterator]);
-      DEBUG ((DEBUG_ERROR, "%a: SMMUEN bit is disabled for SMMUv3 at base address 0x%lX\n", __func__, SmmuBaseAddresses[Iterator]));
+      //
+      // SMMU translation is not enabled. The SMMU is still DMA-safe if it is
+      // configured for global abort (GBPA.ABORT == 1).
+      //
+      GbpaValue = MmioRead32 ((UINTN)(SmmuBaseAddresses[Iterator] + SMMU_GBPA));
+      AbortBit  = GbpaValue & SMMU_GBPA_ABORT;
+      UT_LOG_INFO ("GBPA Register Value: 0x%X, ABORT bit: %d\n", GbpaValue, AbortBit ? 1 : 0);
+      DEBUG ((DEBUG_INFO, "%a: GBPA Register Value: 0x%X, ABORT bit: %d\n", __func__, GbpaValue, AbortBit ? 1 : 0));
+
+      if (AbortBit != 0) {
+        //
+        // Global abort is set: all DMA is aborted, so this SMMU is DMA-safe.
+        // Skip the remaining translation-related checks for this SMMU.
+        //
+        UT_LOG_INFO ("SMMUEN is disabled but global abort (GBPA.ABORT) is set for SMMUv3 at base address 0x%lX. SMMU is DMA-safe.\n", SmmuBaseAddresses[Iterator]);
+        DEBUG ((DEBUG_INFO, "%a: SMMUEN is disabled but global abort (GBPA.ABORT) is set for SMMUv3 at base address 0x%lX. SMMU is DMA-safe.\n", __func__, SmmuBaseAddresses[Iterator]));
+        continue;
+      }
+
+      UT_LOG_ERROR ("SMMUEN bit is disabled and global abort is not set for SMMUv3 at base address 0x%lX\n", SmmuBaseAddresses[Iterator]);
+      DEBUG ((DEBUG_ERROR, "%a: SMMUEN bit is disabled and global abort is not set for SMMUv3 at base address 0x%lX\n", __func__, SmmuBaseAddresses[Iterator]));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
+      continue;
     }
 
     //
@@ -337,8 +398,9 @@ CheckIOMMUEnabled (
     }
   }
 
-  UT_LOG_INFO ("%a: Result=%d\n", __func__, TestStatus);
-  DEBUG ((DEBUG_INFO, "%a: Result=%d\n", __func__, TestStatus));
+  UT_LOG_INFO ("%a: Result=%d (%a)\n", __func__, TestStatus, (TestStatus == UNIT_TEST_PASSED) ? "PASSED" : "FAILED");
+  DEBUG ((DEBUG_INFO, "%a: Result=%d (%a)\n", __func__, TestStatus, (TestStatus == UNIT_TEST_PASSED) ? "PASSED" : "FAILED"));
 
+  UT_ASSERT_STATUS_EQUAL (TestStatus, UNIT_TEST_PASSED);
   return TestStatus;
 } // CheckIOMMUEnabled()
