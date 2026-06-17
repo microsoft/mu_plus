@@ -303,6 +303,11 @@ VerifyReplayEventLogPreConditions (
       goto EndOfChecks;
     }
 
+    if (ReplayEventLog->OffsetToFinalPcrs >= ReplayEventLog->StructureSize) {
+      Status = EFI_INVALID_PARAMETER;
+      goto EndOfChecks;
+    }
+
     if (ReplayEventLog->FinalPcrCount == 0) {
       Status = EFI_INVALID_PARAMETER;
       goto EndOfChecks;
@@ -319,6 +324,11 @@ VerifyReplayEventLogPreConditions (
   DEBUG ((DEBUG_INFO, "[%a] - Validating that events are present... ", __FUNCTION__));
   if ((ReplayEventLog->EventLogCount == 0) || (ReplayEventLog->OffsetToEventLog < sizeof (TPM_REPLAY_EVENT_LOG))) {
     Status = EFI_NOT_FOUND;
+    goto EndOfChecks;
+  }
+
+  if (ReplayEventLog->OffsetToEventLog >= ReplayEventLog->StructureSize) {
+    Status = EFI_INVALID_PARAMETER;
     goto EndOfChecks;
   }
 
