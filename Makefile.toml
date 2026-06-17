@@ -8,7 +8,7 @@ ARCH = "X64"
 TARGET_TRIPLE = { source = "${ARCH}", mapping = { "X64" = "x86_64-unknown-uefi", "IA32" = "i686-unknown-uefi", "AARCH64" = "aarch64-unknown-uefi", "LOCAL" = "${CARGO_MAKE_RUST_TARGET_TRIPLE}" }, condition = { env_not_set = [ "TARGET_TRIPLE" ] } }
 
 CARGO_FEATURES_FLAG = {value = "--features ${FEATURES}", condition = {env_set = ["FEATURES"], env_true = ["FEATURES"]}}
-BUILD_FLAGS = "--profile ${RUSTC_PROFILE} --target ${TARGET_TRIPLE} -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem -Zunstable-options --timings=html"
+BUILD_FLAGS = "--profile ${RUSTC_PROFILE} --target ${TARGET_TRIPLE} -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem --timings"
 TEST_FLAGS = { value = "", condition = { env_not_set = ["TEST_FLAGS"] } }
 COV_FLAGS = { value = "--out html --out xml --exclude-files **/tests/*", condition = { env_not_set = ["COV_FLAGS"] } }
 
