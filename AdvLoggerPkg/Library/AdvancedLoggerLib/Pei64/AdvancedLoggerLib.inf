@@ -42,4 +42,4 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## SOMETIMES_CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable              ## SOMETIMES_CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortRuntimeDisable        ## SOMETIMES_CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortOsRuntimeDisable        ## SOMETIMES_CONSUMES

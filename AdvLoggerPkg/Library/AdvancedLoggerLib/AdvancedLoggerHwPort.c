@@ -3,7 +3,7 @@
   instances that do not override it for special hardware port handling at OS runtime.
 
   Permits hardware port writes at boot time, and at OS runtime unless a platform
-  opts in to PcdAdvancedLoggerHdwPortRuntimeDisable. The DXE runtime instance provides its
+  opts in to PcdAdvancedLoggerHdwPortOsRuntimeDisable. The DXE runtime instance provides its
   own implementation (it clears its logger info block at ExitBootServices) instead of using
   this file.
 
@@ -25,7 +25,7 @@
   hardware port.
 
   Hardware port writes are always permitted unless the platform sets
-  PcdAdvancedLoggerHdwPortRuntimeDisable, in which case they are suppressed once at OS
+  PcdAdvancedLoggerHdwPortOsRuntimeDisable, in which case they are suppressed once at OS
   runtime (after ExitBootServices), as reported by the logger info block's AtRuntime field.
 
   @param  LoggerInfo  The logger info block, or NULL if it is not available.
@@ -39,7 +39,7 @@ AdvancedLoggerPrintToHwPort (
   IN ADVANCED_LOGGER_INFO  *LoggerInfo
   )
 {
-  if (FeaturePcdGet (PcdAdvancedLoggerHdwPortRuntimeDisable) &&
+  if (FeaturePcdGet (PcdAdvancedLoggerHdwPortOsRuntimeDisable) &&
       (LoggerInfo != NULL) &&
       (LoggerInfo->AtRuntime))
   {

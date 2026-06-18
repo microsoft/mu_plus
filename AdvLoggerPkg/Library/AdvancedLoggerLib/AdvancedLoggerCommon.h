@@ -84,7 +84,7 @@ AdvancedLoggerMemoryLoggerWrite (
 
   Each library instance that links AdvancedLoggerCommon.c provides this function. The default
   implementation (AdvancedLoggerHwPort.c) permits hardware port writes at boot time, and at OS
-  runtime unless the platform sets PcdAdvancedLoggerHdwPortRuntimeDisable. The DXE runtime
+  runtime unless the platform sets PcdAdvancedLoggerHdwPortOsRuntimeDisable. The DXE runtime
   instance overrides the default implementation because it clears its logger info block at
   ExitBootServices.
 

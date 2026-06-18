@@ -50,7 +50,7 @@
 
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortRuntimeDisable
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortOsRuntimeDisable
 
 [BuildOptions]
   *_*_*_CC_FLAGS  = -D ADVANCED_LOGGER_SEC=1

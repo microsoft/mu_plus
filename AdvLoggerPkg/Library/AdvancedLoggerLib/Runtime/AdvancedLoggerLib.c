@@ -143,7 +143,7 @@ AdvancedLoggerGetPhase (
   the hardware port.
 
   Hardware port writes are always permitted unless the platform sets
-  PcdAdvancedLoggerHdwPortRuntimeDisable, in which case they are suppressed once at OS runtime
+  PcdAdvancedLoggerHdwPortOsRuntimeDisable, in which case they are suppressed once at OS runtime
   (after ExitBootServices). The runtime status is taken from the logger info block's AtRuntime
   field when available; this instance clears that block at ExitBootServices, so it falls back
   to mAdvancedLoggerAtRuntime once the block is no longer available.
@@ -161,7 +161,7 @@ AdvancedLoggerPrintToHwPort (
 {
   BOOLEAN  AtOsRuntime;
 
-  if (!FeaturePcdGet (PcdAdvancedLoggerHdwPortRuntimeDisable)) {
+  if (!FeaturePcdGet (PcdAdvancedLoggerHdwPortOsRuntimeDisable)) {
     return TRUE;
   }
 
