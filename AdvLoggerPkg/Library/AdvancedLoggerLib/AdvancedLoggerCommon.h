@@ -78,4 +78,25 @@ AdvancedLoggerMemoryLoggerWrite (
   IN       UINTN  NumberOfBytes
   );
 
+/**
+  Returns whether the current Advanced Logger instance permits writing debug output to the
+  hardware port.
+
+  Each library instance that links AdvancedLoggerCommon.c provides this function. The default
+  implementation (AdvancedLoggerHwPort.c) permits hardware port writes at boot time, and at OS
+  runtime unless the platform sets PcdAdvancedLoggerHdwPortRuntimeDisable. The DXE runtime
+  instance overrides the default implementation because it clears its logger info block at
+  ExitBootServices.
+
+  @param  LoggerInfo  The logger info block, or NULL if it is not available.
+
+  @retval TRUE   Hardware port writes are permitted.
+  @retval FALSE  Hardware port writes are currently suppressed.
+**/
+BOOLEAN
+EFIAPI
+AdvancedLoggerPrintToHwPort (
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo
+  );
+
 #endif // __ADVANCED_LOGGER_COMMON_H__

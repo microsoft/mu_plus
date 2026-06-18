@@ -17,6 +17,7 @@
 
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
+#include <Library/PcdLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
@@ -28,13 +29,10 @@ STATIC EFI_EVENT             mExitBootServicesEvent = NULL;
 
 //
 // TRUE after ExitBootServices. This instance clears its logger info pointer at
-// ExitBootServices (see OnExitBootServicesNotification), making a NULL logger info block
-// ambiguous between early boot and runtime. AdvancedLoggerCommon.c (compiled with
-// -D ADVANCED_LOGGER_RUNTIME for this instance) consults this flag, only when a platform
-// sets PcdAdvancedLoggerHdwPortRuntimeDisable, to suppress hardware port writes at runtime
-// while preserving boot-time output.
+// ExitBootServices, so AdvancedLoggerPrintToHwPort uses this flag to obtain the OS runtime
+// status once the logger info block is no longer available.
 //
-BOOLEAN  gAdvancedLoggerAtRuntime = FALSE;
+STATIC BOOLEAN  mAdvancedLoggerAtRuntime = FALSE;
 
 /**
     CheckAddress
@@ -141,6 +139,38 @@ AdvancedLoggerGetPhase (
 }
 
 /**
+  Returns whether this (DXE runtime) Advanced Logger instance permits writing debug output to
+  the hardware port.
+
+  Hardware port writes are always permitted unless the platform sets
+  PcdAdvancedLoggerHdwPortRuntimeDisable, in which case they are suppressed once at OS runtime
+  (after ExitBootServices). The runtime status is taken from the logger info block's AtRuntime
+  field when available; this instance clears that block at ExitBootServices, so it falls back
+  to mAdvancedLoggerAtRuntime once the block is no longer available.
+
+  @param  LoggerInfo  The logger info block, or NULL if it is not available.
+
+  @retval TRUE   Hardware port writes are permitted.
+  @retval FALSE  Hardware port writes are currently suppressed (OS runtime, opt-in platform).
+**/
+BOOLEAN
+EFIAPI
+AdvancedLoggerPrintToHwPort (
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo
+  )
+{
+  BOOLEAN  AtOsRuntime;
+
+  if (!FeaturePcdGet (PcdAdvancedLoggerHdwPortRuntimeDisable)) {
+    return TRUE;
+  }
+
+  AtOsRuntime = (LoggerInfo != NULL) ? LoggerInfo->AtRuntime : mAdvancedLoggerAtRuntime;
+
+  return (BOOLEAN)(!AtOsRuntime);
+}
+
+/**
     Inform all instances of Advanced Logger that ExitBoot Services has occurred.
 
     @param    Event           Not Used.
@@ -158,7 +188,7 @@ OnExitBootServicesNotification (
   //
   // Runtime logging is currently not supported, so clear mLoggerInfo.
   //
-  gAdvancedLoggerAtRuntime = TRUE;
+  mAdvancedLoggerAtRuntime = TRUE;
   mLoggerInfo              = NULL;
   mBS                      = NULL;
 }

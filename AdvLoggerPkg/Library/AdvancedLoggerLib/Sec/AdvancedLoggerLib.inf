@@ -28,6 +28,7 @@
   AdvancedLoggerLib.c
   ../AdvancedLoggerCommon.h
   ../AdvancedLoggerCommon.c
+  ../AdvancedLoggerHwPort.c
 
 [Packages]
   MdePkg/MdePkg.dec
