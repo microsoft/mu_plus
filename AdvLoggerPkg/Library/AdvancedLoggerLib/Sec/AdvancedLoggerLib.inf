@@ -28,7 +28,6 @@
   AdvancedLoggerLib.c
   ../AdvancedLoggerCommon.h
   ../AdvancedLoggerCommon.c
-  ../AdvancedLoggerHwPort.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -50,7 +49,3 @@
 
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortOsRuntimeDisable
-
-[BuildOptions]
-  *_*_*_CC_FLAGS  = -D ADVANCED_LOGGER_SEC=1

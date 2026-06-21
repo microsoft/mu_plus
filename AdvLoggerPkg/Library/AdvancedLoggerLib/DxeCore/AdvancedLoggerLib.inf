@@ -64,4 +64,3 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortOsRuntimeDisable

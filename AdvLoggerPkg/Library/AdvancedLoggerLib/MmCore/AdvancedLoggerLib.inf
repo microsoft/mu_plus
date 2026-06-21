@@ -46,7 +46,6 @@
 
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortOsRuntimeDisable
 
 [Depex]
   TRUE

@@ -1,13 +1,11 @@
 /** @file
   Default AdvancedLoggerPrintToHwPort implementation, shared by the Advanced Logger library
-  instances that do not override it for special hardware port handling at OS runtime.
+  instances that do not override it for special hardware port handling.
 
-  Permits hardware port writes at boot time, and at OS runtime unless a platform
-  opts in to PcdAdvancedLoggerHdwPortOsRuntimeDisable. The DXE runtime instance provides its
-  own implementation (it clears its logger info block at ExitBootServices) instead of using
-  this file.
+  Decides whether a message should be written to the hardware port based on the logger info
+  block and the configured hardware port debug level.
 
-  Copyright (C) Microsoft Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -16,35 +14,28 @@
 
 #include <AdvancedLoggerInternal.h>
 
-#include <Library/PcdLib.h>
-
 #include "AdvancedLoggerCommon.h"
 
 /**
-  Returns whether this Advanced Logger instance permits writing debug output to the
-  hardware port.
-
-  Hardware port writes are always permitted unless the platform sets
-  PcdAdvancedLoggerHdwPortOsRuntimeDisable, in which case they are suppressed once at OS
-  runtime (after ExitBootServices), as reported by the logger info block's AtRuntime field.
+  Returns whether the given message should be written to the hardware port for this
+  Advanced Logger instance.
 
   @param  LoggerInfo  The logger info block, or NULL if it is not available.
+  @param  DebugLevel  The debug level of the message being logged.
 
-  @retval TRUE   Hardware port writes are permitted.
-  @retval FALSE  Hardware port writes are currently suppressed (OS runtime, opt-in platform).
+  @retval TRUE   The message should be written to the hardware port.
+  @retval FALSE  The message should not be written to the hardware port.
 **/
 BOOLEAN
 EFIAPI
 AdvancedLoggerPrintToHwPort (
-  IN ADVANCED_LOGGER_INFO  *LoggerInfo
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo,
+  IN UINTN                 DebugLevel
   )
 {
-  if (FeaturePcdGet (PcdAdvancedLoggerHdwPortOsRuntimeDisable) &&
-      (LoggerInfo != NULL) &&
-      (LoggerInfo->AtRuntime))
-  {
+  if ((LoggerInfo != NULL) && (LoggerInfo->HdwPortDisabled)) {
     return FALSE;
   }
 
-  return TRUE;
+  return AdvancedLoggerHwPortLevelEnabled (LoggerInfo, DebugLevel);
 }

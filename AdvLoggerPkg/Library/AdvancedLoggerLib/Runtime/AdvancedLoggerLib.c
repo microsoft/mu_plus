@@ -139,35 +139,39 @@ AdvancedLoggerGetPhase (
 }
 
 /**
-  Returns whether this (DXE runtime) Advanced Logger instance permits writing debug output to
-  the hardware port.
+  Returns whether the given message should be written to the hardware port for the DXE
+  runtime Advanced Logger instance.
 
-  Hardware port writes are always permitted unless the platform sets
-  PcdAdvancedLoggerHdwPortOsRuntimeDisable, in which case they are suppressed once at OS runtime
-  (after ExitBootServices). The runtime status is taken from the logger info block's AtRuntime
-  field when available; this instance clears that block at ExitBootServices, so it falls back
-  to mAdvancedLoggerAtRuntime once the block is no longer available.
+  In addition to the common hardware port gating, this instance suppresses hardware port
+  writes at OS runtime when platform configuration enables OS-runtime suppression.
 
   @param  LoggerInfo  The logger info block, or NULL if it is not available.
+  @param  DebugLevel  The debug level of the message being logged.
 
-  @retval TRUE   Hardware port writes are permitted.
-  @retval FALSE  Hardware port writes are currently suppressed (OS runtime, opt-in platform).
+  @retval TRUE   The message should be written to the hardware port.
+  @retval FALSE  The message should not be written to the hardware port.
 **/
 BOOLEAN
 EFIAPI
 AdvancedLoggerPrintToHwPort (
-  IN ADVANCED_LOGGER_INFO  *LoggerInfo
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo,
+  IN UINTN                 DebugLevel
   )
 {
   BOOLEAN  AtOsRuntime;
 
-  if (!FeaturePcdGet (PcdAdvancedLoggerHdwPortOsRuntimeDisable)) {
-    return TRUE;
+  if ((LoggerInfo != NULL) && (LoggerInfo->HdwPortDisabled)) {
+    return FALSE;
   }
 
-  AtOsRuntime = (LoggerInfo != NULL) ? LoggerInfo->AtRuntime : mAdvancedLoggerAtRuntime;
+  if (FeaturePcdGet (PcdAdvancedLoggerHdwPortOsRuntimeDisable)) {
+    AtOsRuntime = (LoggerInfo != NULL) ? LoggerInfo->AtRuntime : mAdvancedLoggerAtRuntime;
+    if (AtOsRuntime) {
+      return FALSE;
+    }
+  }
 
-  return (BOOLEAN)(!AtOsRuntime);
+  return AdvancedLoggerHwPortLevelEnabled (LoggerInfo, DebugLevel);
 }
 
 /**

@@ -136,6 +136,38 @@ AdvancedLoggerMemoryLoggerWrite (
 }
 
 /**
+  Returns whether the given message's debug level is enabled for the hardware port.
+
+  This is the generic hardware port debug level policy shared by the Advanced Logger instances
+  that honor the logger info block's dynamic level. Instances that must not consult the dynamic
+  level (such as SEC instances) provide their own AdvancedLoggerPrintToHwPort instead of using
+  this helper.
+
+  @param  LoggerInfo  The logger info block, or NULL if it is not available.
+  @param  DebugLevel  The debug level of the message being logged.
+
+  @retval TRUE   The message's debug level is enabled for the hardware port.
+  @retval FALSE  The message's debug level is not enabled for the hardware port.
+**/
+BOOLEAN
+EFIAPI
+AdvancedLoggerHwPortLevelEnabled (
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo,
+  IN UINTN                 DebugLevel
+  )
+{
+  UINT32  HwPortDebugLevel;
+
+  HwPortDebugLevel = PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
+
+  if ((LoggerInfo != NULL) && (LoggerInfo->Version >= ADVANCED_LOGGER_INFO_HW_LVL_SUPPORTED_VER)) {
+    HwPortDebugLevel = LoggerInfo->HwPrintLevel;
+  }
+
+  return (BOOLEAN)((DebugLevel & HwPortDebugLevel) != 0);
+}
+
+/**
   Write data from buffer to possible debugging devices.
 
   This is the interface from PeiCore
@@ -160,25 +192,12 @@ AdvancedLoggerWrite (
   )
 {
   ADVANCED_LOGGER_INFO  *LoggerInfo;
-  UINT32                HwPortDebugLevel;
 
   // All messages go to the in memory log.
   LoggerInfo = AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 
-  HwPortDebugLevel = PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
-
-  // Only selected messages go to the hdw port.
-
-  if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled)) {
- #ifndef ADVANCED_LOGGER_SEC
-    if ((LoggerInfo != NULL) && (LoggerInfo->Version >= ADVANCED_LOGGER_INFO_HW_LVL_SUPPORTED_VER)) {
-      HwPortDebugLevel = LoggerInfo->HwPrintLevel;
-    }
-
- #endif
-
-    if ((DebugLevel & HwPortDebugLevel) && AdvancedLoggerPrintToHwPort (LoggerInfo)) {
-      AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
-    }
+  // Only selected messages go to the hardware port.
+  if (AdvancedLoggerPrintToHwPort (LoggerInfo, DebugLevel)) {
+    AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
   }
 }
