@@ -200,7 +200,7 @@
   MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf
   MsCorePkg/Library/MacAddressEmulationPlatformLibNull/MacAddressEmulationPlatformLibNull.inf
 
-[Components.AARCH64, Components.AARCH64]
+[Components.AARCH64]
   MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
   MsCorePkg/Library/MuArmGicExLib/MuArmGicExLib.inf
 

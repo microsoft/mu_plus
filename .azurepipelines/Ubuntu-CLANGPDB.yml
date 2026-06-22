@@ -1,0 +1,69 @@
+## @file
+# Azure Pipeline build file for a build using Ubuntu and CLANGPDB.
+#
+# IMPORTANT: This file requires the local repo to contain a .azurepipelines/Matrix-Build-Job.yml file that
+#            performs the actual build steps for the configurations and packages supported by the repo.
+#
+# NOTE: This file is automatically synchronized from Mu DevOps. Update the original file there
+#       instead of the file in this repo.
+#
+# - Mu DevOps Repo: https://github.com/microsoft/mu_devops
+# - File Sync Settings: https://github.com/microsoft/mu_devops/blob/main/.sync/Files.yml
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+variables:
+- group: architectures-arm64-x86-64
+- group: tool-chain-ubuntu-clangpdb
+- group: coverage
+
+extends:
+  template: MuDevOpsWrapper.yml
+  parameters:
+    do_ci_build: true
+    do_ci_setup: true
+    do_non_ci_build: false
+    do_non_ci_setup: true
+    do_pr_eval: true
+    container_build: true
+    rust_build: true
+    os_type: Linux
+    build_matrix:
+      TARGET_MFCI_XML:
+        Pkgs: 'XmlSupportPkg,MfciPkg'
+        Targets: 'DEBUG,RELEASE'
+        ArchList: $(arch_list)
+      TARGET_GRAPHICS_WHEA_HID:
+        Pkgs: 'MsGraphicsPkg,MsWheaPkg,HidPkg'
+        Targets: 'DEBUG,RELEASE'
+        ArchList: $(arch_list)
+      TARGET_CORE:
+        Pkgs: 'MsCorePkg'
+        Targets: 'DEBUG,RELEASE'
+        ArchList: $(arch_list)
+      TARGET_TEST_PCBDS_LOG:
+        Pkgs: 'TpmTestingPkg,UefiTestingPkg,PcBdsPkg,AdvLoggerPkg'
+        Targets: 'DEBUG,RELEASE'
+        ArchList: $(arch_list)
+      TARGET_MFCI_XML_ARM:
+        Pkgs: 'XmlSupportPkg,MfciPkg'
+        Targets: 'DEBUG,RELEASE'
+        ArchList: $(arch_list)
+        SelfHostAgent: true
+      TARGET_GRAPHICS_WHEA_HID_ARM:
+        Pkgs: 'MsGraphicsPkg,MsWheaPkg,HidPkg'
+        Targets: 'DEBUG,RELEASE'
+        ArchList: $(arch_list)
+        SelfHostAgent: true
+      TARGET_CORE_ARM:
+        Pkgs: 'MsCorePkg'
+        Targets: 'DEBUG,RELEASE'
+        ArchList: $(arch_list)
+        SelfHostAgent: true
+      TARGET_TEST_PCBDS_LOG_ARM:
+        Pkgs: 'TpmTestingPkg,UefiTestingPkg,PcBdsPkg,AdvLoggerPkg'
+        Targets: 'DEBUG,RELEASE'
+        ArchList: $(arch_list)
+        SelfHostAgent: true
