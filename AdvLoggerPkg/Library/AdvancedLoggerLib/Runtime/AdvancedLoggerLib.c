@@ -17,6 +17,7 @@
 
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
+#include <Library/PcdLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
@@ -25,6 +26,13 @@ STATIC UINT32                mBufferSize            = 0;
 STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress            = 0;
 STATIC EFI_BOOT_SERVICES     *mBS                   = NULL;
 STATIC EFI_EVENT             mExitBootServicesEvent = NULL;
+
+//
+// TRUE after ExitBootServices. This instance clears its logger info pointer at
+// ExitBootServices, so AdvancedLoggerPrintToHwPort uses this flag to obtain the OS runtime
+// status once the logger info block is no longer available.
+//
+STATIC BOOLEAN  mAdvancedLoggerAtRuntime = FALSE;
 
 /**
     CheckAddress
@@ -131,6 +139,42 @@ AdvancedLoggerGetPhase (
 }
 
 /**
+  Returns whether the given message should be written to the hardware port for the DXE
+  runtime Advanced Logger instance.
+
+  In addition to the common hardware port gating, this instance suppresses hardware port
+  writes at OS runtime when platform configuration enables OS-runtime suppression.
+
+  @param  LoggerInfo  The logger info block, or NULL if it is not available.
+  @param  DebugLevel  The debug level of the message being logged.
+
+  @retval TRUE   The message should be written to the hardware port.
+  @retval FALSE  The message should not be written to the hardware port.
+**/
+BOOLEAN
+EFIAPI
+AdvancedLoggerPrintToHwPort (
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo,
+  IN UINTN                 DebugLevel
+  )
+{
+  BOOLEAN  AtOsRuntime;
+
+  if ((LoggerInfo != NULL) && (LoggerInfo->HdwPortDisabled)) {
+    return FALSE;
+  }
+
+  if (FeaturePcdGet (PcdAdvancedLoggerHdwPortOsRuntimeDisable)) {
+    AtOsRuntime = (LoggerInfo != NULL) ? LoggerInfo->AtRuntime : mAdvancedLoggerAtRuntime;
+    if (AtOsRuntime) {
+      return FALSE;
+    }
+  }
+
+  return AdvancedLoggerHwPortLevelEnabled (LoggerInfo, DebugLevel);
+}
+
+/**
     Inform all instances of Advanced Logger that ExitBoot Services has occurred.
 
     @param    Event           Not Used.
@@ -148,8 +192,9 @@ OnExitBootServicesNotification (
   //
   // Runtime logging is currently not supported, so clear mLoggerInfo.
   //
-  mLoggerInfo = NULL;
-  mBS         = NULL;
+  mAdvancedLoggerAtRuntime = TRUE;
+  mLoggerInfo              = NULL;
+  mBS                      = NULL;
 }
 
 /**

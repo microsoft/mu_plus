@@ -50,6 +50,3 @@
 
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
-
-[BuildOptions]
-  *_*_*_CC_FLAGS  = -D ADVANCED_LOGGER_SEC=1

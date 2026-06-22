@@ -99,6 +99,13 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable|FALSE|BOOLEAN|0x00010188
 
+  ## PcdAdvancedLoggerHdwPortOsRuntimeDisable - Suppress hardware port writes at OS
+  # runtime (after ExitBootServices). By default (FALSE), hardware port writes remain
+  # enabled at runtime. Set to TRUE on a platform whose underlying hardware port
+  # implementation cannot be safely called after ExitBootServices.
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortOsRuntimeDisable|FALSE|BOOLEAN|0x0001018A
+
 
 [PcdsFixedAtBuild]
   ## Advanced Logger Base - NULL = UEFI starts with PEI or DXE, and there is no SEC, or SEC

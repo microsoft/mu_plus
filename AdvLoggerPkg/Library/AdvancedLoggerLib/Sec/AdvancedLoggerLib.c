@@ -88,3 +88,30 @@ AdvancedLoggerGetPhase (
 {
   return ADVANCED_LOGGER_PHASE_SEC;
 }
+
+/**
+  Returns whether the given message should be written to the hardware port for this SEC
+  Advanced Logger instance.
+
+  SEC instances use only the static hardware port debug level and do not consult the logger
+  info block's dynamic hardware port level.
+
+  @param  LoggerInfo  The logger info block, or NULL if it is not available.
+  @param  DebugLevel  The debug level of the message being logged.
+
+  @retval TRUE   The message should be written to the hardware port.
+  @retval FALSE  The message should not be written to the hardware port.
+**/
+BOOLEAN
+EFIAPI
+AdvancedLoggerPrintToHwPort (
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo,
+  IN UINTN                 DebugLevel
+  )
+{
+  if ((LoggerInfo != NULL) && (LoggerInfo->HdwPortDisabled)) {
+    return FALSE;
+  }
+
+  return (BOOLEAN)((DebugLevel & PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) != 0);
+}
