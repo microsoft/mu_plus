@@ -157,7 +157,7 @@ pub fn init_telemetry(efi_boot_services: *mut efi::BootServices) {
 
 #[cfg(test)]
 mod test {
-    use mu_rust_helpers::guid::guid;
+    use patina::base::guid::BinaryGuid;
     use patina::boot_services::MockBootServices;
     use patina::pi::protocols::{
         status_code,
@@ -170,7 +170,7 @@ mod test {
     use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
 
     const DATA_SIZE: usize = size_of::<EfiStatusCodeData>() + size_of::<MsWheaRscInternalErrorData>();
-    const MOCK_CALLER_ID: efi::Guid = guid!("d0d1d2d3-d4d5-d6d7-d8d9-dadbdcdddedf");
+    const MOCK_CALLER_ID: efi::Guid = BinaryGuid::from_string("d0d1d2d3-d4d5-d6d7-d8d9-dadbdcdddedf").into_inner();
     const MOCK_STATUS_CODE_VALUE: EfiStatusCodeValue = 0xa0a1a2a3;
 
     extern "efiapi" fn mock_report_status_code(
@@ -214,8 +214,8 @@ mod test {
                 0xb0b1b2b3b4b5b6b7,
                 0xc0c1c2c3c4c5c6c7,
                 Some(&MOCK_CALLER_ID),
-                Some(&guid!("e0e1e2e3-e4e5-e6e7-e8e9-eaebecedeeef")),
-                Some(&guid!("f0f1f2f3-f4f5-f6f7-f8f9-fafbfcfdfeff"))
+                Some(BinaryGuid::from_string("e0e1e2e3-e4e5-e6e7-e8e9-eaebecedeeef").as_efi_guid()),
+                Some(BinaryGuid::from_string("f0f1f2f3-f4f5-f6f7-f8f9-fafbfcfdfeff").as_efi_guid())
             )
         );
         assert_eq!(
