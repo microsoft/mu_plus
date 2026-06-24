@@ -38,16 +38,17 @@ use mu_pi::{
     protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue},
     status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR},
 };
-use mu_rust_helpers::{guid, guid::guid};
 use patina::boot_services::{BootServices, StandardBootServices};
 use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
+use patina::{base::guid::BinaryGuid, guids};
 use r_efi::efi;
 
 static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
 
 /// Matches gMsWheaRSCDataTypeGuid in MsWheaPkg\MsWheaPkg.dec
 /// Matches MS_WHEA_RSC_DATA_TYPE in MsWheaPkg\Private\Guid\MsWheaReportDataType.h
-const MS_WHEA_RSC_DATA_TYPE_GUID: efi::Guid = guid!("91DEEA05-8C0A-4DCD-B91E-F21CA0C68405");
+const MS_WHEA_RSC_DATA_TYPE_GUID: efi::Guid =
+    BinaryGuid::from_string("91DEEA05-8C0A-4DCD-B91E-F21CA0C68405").into_inner();
 
 const MS_WHEA_ERROR_STATUS_TYPE_INFO: EfiStatusCodeType = EFI_ERROR_MINOR | EFI_ERROR_CODE;
 const MS_WHEA_ERROR_STATUS_TYPE_FATAL: EfiStatusCodeType = EFI_ERROR_MAJOR | EFI_ERROR_CODE;
@@ -131,15 +132,15 @@ fn log_telemetry_internal<B: BootServices>(
         if is_fatal { MS_WHEA_ERROR_STATUS_TYPE_FATAL } else { MS_WHEA_ERROR_STATUS_TYPE_INFO };
 
     let error_data = MsWheaRscInternalErrorData {
-        library_id: *library_id.unwrap_or(&guid::ZERO),
-        ihv_sharing_guid: *ihv_id.unwrap_or(&guid::ZERO),
+        library_id: *library_id.unwrap_or(guids::ZERO.as_efi_guid()),
+        ihv_sharing_guid: *ihv_id.unwrap_or(guids::ZERO.as_efi_guid()),
         additional_info1: extra_data1,
         additional_info2: extra_data2,
     };
 
     let protocol = unsafe { boot_services.locate_protocol::<StatusCodeRuntimeProtocol>(None)? };
 
-    let caller_id = component_id.unwrap_or(&guid::CALLER_ID);
+    let caller_id = component_id.unwrap_or(guids::CALLER_ID.as_efi_guid());
 
     protocol.report_status_code_with_data(
         status_code_type,
