@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 
-# Add packages that generate binaries here
 members = [
+  "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe",
   "HidPkg/Crates/HidIo",
   "HidPkg/Crates/HiiKeyboardLayout",
   "HidPkg/UefiHidDxe",
