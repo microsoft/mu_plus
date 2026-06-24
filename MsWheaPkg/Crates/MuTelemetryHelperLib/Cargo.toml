@@ -8,7 +8,6 @@ name = "mu_telemetry_helper_lib"
 path = "src/lib.rs"
 
 [dependencies]
-mu_pi = { workspace = true }
 mu_rust_helpers = { workspace = true }
 r-efi = { workspace = true }
 patina = { workspace = true }
