@@ -34,11 +34,9 @@
 //!
 #![cfg_attr(target_os = "uefi", no_std)]
 
-use mu_pi::{
-    protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue},
-    status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR},
-};
 use patina::boot_services::{BootServices, StandardBootServices};
+use patina::pi::protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue};
+use patina::pi::status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR};
 use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
 use patina::{base::guid::BinaryGuid, guids};
 use r_efi::efi;
@@ -159,12 +157,12 @@ pub fn init_telemetry(efi_boot_services: *mut efi::BootServices) {
 
 #[cfg(test)]
 mod test {
-    use mu_pi::protocols::{
+    use mu_rust_helpers::guid::guid;
+    use patina::boot_services::MockBootServices;
+    use patina::pi::protocols::{
         status_code,
         status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue},
     };
-    use mu_rust_helpers::guid::guid;
-    use patina::boot_services::MockBootServices;
     use r_efi::efi;
 
     use crate::{MS_WHEA_ERROR_STATUS_TYPE_FATAL, MsWheaRscInternalErrorData, log_telemetry_internal};
