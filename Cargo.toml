@@ -21,7 +21,7 @@ MuTelemetryHelperLib = { path = "MsWheaPkg/Crates/MuTelemetryHelperLib" }
 num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false }
 patina = { version = "22" }
-r-efi = "^6"
+r-efi = "^7"
 RustAdvancedLoggerDxe = { path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe" }
 RustBootServicesAllocatorDxe = { path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe" }
 rustversion = "1.0.14"
