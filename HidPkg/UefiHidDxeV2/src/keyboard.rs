@@ -36,7 +36,7 @@ use hidparser::{
     ArrayField, ReportDescriptor, ReportField, VariableField,
     report_data_types::{ReportId, Usage},
 };
-use mu_rust_helpers::function;
+use patina::function;
 use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN, debugln};
 
 use crate::{
@@ -969,7 +969,7 @@ mod test {
     use core::{ffi::c_void, mem::MaybeUninit, ptr, slice::from_raw_parts_mut};
 
     use hii_keyboard_layout::HiiKeyboardLayout;
-    use mu_rust_helpers::function;
+    use patina::function;
     use r_efi::{efi, hii, protocols};
     use scroll::Pwrite;
     use std::sync::Mutex;

@@ -22,7 +22,7 @@ use hidparser::{
     ReportDescriptor, ReportField, VariableField,
     report_data_types::{ReportId, Usage},
 };
-use mu_rust_helpers::function;
+use patina::function;
 use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_VERBOSE, debugln};
 
 use self::absolute_pointer::PointerContext;
