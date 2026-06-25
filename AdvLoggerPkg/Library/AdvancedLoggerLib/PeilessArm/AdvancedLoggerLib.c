@@ -21,6 +21,47 @@
 
 #include "../AdvancedLoggerCommon.h"
 
+/**
+  Validate Info Blocks
+
+  The address of the ADVANCE_LOGGER_INFO block pointer is captured during the first debug print.
+  Offsets LogBufferOffset, LogCurrentOffset, and LogBufferSize, could be written to by untrusted code.  Here,
+  we check that the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which
+  is used in multiple places to see if a new message will fit into the log buffer, is valid.
+
+  @param          LoggerInfo  Logger information pointer needs to be validated.
+
+  @return         BOOLEAN     TRUE = mLoggerInfo Block passes security checks
+  @return         BOOLEAN     FALSE= mLoggerInfo Block failed security checks
+
+**/
+STATIC
+BOOLEAN
+ValidateInfoBlock (
+  IN  ADVANCED_LOGGER_INFO  *LoggerInfo
+  )
+{
+  if (LoggerInfo == NULL) {
+    return FALSE;
+  }
+
+  if (LoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
+    return FALSE;
+  }
+
+  if (LoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo)) {
+    return FALSE;
+  }
+
+  if ((LoggerInfo->LogCurrentOffset > TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo)) ||
+      (LoggerInfo->LogCurrentOffset < LoggerInfo->LogBufferOffset))
+  {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
 EFI_STATUS
 EFIAPI
 AdvancedLoggerLibConstructor (
@@ -40,12 +81,17 @@ AdvancedLoggerLibConstructor (
   // Buffer must be large enough to hold the header plus some payload.
   //
   if ((LoggerInfo != NULL) && (LogBufferSize > sizeof (ADVANCED_LOGGER_INFO))) {
-    ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
-    LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
-    LoggerInfo->Version            = ADVANCED_LOGGER_INFO_VER;
-    LoggerInfo->LogBufferSize      = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
-    LoggerInfo->LogBufferOffset    = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
-    LoggerInfo->LogCurrentOffset   = LoggerInfo->LogBufferOffset;
+    // Check if we need to initialize the buffer or if pre-UEFI did
+    if (!ValidateInfoBlock (LoggerInfo)) {
+      ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
+      LoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+      LoggerInfo->Version          = ADVANCED_LOGGER_INFO_VER;
+      LoggerInfo->LogBufferSize    = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
+      LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+      LoggerInfo->LogCurrentOffset = LoggerInfo->LogBufferOffset;
+    }
+
+    // Update these to have the UEFI settings
     LoggerInfo->HdwPortInitialized = TRUE;
     LoggerInfo->HwPrintLevel       = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
     LoggerInfo->InPermanentRAM     = TRUE;
