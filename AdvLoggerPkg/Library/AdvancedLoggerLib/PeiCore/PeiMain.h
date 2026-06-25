@@ -52,7 +52,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MigratedFvInfo.h>
 #include <Guid/DelayedDispatch.h>
 #include <Guid/MemoryTypeInformation.h>
-#include <MemoryBin.h>
 
 ///
 /// It is an FFS type extension used for PeiFindFileEx. It indicates current
@@ -353,7 +352,7 @@ struct _PEI_CORE_INSTANCE {
   // Memory type statistics for all memory types. The array index is the memory type.
   // This is used for the memory bin feature, if enabled, to track bin locations.
   //
-  EFI_MEMORY_TYPE_STATISTICS        *MemoryTypeStatistics;
+  VOID                              *MemoryTypeStatistics;    // OVERRIDE: Drop type to drop private header
 
   EFI_PHYSICAL_ADDRESS              PlatformBlob;             // MU_CHANGE  Used by AdvancedLogger
 };
@@ -450,7 +449,7 @@ PeimDispatchReadiness (
   @param PeimFileHandle       Pointer to the FFS file header of the image.
   @param MigratedFileHandle   Pointer to the FFS file header of the migrated image.
 
-  @retval EFI_SUCCESS         Sucessfully migrated the PEIM to permanent memory.
+  @retval EFI_SUCCESS         Successfully migrated the PEIM to permanent memory.
 
 **/
 EFI_STATUS
