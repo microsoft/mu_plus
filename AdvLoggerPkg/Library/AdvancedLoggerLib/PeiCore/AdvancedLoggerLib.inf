@@ -5,7 +5,7 @@
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
-#Override : 00000002 | MdeModulePkg/Core/Pei/PeiMain.h | 5f8415080619b4d12d294f54e3fec16d | 2026-06-25T18-37-10 | 3fcfa38b0117f38468e2106feef56feb9fd47e28
+#Override : 00000002 | MdeModulePkg/Core/Pei/PeiMain.h | b95e7c1747b1fb8735072cdee35b0132 | 2026-06-25T18-37-10 | 3fcfa38b0117f38468e2106feef56feb9fd47e28
 ##
 
 [Defines]
