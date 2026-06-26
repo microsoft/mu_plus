@@ -12,13 +12,13 @@
 #include <AdvancedLoggerInternal.h>
 
 /**
-  Including the PeiMain.h from PeiCore in order to access the Platform Blob data member.
+  Include a copy of PeiMain.h from PeiCore in order to access the Platform Blob data member.
 
-  This is breaking the rules, but PeiCore on a system using ROM for PeiPremem has no place
+  This is breaking the rules, but PeiCore on a system using ROM for PeiPreMem has no place
   to store long term data besides the Hob or Ppi list.  Accessing these list for high
   frequency operations is a performance issue.
 **/
-#include <Core/Pei/PeiMain.h>
+#include "../../AdvancedLoggerLib/PeiCore/PeiMain.h"
 
 #include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseMemoryLib.h>
