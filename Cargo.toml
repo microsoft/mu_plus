@@ -16,7 +16,7 @@ HidIo = { path = "HidPkg/Crates/HidIo" }
 hidparser = { version = "1" }
 HiiKeyboardLayout = { path = "HidPkg/Crates/HiiKeyboardLayout" }
 memoffset = "0.9.0"
-mockall = {version = "0.14.0"}
+mockall = {version = "0.15.0"}
 MuTelemetryHelperLib = { path = "MsWheaPkg/Crates/MuTelemetryHelperLib" }
 num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false }
