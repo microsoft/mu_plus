@@ -100,11 +100,11 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable|FALSE|BOOLEAN|0x00010188
 
   ## PcdAdvancedLoggerHdwPortOsRuntimeDisable - Suppress hardware port writes at OS
-  # runtime (after ExitBootServices). By default (FALSE), hardware port writes remain
-  # enabled at runtime. Set to TRUE on a platform whose underlying hardware port
-  # implementation cannot be safely called after ExitBootServices.
+  # runtime (after ExitBootServices). By default, hardware port writes remain disabled for an
+  # implementation that cannot be safely called after ExitBootServices. Set to FALSE for a
+  # platform where the hardware port implementation can safely be called after ExitBootServices.
   #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortOsRuntimeDisable|FALSE|BOOLEAN|0x0001018A
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortOsRuntimeDisable|TRUE|BOOLEAN|0x0001018A
 
 
 [PcdsFixedAtBuild]
