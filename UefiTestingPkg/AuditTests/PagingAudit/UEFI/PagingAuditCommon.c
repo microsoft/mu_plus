@@ -1606,7 +1606,7 @@ DumpPagingInfo (
   StringLength                  = 0;
 
   // Calculate the string size of the Loaded Image Table
-  Status = LoadedImageTableDump (TRUE, &StringLength);
+  Status = LoadedImageTableDump (FALSE, &StringLength);
 
   if (EFI_ERROR (Status) && (Status != EFI_NOT_STARTED)) {
     DEBUG ((DEBUG_ERROR, "%a - Error tabulating required string size for the loaded image info in the memory info database\n", __func__));
@@ -1649,6 +1649,9 @@ DumpPagingInfo (
     ASSERT (mMemoryInfoDatabaseBuffer != NULL);
     goto Cleanup;
   }
+
+  // Prevent a stale, non-zero offset from writing past the beginning of the buffer.
+  mMemoryInfoDatabaseSize = 0;
 
   if (mPteCounts[EntryGuard] > 0) {
     // Calculate the string size of the guard page entries
