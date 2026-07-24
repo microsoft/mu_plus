@@ -15,7 +15,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/MemoryProtectionDebug.h>
 #include <Protocol/MemoryAttribute.h>
 
-#include <Library/FileHandleLib.h>
 #include <Library/DxeServicesTableLib.h>
 #include <Library/FlatPageTableLib.h>
 #include <Library/UnitTestLib.h>
@@ -623,10 +622,10 @@ CanRegionBeRWX (
 }
 
 /**
- Locates and opens the SFS volume containing the application and, if successful, returns an
- FS handle to the opened volume.
+ Locates and opens the SFS volume that this application was loaded from and, if successful,
+ outputs an FS handle to the directory this application resides in.
 
-  @param    mFs_Handle       Handle to the opened volume.
+  @param[out]   FsHandle    Handle to the opened directory.
 
   @retval   EFI_SUCCESS     The FS volume was opened successfully.
   @retval   Others          The operation failed.
@@ -635,121 +634,77 @@ CanRegionBeRWX (
 STATIC
 EFI_STATUS
 OpenAppSFS (
-  OUT EFI_FILE  **Fs_Handle
+  OUT EFI_FILE  **FsHandle
   )
 {
-  EFI_DEVICE_PATH_PROTOCOL         *DevicePath;
-  BOOLEAN                          Found;
-  EFI_HANDLE                       Handle;
-  EFI_HANDLE                       *HandleBuffer;
-  UINTN                            Index;
-  UINTN                            NumHandles;
-  EFI_STRING                       PathNameStr;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SfProtocol;
   EFI_STATUS                       Status;
-  EFI_FILE_PROTOCOL                *FileHandle;
-  EFI_FILE_PROTOCOL                *FileHandle2;
+  EFI_LOADED_IMAGE_PROTOCOL        *LoadedImage;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SfProtocol;
+  EFI_FILE_PROTOCOL                *RootDir;
+  EFI_FILE_PROTOCOL                *DirHandle;
+  FILEPATH_DEVICE_PATH             *FilePathNode;
+  CHAR16                           *AppPath;
 
-  Status       = EFI_SUCCESS;
-  SfProtocol   = NULL;
-  NumHandles   = 0;
-  HandleBuffer = NULL;
-
-  //
-  // Locate all handles that are using the SFS protocol.
-  //
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiSimpleFileSystemProtocolGuid,
-                  NULL,
-                  &NumHandles,
-                  &HandleBuffer
+  Status = gBS->HandleProtocol (
+                  gImageHandle,
+                  &gEfiLoadedImageProtocolGuid,
+                  (VOID **)&LoadedImage
                   );
-
-  if (EFI_ERROR (Status) != FALSE) {
-    DEBUG ((DEBUG_ERROR, "%a: failed to locate all handles using the Simple FS protocol (%r)\n", __FUNCTION__, Status));
-    goto CleanUp;
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to locate Loaded Image protocol for this application: %r\n", __FUNCTION__, Status));
+    return Status;
   }
 
+  Status = gBS->HandleProtocol (
+                  LoadedImage->DeviceHandle,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  (VOID **)&SfProtocol
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to locate Simple FS protocol on the device this application was loaded from: %r\n", __FUNCTION__, Status));
+    return Status;
+  }
+
+  Status = SfProtocol->OpenVolume (SfProtocol, &RootDir);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to open the Simple FS volume this application was loaded from: %r\n", __FUNCTION__, Status));
+    return Status;
+  }
+
+  *FsHandle = (EFI_FILE *)RootDir;
+
   //
-  // Search the handles to find one that is on a GPT partition on a hard drive.
+  // Find the parent directory, so output is written to it instead of to the volume root.
   //
-  Found = FALSE;
-  for (Index = 0; (Index < NumHandles) && (Found == FALSE); Index += 1) {
-    DevicePath = DevicePathFromHandle (HandleBuffer[Index]);
-    if (DevicePath == NULL) {
-      continue;
-    }
+  if ((LoadedImage->FilePath == NULL) ||
+      (LoadedImage->FilePath->Type != MEDIA_DEVICE_PATH) ||
+      (LoadedImage->FilePath->SubType != MEDIA_FILEPATH_DP))
+  {
+    DEBUG ((DEBUG_WARN, "%a: This application's device path is not a file path. Using the volume root.\n", __FUNCTION__));
+    return EFI_SUCCESS;
+  }
 
-    //
-    // Convert the device path to a string to print it.
-    //
-    PathNameStr = ConvertDevicePathToText (DevicePath, TRUE, TRUE);
-    DEBUG ((DEBUG_ERROR, "%a: device path %d -> %s\n", __FUNCTION__, Index, PathNameStr));
+  FilePathNode = (FILEPATH_DEVICE_PATH *)LoadedImage->FilePath;
+  AppPath      = AllocateCopyPool (StrSize (FilePathNode->PathName), FilePathNode->PathName);
+  if (AppPath == NULL) {
+    DEBUG ((DEBUG_WARN, "%a: Failed to allocate memory for this application's path. Using the volume root.\n", __FUNCTION__));
+    return EFI_SUCCESS;
+  }
 
-    //
-    // Check if this is a block IO device path. If it is not, keep searching.
-    // This changes our locate device path variable, so we'll have to restore
-    // it afterwards.
-    //
-    Status = gBS->LocateDevicePath (
-                    &gEfiBlockIoProtocolGuid,
-                    &DevicePath,
-                    &Handle
-                    );
-
-    if (EFI_ERROR (Status) != FALSE) {
-      DEBUG ((DEBUG_ERROR, "%a: not a block IO device path\n", __FUNCTION__));
-      continue;
-    }
-
-    Status = gBS->HandleProtocol (
-                    HandleBuffer[Index],
-                    &gEfiSimpleFileSystemProtocolGuid,
-                    (VOID **)&SfProtocol
-                    );
-
-    if (EFI_ERROR (Status) != FALSE) {
-      DEBUG ((DEBUG_ERROR, "%a: Failed to locate Simple FS protocol using the handle to fs0: %r \n", __FUNCTION__, Status));
-      goto CleanUp;
-    }
-
-    //
-    // Open the volume/partition.
-    //
-    Status = SfProtocol->OpenVolume (SfProtocol, &FileHandle);
-    if (EFI_ERROR (Status) != FALSE) {
-      DEBUG ((DEBUG_ERROR, "%a: Failed to open Simple FS volume fs0: %r \n", __FUNCTION__, Status));
-      goto CleanUp;
-    }
-
-    //
-    // Ensure the PktName file is present
-    //
-    Status = FileHandle->Open (FileHandle, &FileHandle2, L"DxePagingAuditTestApp.efi", EFI_FILE_MODE_READ, 0);
+  if (PathRemoveLastItem (AppPath) && (StrCmp (AppPath, L"\\") != 0)) {
+    Status = RootDir->Open (RootDir, &DirHandle, AppPath, EFI_FILE_MODE_READ, 0);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "%a: Unable to locate %s. Status: %r\n", __FUNCTION__, L"DxePagingAuditTestApp.efi", Status));
-      Status = FileHandleClose (FileHandle);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "%a: Error closing Vol Handle. Code = %r\n", __FUNCTION__, Status));
-      }
-
-      Status = EFI_NOT_FOUND;
-      continue;
+      DEBUG ((DEBUG_WARN, "%a: Failed to open this application's directory %s: %r. Using the volume root.\n", __FUNCTION__, AppPath, Status));
     } else {
-      DEBUG ((DEBUG_ERROR, "%a: Located app device path\n", __FUNCTION__));
-      Status     = FileHandleClose (FileHandle2);
-      *Fs_Handle = (EFI_FILE *)FileHandle;
-      break;
+      RootDir->Close (RootDir);
+      RootDir = DirHandle;
     }
   }
 
-CleanUp:
-  if (HandleBuffer != NULL) {
-    FreePool (HandleBuffer);
-  }
+  FreePool (AppPath);
 
-  return Status;
+  *FsHandle = (EFI_FILE *)RootDir;
+  return EFI_SUCCESS;
 }
 
 // -------------------------
@@ -1230,7 +1185,7 @@ DxePagingAuditTestAppEntryPoint (
   UNIT_TEST_SUITE_HANDLE         Misc     = NULL;
   BOOLEAN                        RunTests = TRUE;
   EFI_SHELL_PARAMETERS_PROTOCOL  *ShellParams;
-  EFI_FILE                       *Fs_Handle;
+  EFI_FILE                       *FsHandle;
 
   DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
   DEBUG ((DEBUG_ERROR, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
@@ -1251,10 +1206,11 @@ DxePagingAuditTestAppEntryPoint (
     if (StrnCmp (ShellParams->Argv[1], L"-r", MAX_CHARS_TO_READ) == 0) {
       RunTests = TRUE;
     } else if (StrnCmp (ShellParams->Argv[1], L"-d", MAX_CHARS_TO_READ) == 0) {
-      Status = OpenAppSFS (&Fs_Handle);
+      Status = OpenAppSFS (&FsHandle);
 
       if (!EFI_ERROR ((Status))) {
-        DumpPagingInfo (Fs_Handle);
+        DumpPagingInfo (FsHandle);
+        FsHandle->Close (FsHandle);
       } else {
         DumpPagingInfo (NULL);
       }
