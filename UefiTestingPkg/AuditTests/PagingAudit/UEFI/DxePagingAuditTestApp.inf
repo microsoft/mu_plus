@@ -49,7 +49,6 @@
   DxeServicesTableLib
   UnitTestLib
   DxeMemoryProtectionHobLib
-  FileHandleLib
   FlatPageTableLib
   SafeIntLib
 
