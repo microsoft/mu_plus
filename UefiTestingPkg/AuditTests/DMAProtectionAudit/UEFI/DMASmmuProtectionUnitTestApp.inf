@@ -44,6 +44,7 @@
 
 [LibraryClasses]
   UefiApplicationEntryPoint
+  BaseLib
   DebugLib
   UnitTestLib
   UnitTestBootLib

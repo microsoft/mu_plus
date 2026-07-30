@@ -17,6 +17,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UnitTestLib.h>
@@ -66,8 +67,9 @@ CheckExcludedRegions (
   UINTN                        EfiDescriptorSize;
   UINT32                       EfiDescriptorVersion;
   EFI_ACPI_DESCRIPTION_HEADER  *IortTable;
-  RMRListNode                  *Head;
-  RMRListNode                  *Current;
+  LIST_ENTRY                   RmrList;
+  LIST_ENTRY                   *Link;
+  RMR_LIST_NODE                *RmrEntry;
   BOOLEAN                      Found;
   BOOLEAN                      FoundInMemoryMap;
   UINT32                       FoundMemoryType;
@@ -83,14 +85,13 @@ CheckExcludedRegions (
   //
   // Step 2: Get the RMR (Reserved Memory Range) nodes from IORT Table
   //
-  Head = GetIortAcpiTableRmrList (IortTable);
-  if (Head == NULL) {
+  InitializeListHead (&RmrList);
+  Status = GetIortAcpiTableRmrList (IortTable, &RmrList);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  if (IsListEmpty (&RmrList)) {
     UT_LOG_INFO ("No RMRs Found in IORT\n");
-    DEBUG ((DEBUG_INFO, "%a: No RMRs Found in IORT\n", __func__));
     return UNIT_TEST_PASSED;
   }
-
-  Current = Head;
 
   //
   // Step 3: Get the EFI memory map.
@@ -118,7 +119,6 @@ CheckExcludedRegions (
     UT_ASSERT_NOT_EFI_ERROR (Status);
   } else {
     UT_LOG_ERROR ("GetMemoryMap Failed\n");
-    DEBUG ((DEBUG_ERROR, "%a: GetMemoryMap Failed\n", __func__));
     TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
     UT_ASSERT_STATUS_EQUAL (Status, TestStatus);
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -131,19 +131,22 @@ CheckExcludedRegions (
   EfiMemoryMapEnd = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)EfiMemoryMap + EfiMemoryMapSize);
   TestStatus      = UNIT_TEST_PASSED;
 
-  while (Current != NULL) {
+  for (Link = GetFirstNode (&RmrList);
+       !IsNull (&RmrList, Link);
+       Link = GetNextNode (&RmrList, Link))
+  {
+    RmrEntry         = RMR_LIST_NODE_FROM_LINK (Link);
     Found            = FALSE;
     FoundInMemoryMap = FALSE;
     FoundMemoryType  = 0;
     EfiMemNext       = EfiMemoryMap;
 
-    UT_LOG_INFO ("Checking RMR region: Base=0x%lX, Length=0x%lX\n", Current->BaseAddress, Current->Length);
-    DEBUG ((DEBUG_INFO, "%a: Checking RMR region: Base=0x%lX, Length=0x%lX\n", __func__, Current->BaseAddress, Current->Length));
+    UT_LOG_INFO ("Checking RMR region: Base=0x%lX, Length=0x%lX\n", RmrEntry->BaseAddress, RmrEntry->Length);
 
     while (EfiMemNext < EfiMemoryMapEnd) {
       // Check if memory range fully encompasses RMR
-      if ((EfiMemNext->PhysicalStart <= Current->BaseAddress) &&
-          ((EfiMemNext->PhysicalStart + (EFI_PAGE_SIZE * EfiMemNext->NumberOfPages)) >= (Current->BaseAddress + Current->Length)))
+      if ((EfiMemNext->PhysicalStart <= RmrEntry->BaseAddress) &&
+          ((EfiMemNext->PhysicalStart + (EFI_PAGE_SIZE * EfiMemNext->NumberOfPages)) >= (RmrEntry->BaseAddress + RmrEntry->Length)))
       {
         FoundInMemoryMap = TRUE;
         FoundMemoryType  = EfiMemNext->Type;
@@ -154,14 +157,6 @@ CheckExcludedRegions (
           EFI_PAGE_SIZE * EfiMemNext->NumberOfPages,
           EfiMemNext->Type
           );
-        DEBUG ((
-          DEBUG_INFO,
-          "%a: Found encompassing memory range: Base=0x%lX, Length=0x%lX, Type=%d\n",
-          __func__,
-          EfiMemNext->PhysicalStart,
-          EFI_PAGE_SIZE * EfiMemNext->NumberOfPages,
-          EfiMemNext->Type
-          ));
 
         if ((EfiMemNext->Type == EfiReservedMemoryType) ||
             (EfiMemNext->Type == EfiRuntimeServicesData))
@@ -183,42 +178,34 @@ CheckExcludedRegions (
     if (!FoundInMemoryMap) {
       UT_LOG_INFO (
         "RMR region Base=0x%lX, Length=0x%lX was NOT found in the UEFI memory map\n",
-        Current->BaseAddress,
-        Current->Length
+        RmrEntry->BaseAddress,
+        RmrEntry->Length
         );
-      DEBUG ((
-        DEBUG_INFO,
-        "%a: RMR region Base=0x%lX, Length=0x%lX was NOT found in the UEFI memory map\n",
-        __func__,
-        Current->BaseAddress,
-        Current->Length
-        ));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
     }
 
     if (!Found) {
       UT_LOG_ERROR (
         "RMR between 0x%lX and 0x%lX NOT found with an acceptable memory type (Reserved or RuntimeServicesData)! Memory type found: %d\n",
-        Current->BaseAddress,
-        Current->BaseAddress + Current->Length,
+        RmrEntry->BaseAddress,
+        RmrEntry->BaseAddress + RmrEntry->Length,
         FoundMemoryType
         );
-      DEBUG ((
-        DEBUG_ERROR,
-        "%a: RMR between 0x%lX and 0x%lX NOT found with an acceptable memory type (Reserved or RuntimeServicesData)! Memory type found: %d\n",
-        __func__,
-        Current->BaseAddress,
-        Current->BaseAddress + Current->Length,
-        FoundMemoryType
-        ));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
     }
-
-    Current = Current->Next;
   }
 
   UT_LOG_INFO ("%a: Result=%d (%a)\n", __func__, TestStatus, (TestStatus == UNIT_TEST_PASSED) ? "PASSED" : "FAILED");
-  DEBUG ((DEBUG_INFO, "%a: Result=%d (%a)\n", __func__, TestStatus, (TestStatus == UNIT_TEST_PASSED) ? "PASSED" : "FAILED"));
+
+  //
+  // Free every RMR entry appended by GetIortAcpiTableRmrList.
+  //
+  while (!IsListEmpty (&RmrList)) {
+    Link     = GetFirstNode (&RmrList);
+    RmrEntry = RMR_LIST_NODE_FROM_LINK (Link);
+    RemoveEntryList (Link);
+    FreePool (RmrEntry);
+  }
 
   UT_ASSERT_STATUS_EQUAL (TestStatus, UNIT_TEST_PASSED);
   return TestStatus;
@@ -287,7 +274,6 @@ CheckIOMMUEnabled (
   //
   UT_ASSERT_TRUE (SmmuCount > 0);
   UT_LOG_INFO ("Found %d SMMUv3 units in IORT\n", SmmuCount);
-  DEBUG ((DEBUG_INFO, "%a: Found %d SMMUv3 units in IORT\n", __func__, SmmuCount));
 
   TestStatus = UNIT_TEST_PASSED;
 
@@ -302,21 +288,18 @@ CheckIOMMUEnabled (
   //
   for (Iterator = 0; Iterator < SmmuCount; Iterator++) {
     UT_LOG_INFO ("Checking SMMUv3 at base address 0x%lX\n", SmmuBaseAddresses[Iterator]);
-    DEBUG ((DEBUG_INFO, "%a: Checking SMMUv3 at base address 0x%lX\n", __func__, SmmuBaseAddresses[Iterator]));
 
     //
     // Read CR0 register
     //
     Cr0Value = MmioRead32 ((UINTN)(SmmuBaseAddresses[Iterator] + SMMU_CR0));
     UT_LOG_INFO ("CR0 Register Value: 0x%X\n", Cr0Value);
-    DEBUG ((DEBUG_INFO, "%a: CR0 Register Value: 0x%X\n", __func__, Cr0Value));
 
     //
     // Check SMMUEN bit (bit 0)
     //
     SmmuEnBit = Cr0Value & SMMU_CR0_SMMUEN;
     UT_LOG_INFO ("SMMUEN bit: %d\n", SmmuEnBit);
-    DEBUG ((DEBUG_INFO, "%a: SMMUEN bit: %d\n", __func__, SmmuEnBit));
     if (SmmuEnBit == 0) {
       //
       // SMMU translation is not enabled. The SMMU is still DMA-safe if it is
@@ -325,7 +308,6 @@ CheckIOMMUEnabled (
       GbpaValue = MmioRead32 ((UINTN)(SmmuBaseAddresses[Iterator] + SMMU_GBPA));
       AbortBit  = GbpaValue & SMMU_GBPA_ABORT;
       UT_LOG_INFO ("GBPA Register Value: 0x%X, ABORT bit: %d\n", GbpaValue, AbortBit ? 1 : 0);
-      DEBUG ((DEBUG_INFO, "%a: GBPA Register Value: 0x%X, ABORT bit: %d\n", __func__, GbpaValue, AbortBit ? 1 : 0));
 
       if (AbortBit != 0) {
         //
@@ -333,12 +315,10 @@ CheckIOMMUEnabled (
         // Skip the remaining translation-related checks for this SMMU.
         //
         UT_LOG_INFO ("SMMUEN is disabled but global abort (GBPA.ABORT) is set for SMMUv3 at base address 0x%lX. SMMU is DMA-safe.\n", SmmuBaseAddresses[Iterator]);
-        DEBUG ((DEBUG_INFO, "%a: SMMUEN is disabled but global abort (GBPA.ABORT) is set for SMMUv3 at base address 0x%lX. SMMU is DMA-safe.\n", __func__, SmmuBaseAddresses[Iterator]));
         continue;
       }
 
       UT_LOG_ERROR ("SMMUEN bit is disabled and global abort is not set for SMMUv3 at base address 0x%lX\n", SmmuBaseAddresses[Iterator]);
-      DEBUG ((DEBUG_ERROR, "%a: SMMUEN bit is disabled and global abort is not set for SMMUv3 at base address 0x%lX\n", __func__, SmmuBaseAddresses[Iterator]));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
       continue;
     }
@@ -348,10 +328,8 @@ CheckIOMMUEnabled (
     //
     CmdQEnBit = Cr0Value & SMMU_CR0_CMDQEN;
     UT_LOG_INFO ("CMDQEN bit: %d\n", CmdQEnBit ? 1 : 0);
-    DEBUG ((DEBUG_INFO, "%a: CMDQEN bit: %d\n", __func__, CmdQEnBit ? 1 : 0));
     if (CmdQEnBit == 0) {
       UT_LOG_ERROR ("CMDQEN bit is disabled for SMMUv3 at base address 0x%lX\n", SmmuBaseAddresses[Iterator]);
-      DEBUG ((DEBUG_ERROR, "%a: CMDQEN bit is disabled for SMMUv3 at base address 0x%lX\n", __func__, SmmuBaseAddresses[Iterator]));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
     }
 
@@ -360,10 +338,8 @@ CheckIOMMUEnabled (
     //
     EvtQEnBit = Cr0Value & SMMU_CR0_EVTQEN;
     UT_LOG_INFO ("EVTQEN bit: %d\n", EvtQEnBit ? 1 : 0);
-    DEBUG ((DEBUG_INFO, "%a: EVTQEN bit: %d\n", __func__, EvtQEnBit ? 1 : 0));
     if (EvtQEnBit == 0) {
       UT_LOG_ERROR ("EVTQEN bit is disabled for SMMUv3 at base address 0x%lX\n", SmmuBaseAddresses[Iterator]);
-      DEBUG ((DEBUG_ERROR, "%a: EVTQEN bit is disabled for SMMUv3 at base address 0x%lX\n", __func__, SmmuBaseAddresses[Iterator]));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
     }
 
@@ -373,15 +349,12 @@ CheckIOMMUEnabled (
     //
     StrTabBase = MmioRead64 ((UINTN)(SmmuBaseAddresses[Iterator] + SMMU_STRTAB_BASE));
     UT_LOG_INFO ("STRTAB_BASE Register Value: 0x%lX\n", StrTabBase);
-    DEBUG ((DEBUG_INFO, "%a: STRTAB_BASE Register Value: 0x%lX\n", __func__, StrTabBase));
 
     // Extract the address portion by masking out lower 6 bits (bits [5:0] are reserved/config)
     StrTabBaseAddr = StrTabBase & ~SMMU_STRTAB_BASE_ADDR_MASK;
     UT_LOG_INFO ("STRTAB_BASE Address: 0x%lX\n", StrTabBaseAddr);
-    DEBUG ((DEBUG_INFO, "%a: STRTAB_BASE Address: 0x%lX\n", __func__, StrTabBaseAddr));
     if (StrTabBaseAddr == 0) {
       UT_LOG_ERROR ("STRTAB_BASE is NULL for SMMUv3 at base address 0x%lX\n", SmmuBaseAddresses[Iterator]);
-      DEBUG ((DEBUG_ERROR, "%a: STRTAB_BASE is NULL for SMMUv3 at base address 0x%lX\n", __func__, SmmuBaseAddresses[Iterator]));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
     }
 
@@ -390,16 +363,17 @@ CheckIOMMUEnabled (
     //
     GError = MmioRead32 ((UINTN)(SmmuBaseAddresses[Iterator] + SMMU_GERROR));
     UT_LOG_INFO ("GERROR Register Value: 0x%X\n", GError);
-    DEBUG ((DEBUG_INFO, "%a: GERROR Register Value: 0x%X\n", __func__, GError));
     if (GError != 0) {
       UT_LOG_ERROR ("GERROR register is non-zero for SMMUv3 at base address 0x%lX\n", SmmuBaseAddresses[Iterator]);
-      DEBUG ((DEBUG_ERROR, "%a: GERROR register is non-zero for SMMUv3 at base address 0x%lX\n", __func__, SmmuBaseAddresses[Iterator]));
       TestStatus = UNIT_TEST_ERROR_TEST_FAILED;
     }
   }
 
   UT_LOG_INFO ("%a: Result=%d (%a)\n", __func__, TestStatus, (TestStatus == UNIT_TEST_PASSED) ? "PASSED" : "FAILED");
-  DEBUG ((DEBUG_INFO, "%a: Result=%d (%a)\n", __func__, TestStatus, (TestStatus == UNIT_TEST_PASSED) ? "PASSED" : "FAILED"));
+
+  // Free the SMMU base address array allocated by ParseIortAcpiTableSmmu.
+  FreePool (SmmuBaseAddresses);
+  SmmuBaseAddresses = NULL;
 
   UT_ASSERT_STATUS_EQUAL (TestStatus, UNIT_TEST_PASSED);
   return TestStatus;

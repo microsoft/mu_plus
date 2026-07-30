@@ -9,6 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <IndustryStandard/IoRemappingTable.h>
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 
@@ -121,43 +122,50 @@ ParseIortAcpiTableSmmu (
 }
 
 /**
-  Parse the IORT table to find all RMR (Reserved Memory Range) nodes
-  and return a linked list of memory ranges.
+  Parse the IORT table and append each Reserved Memory Range (RMR) descriptor
+  to the caller-provided doubly-linked list.
 
-  This function iterates through all nodes in the IORT table looking for
-  RMR nodes (type 0x6). For each RMR node found, it extracts all memory
-  range descriptors and adds them to the returned linked list.
+  This function iterates through all nodes in the IORT table looking for RMR
+  nodes (type 0x6). For each RMR node found, every valid memory range
+  descriptor (non-zero base and length) is wrapped in an RMR_LIST_NODE and
+  appended to RmrList via InsertTailList.
 
-  @param[in] IortTable          Pointer to the IORT table.
+  The caller must have initialized RmrList (e.g. with InitializeListHead)
+  before calling this function, and is responsible for freeing every appended
+  entry (e.g. via RemoveEntryList + FreePool) when done. Entries appended
+  before an EFI_OUT_OF_RESOURCES return must also be freed.
 
-  @retval Pointer to head of linked list of RMR entries, or NULL if none found.
+  @param[in]     IortTable  Pointer to the IORT table.
+  @param[in,out] RmrList    List head to append RMR entries to.
+
+  @retval EFI_SUCCESS           IORT was parsed; RmrList may be empty if there
+                                are no RMR nodes.
+  @retval EFI_INVALID_PARAMETER IortTable or RmrList is NULL.
+  @retval EFI_OUT_OF_RESOURCES  Failed to allocate an RMR_LIST_NODE. Any entries
+                                appended before the failure remain in RmrList.
 **/
-RMRListNode *
+EFI_STATUS
 EFIAPI
 GetIortAcpiTableRmrList (
-  IN EFI_ACPI_DESCRIPTION_HEADER  *IortTable
+  IN     EFI_ACPI_DESCRIPTION_HEADER  *IortTable,
+  IN OUT LIST_ENTRY                   *RmrList
   )
 {
   EFI_ACPI_6_0_IO_REMAPPING_TABLE           *Iort;
   EFI_ACPI_6_0_IO_REMAPPING_NODE            *Node;
   EFI_ACPI_6_0_IO_REMAPPING_RMR_NODE        *RmrNode;
   EFI_ACPI_6_0_IO_REMAPPING_MEM_RANGE_DESC  *MemRangeDesc;
-  RMRListNode                               *Head;
-  RMRListNode                               *Current;
-  RMRListNode                               *NewNode;
+  RMR_LIST_NODE                             *NewNode;
   UINT32                                    Count;
   UINT32                                    MemRangeIndex;
 
-  if (IortTable == NULL) {
-    DEBUG ((DEBUG_ERROR, "%a: IORT table not available\n", __func__));
-    return NULL;
+  if ((IortTable == NULL) || (RmrList == NULL)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter\n", __func__));
+    return EFI_INVALID_PARAMETER;
   }
 
   Iort = (EFI_ACPI_6_0_IO_REMAPPING_TABLE *)IortTable;
   Node = (EFI_ACPI_6_0_IO_REMAPPING_NODE *)((UINT8 *)Iort + Iort->NodeOffset);
-
-  Head    = NULL;
-  Current = NULL;
 
   // Iterate through all nodes looking for RMR nodes
   for (Count = 0; Count < Iort->NumNodes; Count++) {
@@ -172,25 +180,18 @@ GetIortAcpiTableRmrList (
       for (MemRangeIndex = 0; MemRangeIndex < RmrNode->NumMemRangeDesc; MemRangeIndex++) {
         // Only add valid ranges (non-zero base and length)
         if ((MemRangeDesc[MemRangeIndex].Base > 0) && (MemRangeDesc[MemRangeIndex].Length > 0)) {
-          NewNode = AllocateZeroPool (sizeof (RMRListNode));
+          NewNode = AllocateZeroPool (sizeof (RMR_LIST_NODE));
           if (NewNode == NULL) {
-            DEBUG ((DEBUG_ERROR, "%a: Failed to allocate RMRListNode\n", __func__));
-            // Return what we have so far
-            return Head;
+            DEBUG ((DEBUG_ERROR, "%a: Failed to allocate RMR_LIST_NODE\n", __func__));
+            // Leave already-appended entries in RmrList; caller must free them.
+            return EFI_OUT_OF_RESOURCES;
           }
 
+          NewNode->Signature   = RMR_LIST_NODE_SIGNATURE;
           NewNode->BaseAddress = MemRangeDesc[MemRangeIndex].Base;
           NewNode->Length      = MemRangeDesc[MemRangeIndex].Length;
-          NewNode->Next        = NULL;
 
-          // Add to linked list
-          if (Head == NULL) {
-            Head    = NewNode;
-            Current = NewNode;
-          } else {
-            Current->Next = NewNode;
-            Current       = NewNode;
-          }
+          InsertTailList (RmrList, &NewNode->Link);
         }
       }
     }
@@ -199,5 +200,5 @@ GetIortAcpiTableRmrList (
     Node = (EFI_ACPI_6_0_IO_REMAPPING_NODE *)((UINT8 *)Node + Node->Length);
   }
 
-  return Head;
+  return EFI_SUCCESS;
 }

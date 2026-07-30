@@ -45,13 +45,21 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define SMMU_STRTAB_BASE_ADDR_MASK  0x3FULL
 
 //
-// RMR List Node Structure for tracking Reserved Memory Ranges
+// Signature and structure used to track Reserved Memory Ranges (RMRs) parsed
+// from the IORT. Nodes are linked into a doubly-linked list rooted at a
+// caller-provided LIST_ENTRY head. Use RMR_LIST_NODE_FROM_LINK() to recover
+// the containing RMR_LIST_NODE from a LIST_ENTRY *.
 //
-typedef struct _RMRListNode {
-  UINT64                 BaseAddress;
-  UINT64                 Length;
-  struct _RMRListNode    *Next;
-} RMRListNode;
+#define RMR_LIST_NODE_SIGNATURE  SIGNATURE_32 ('R', 'M', 'R', 'N')
+
+typedef struct {
+  UINT32        Signature;
+  LIST_ENTRY    Link;
+  UINT64        BaseAddress;
+  UINT64        Length;
+} RMR_LIST_NODE;
+
+#define RMR_LIST_NODE_FROM_LINK(a)  CR (a, RMR_LIST_NODE, Link, RMR_LIST_NODE_SIGNATURE)
 
 //
 // Function Prototypes
@@ -94,16 +102,31 @@ ParseIortAcpiTableSmmu (
   );
 
 /**
-  Parse the IORT table to find all RMR (Reserved Memory Range) nodes.
+  Parse the IORT table and append each Reserved Memory Range (RMR) descriptor
+  to the caller-provided doubly-linked list.
 
-  @param[in] IortTable          Pointer to the IORT table.
+  Each entry appended is an RMR_LIST_NODE. The caller is responsible for:
+    - Initializing RmrList (e.g. via InitializeListHead) before calling.
+    - Freeing every appended RMR_LIST_NODE (e.g. via RemoveEntryList + FreePool)
+      when done. Entries appended before an error return must also be freed.
 
-  @retval Pointer to head of linked list of RMR entries, or NULL if none found.
+  If no RMR nodes are found, EFI_SUCCESS is returned and RmrList is left empty
+  (IsListEmpty returns TRUE).
+
+  @param[in]     IortTable  Pointer to the IORT table.
+  @param[in,out] RmrList    List head to append RMR entries to.
+
+  @retval EFI_SUCCESS           IORT was parsed; RmrList may be empty if there
+                                are no RMR nodes.
+  @retval EFI_INVALID_PARAMETER IortTable or RmrList is NULL.
+  @retval EFI_OUT_OF_RESOURCES  Failed to allocate an RMR_LIST_NODE. Any entries
+                                appended before the failure remain in RmrList.
 **/
-RMRListNode *
+EFI_STATUS
 EFIAPI
 GetIortAcpiTableRmrList (
-  IN EFI_ACPI_DESCRIPTION_HEADER  *IortTable
+  IN     EFI_ACPI_DESCRIPTION_HEADER  *IortTable,
+  IN OUT LIST_ENTRY                   *RmrList
   );
 
 #endif // _DMA_PROTECTION_H_
