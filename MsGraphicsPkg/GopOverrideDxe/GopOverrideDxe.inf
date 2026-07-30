@@ -37,10 +37,9 @@
   UefiBootServicesTableLib
   PcdLib
 
-[Guids]
-
 [Protocols]
-  gEfiGraphicsOutputProtocolGuid    # CONSUMES
+  gEfiGraphicsOutputProtocolGuid                       ## CONSUMES
+  gMsGopOverrideDriverBindingMarkerProtocolGuid        ## PRODUCES
 
 [Pcd]
   gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
