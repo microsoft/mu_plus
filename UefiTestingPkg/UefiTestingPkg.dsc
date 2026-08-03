@@ -156,6 +156,7 @@
   # NOTE: These currently have source files that are only implemented for AARCH64.
   #       If needed on X86, should port (and test) the functions.
   UefiTestingPkg/FunctionalSystemTests/MpManagement/Driver/MpManagement.inf
+  UefiTestingPkg/AuditTests/DMAProtectionAudit/UEFI/DMASmmuProtectionUnitTestApp.inf
 
 [BuildOptions]
 #force deprecated interfaces off

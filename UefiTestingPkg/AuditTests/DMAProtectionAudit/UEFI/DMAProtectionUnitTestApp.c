@@ -348,6 +348,8 @@ CheckBMETeardown (
                     );
   }
 
+  UT_LOG_INFO ("PASSED: BME test.\n");
+
   return UNIT_TEST_PASSED;
 } // CheckBMETeardown()
 
@@ -418,8 +420,8 @@ DMAProtectionUnitTestApp (
   }
 
   AddTestCase (IommuTests, "All Hardware Definition Units Have IOMMU Enabled", "IOMMU.StatusRegister", CheckIOMMUEnabled, NULL, NULL, NULL);
-  AddTestCase (IommuTests, "BME Teardown at ExitBootServices", "IOMMU.BMETeardown", CheckBMETeardown, NULL, NULL, BMEContext);
   AddTestCase (IommuTests, "Verify excluded ranges are marked reserved", "IOMMU.ExcludedRangeTest", CheckExcludedRegions, NULL, NULL, NULL);
+  AddTestCase (IommuTests, "BME Teardown at ExitBootServices", "IOMMU.BMETeardown", CheckBMETeardown, NULL, NULL, BMEContext);
 
   //
   // Execute the tests.
