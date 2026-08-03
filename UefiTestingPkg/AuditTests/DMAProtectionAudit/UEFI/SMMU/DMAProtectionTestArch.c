@@ -9,8 +9,7 @@ This file contains architecture specific DMA protection tests for ARM SMMU (SMMU
 4) Check that Stream Table Base is configured (STRTAB_BASE is not NULL)
 5) Check that GERROR register is 0 (no global errors)
 6) Check RMR (Reserved Memory Range) regions from IORT are found in the EFI memory map
-   and marked with an acceptable memory type (EfiReservedMemoryType or
-   EfiRuntimeServicesData).
+   and marked with an acceptable memory type (EfiReservedMemoryType)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -42,7 +41,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   For each RMR region, the test verifies that:
     1) An EFI memory map descriptor fully encompasses the RMR region, and
     2) That descriptor's memory type is acceptable, i.e. EfiReservedMemoryType
-       or EfiRuntimeServicesData.
 
   If an RMR region is not found in the memory map, or is found but is not one of
   the acceptable memory types, the test fails.
@@ -158,9 +156,7 @@ CheckExcludedRegions (
           EfiMemNext->Type
           );
 
-        if ((EfiMemNext->Type == EfiReservedMemoryType) ||
-            (EfiMemNext->Type == EfiRuntimeServicesData))
-        {
+        if (EfiMemNext->Type == EfiReservedMemoryType) {
           Found = TRUE;
         }
 
@@ -186,7 +182,7 @@ CheckExcludedRegions (
 
     if (!Found) {
       UT_LOG_ERROR (
-        "RMR between 0x%lX and 0x%lX NOT found with an acceptable memory type (Reserved or RuntimeServicesData)! Memory type found: %d\n",
+        "RMR between 0x%lX and 0x%lX NOT found with an acceptable memory type (Reserved)! Memory type found: %d\n",
         RmrEntry->BaseAddress,
         RmrEntry->BaseAddress + RmrEntry->Length,
         FoundMemoryType
