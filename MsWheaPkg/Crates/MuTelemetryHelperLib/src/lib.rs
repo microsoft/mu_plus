@@ -34,11 +34,14 @@
 //!
 #![cfg_attr(target_os = "uefi", no_std)]
 
-use patina::boot_services::{BootServices, StandardBootServices};
-use patina::pi::protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue};
-use patina::pi::status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR};
-use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
-use patina::{base::guid::BinaryGuid, guids};
+use patina::{
+    BinaryGuid, Guid, guid,
+    pi::{
+        protocol::status_code::{EfiStatusCodeType, EfiStatusCodeValue, StatusCodeProtocol},
+        status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR},
+    },
+    uefi::boot_services::{BootServices, StandardBootServices},
+};
 use r_efi::efi;
 
 static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
@@ -130,15 +133,15 @@ fn log_telemetry_internal<B: BootServices>(
         if is_fatal { MS_WHEA_ERROR_STATUS_TYPE_FATAL } else { MS_WHEA_ERROR_STATUS_TYPE_INFO };
 
     let error_data = MsWheaRscInternalErrorData {
-        library_id: *library_id.unwrap_or(guids::ZERO.as_efi_guid()),
-        ihv_sharing_guid: *ihv_id.unwrap_or(guids::ZERO.as_efi_guid()),
+        library_id: *library_id.unwrap_or(&Guid::ZERO.to_efi_guid()),
+        ihv_sharing_guid: *ihv_id.unwrap_or(&Guid::ZERO.to_efi_guid()),
         additional_info1: extra_data1,
         additional_info2: extra_data2,
     };
 
-    let protocol = unsafe { boot_services.locate_protocol::<StatusCodeRuntimeProtocol>(None)? };
+    let protocol = unsafe { boot_services.locate_protocol::<StatusCodeProtocol>(None)? };
 
-    let caller_id = component_id.unwrap_or(guids::CALLER_ID.as_efi_guid());
+    let caller_id = component_id.unwrap_or(guid::CALLER_ID.as_efi_guid());
 
     protocol.report_status_code_with_data(
         status_code_type,
@@ -157,17 +160,19 @@ pub fn init_telemetry(efi_boot_services: *mut efi::BootServices) {
 
 #[cfg(test)]
 mod test {
-    use patina::base::guid::BinaryGuid;
-    use patina::boot_services::MockBootServices;
-    use patina::pi::protocols::{
-        status_code,
-        status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue},
+    use patina::{
+        BinaryGuid,
+        pi::protocol::{
+            status_code,
+            status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue},
+        },
+        uefi::boot_services::MockBootServices,
     };
     use r_efi::efi;
 
     use crate::{MS_WHEA_ERROR_STATUS_TYPE_FATAL, MsWheaRscInternalErrorData, log_telemetry_internal};
     use core::mem::size_of;
-    use patina::uefi_protocol::status_code::StatusCodeRuntimeProtocol;
+    use patina::pi::protocol::status_code::StatusCodeProtocol;
 
     const DATA_SIZE: usize = size_of::<EfiStatusCodeData>() + size_of::<MsWheaRscInternalErrorData>();
     const MOCK_CALLER_ID: efi::Guid = BinaryGuid::from_string("d0d1d2d3-d4d5-d6d7-d8d9-dadbdcdddedf").into_inner();
@@ -186,9 +191,9 @@ mod test {
         if r#type == MS_WHEA_ERROR_STATUS_TYPE_FATAL { efi::Status::SUCCESS } else { efi::Status::INVALID_PARAMETER }
     }
 
-    static MOCK_STATUS_CODE_RUNTIME_INTERFACE: status_code::Protocol = {
+    static MOCK_STATUS_CODE_RUNTIME_INTERFACE: status_code::StatusCodeProtocol = {
         let f: status_code::ReportStatusCode = mock_report_status_code;
-        status_code::Protocol { report_status_code: f }
+        status_code::StatusCodeProtocol { report_status_code: f }
     };
 
     #[test]
@@ -197,7 +202,8 @@ mod test {
 
         mock_boot_services.expect_locate_protocol().returning(|registration| unsafe {
             assert_eq!(registration, None);
-            Ok((&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::Protocol as *mut StatusCodeRuntimeProtocol)
+            Ok((&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::StatusCodeProtocol
+                as *mut StatusCodeProtocol)
                 .as_mut()
                 .unwrap())
         });
@@ -237,7 +243,7 @@ mod test {
     fn test_protocol_not_found() {
         let mut mock_boot_services: MockBootServices = MockBootServices::new();
 
-        mock_boot_services.expect_locate_protocol::<StatusCodeRuntimeProtocol>().returning(|registration| {
+        mock_boot_services.expect_locate_protocol::<StatusCodeProtocol>().returning(|registration| {
             assert_eq!(registration, None);
             //Simulate "marker protocol" without an Interface
             Err(efi::Status::NOT_FOUND)
