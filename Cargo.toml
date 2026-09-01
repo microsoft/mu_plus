@@ -26,4 +26,4 @@ RustAdvancedLoggerDxe = { path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe" }
 RustBootServicesAllocatorDxe = { path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe" }
 rustversion = "1.0.14"
 scroll = { version = "0.13", default-features = false, features = ["derive"] }
-spin = "0.10.0"
+spin = "0.12.3"
