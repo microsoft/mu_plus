@@ -82,7 +82,7 @@ AddEvent (
   HashAlgo     = TcgPcrEvent2->Digest.digests[0].hashAlg;
   DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest.digests[0].digest;
   for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
-    DigestSize = GetHashSizeFromAlgo (HashAlgo);
+    DigestSize = Tpm2GetHashSizeFromAlgo (HashAlgo);
     //
     // Prepare next
     //
@@ -128,7 +128,7 @@ GetPcrEvent2Size (
   HashAlgo     = TcgPcrEvent2->Digest.digests[0].hashAlg;
   DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest.digests[0].digest;
   for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
-    DigestSize = GetHashSizeFromAlgo (HashAlgo);
+    DigestSize = Tpm2GetHashSizeFromAlgo (HashAlgo);
     //
     // Prepare next
     //

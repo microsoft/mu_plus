@@ -193,7 +193,7 @@ New_NodeInList (
     HashAlgo     = Digest->digests[0].hashAlg;
     DigestBuffer = (UINT8 *)Digest->digests[0].digest.sha1;
     for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
-      DigestSize   = GetHashSizeFromAlgo (HashAlgo);
+      DigestSize   = Tpm2GetHashSizeFromAlgo (HashAlgo);
       *AsciiString = '\0';
       // convert the data into hex bytes
       if (DigestSize * 2 > MAX_STRING_LENGTH) {
