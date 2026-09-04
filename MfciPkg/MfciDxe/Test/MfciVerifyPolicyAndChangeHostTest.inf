@@ -63,3 +63,7 @@
   gMuVarPolicyDxePhaseGuid            ## CONSUMES
   gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES ## GUID ## Variable namespace
   gMfciPolicyChangeResetGuid          ## CONSUMES
+
+[BuildOptions]
+  MSFT:*_*_*_CC_FLAGS = /DCpuDeadLoop=MockCpuDeadLoop
+  GCC:*_*_*_CC_FLAGS = -D CpuDeadLoop=MockCpuDeadLoop

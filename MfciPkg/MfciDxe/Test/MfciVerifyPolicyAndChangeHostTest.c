@@ -91,6 +91,16 @@ EFI_RUNTIME_SERVICES  mMockRuntime = {
 };
 
 extern BOOLEAN  mVarPolicyRegistered;
+BOOLEAN         mCpuDeadLoopCalled;
+
+VOID
+EFIAPI
+MockCpuDeadLoop (
+  VOID
+  )
+{
+  mCpuDeadLoopCalled = TRUE;
+}
 
 typedef struct {
   UINT64              Nonce;
@@ -313,6 +323,7 @@ VerifyPrerequisite (
 {
   mCurrentMfciVerify   = Context;
   mVarPolicyRegistered = TRUE;
+  mCpuDeadLoopCalled   = FALSE;
   return UNIT_TEST_PASSED;
 }
 
@@ -330,8 +341,7 @@ UnitTestVerifyAndChangeNormal (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINTN                     Index;
-  BASE_LIBRARY_JUMP_BUFFER  JumpBuf;
+  UINTN  Index;
 
   expect_any_always (UnitTestSetVariable, VariableName);
   expect_any_always (UnitTestSetVariable, Data);
@@ -405,11 +415,9 @@ UnitTestVerifyAndChangeNormal (
 
   expect_value (ResetSystemWithSubtype, ResetType, EfiResetCold);
   expect_value (ResetSystemWithSubtype, ResetSubtype, &gMfciPolicyChangeResetGuid);
-  will_return (ResetSystemWithSubtype, &JumpBuf);
 
-  if (!SetJump (&JumpBuf)) {
-    VerifyPolicyAndChange (NULL, NULL);
-  }
+  VerifyPolicyAndChange (NULL, NULL);
+  UT_ASSERT_TRUE (mCpuDeadLoopCalled);
 
   return UNIT_TEST_PASSED;
 }
@@ -421,8 +429,7 @@ UnitTestVerifyAndChangeEmptyCurrent (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINTN                     Index;
-  BASE_LIBRARY_JUMP_BUFFER  JumpBuf;
+  UINTN  Index;
 
   expect_any_always (UnitTestSetVariable, VariableName);
   expect_any_always (UnitTestSetVariable, Data);
@@ -468,11 +475,9 @@ UnitTestVerifyAndChangeEmptyCurrent (
 
   expect_value (ResetSystemWithSubtype, ResetType, EfiResetCold);
   expect_value (ResetSystemWithSubtype, ResetSubtype, &gMfciPolicyChangeResetGuid);
-  will_return (ResetSystemWithSubtype, &JumpBuf);
 
-  if (!SetJump (&JumpBuf)) {
-    VerifyPolicyAndChange (NULL, NULL);
-  }
+  VerifyPolicyAndChange (NULL, NULL);
+  UT_ASSERT_TRUE (mCpuDeadLoopCalled);
 
   return UNIT_TEST_PASSED;
 }
@@ -709,7 +714,7 @@ UnitTestVerifyAndChangePurgeWrongTarget (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINTN  Nonce = 0;
+  UINT64  Nonce = 0;
 
   expect_memory (UnitTestGetVariable, VariableName, NEXT_MFCI_NONCE_VARIABLE_NAME, sizeof (NEXT_MFCI_NONCE_VARIABLE_NAME));
   will_return (UnitTestGetVariable, TRUE);

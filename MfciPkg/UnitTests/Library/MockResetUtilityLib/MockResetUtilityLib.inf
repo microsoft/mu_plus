@@ -2,25 +2,18 @@
 # Unit tests of the DxeResetSystemLib instance of the ResetSystemLib class
 #
 #  This mocked version library provides interfaces based on cmocka
-#  implementation to inspect input arguments and perform "mocked"
-#  reset operations through long jump.
+#  implementation to inspect input arguments and return without resetting.
 #
 #  For unit tests regarding routines that expects the target system
-#  to reset when the logic is fully fulfilled, this library instance
-#  can be used for host based test to return the tested routine early.
-#
-#  To consume this library from host based unit tests, the unit test
-#  caller need to setup long jump buffer prior to test routine.
+#  to reset when the logic is fully fulfilled, this library instance can be
+#  combined with a returning CpuDeadLoop mock so the tested routine returns.
 #
 #  i.e.:
 #  ```
 #    expect_value (ResetSystemWithSubtype, ResetType, EfiResetCold);
 #    expect_value (ResetSystemWithSubtype, ResetSubtype, &gMfciPolicyChangeResetGuid);
-#    will_return (ResetSystemWithSubtype, &JumpBuf);
 #
-#    if (!SetJump (&JumpBuf)) {
-#      TestRoutine ();
-#    }
+#    TestRoutine ();
 #  ```
 #
 # Copyright (C) Microsoft Corporation.

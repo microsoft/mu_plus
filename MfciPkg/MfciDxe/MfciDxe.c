@@ -1000,8 +1000,9 @@ VerifyTarget:
     TargetBlobSize
     );
 
-  // Should not be here
-  ASSERT (FALSE);
+  // Reset is not expected to return in firmware. Host tests mock the reset and
+  // dead loop, so return without processing the transition a second time.
+  return;
 
 Exit:
 

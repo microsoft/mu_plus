@@ -14,7 +14,6 @@
 #include <cmocka.h>
 
 #include <Uefi.h>
-#include <Library/BaseLib.h>
 #include <Library/UnitTestLib.h>
 #include <Library/ResetUtilityLib.h>
 
@@ -42,14 +41,8 @@ ResetSystemWithSubtype (
   IN CONST  GUID     *ResetSubtype
   )
 {
-  BASE_LIBRARY_JUMP_BUFFER  *JumpBuf;
-
   assert_non_null (ResetSubtype);
 
   check_expected (ResetType);
   check_expected_ptr (ResetSubtype);
-
-  JumpBuf = (BASE_LIBRARY_JUMP_BUFFER *)mock ();
-
-  LongJump (JumpBuf, 1);
 }
