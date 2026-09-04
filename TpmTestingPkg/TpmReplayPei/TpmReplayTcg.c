@@ -56,7 +56,7 @@ UnpackTpmlDigestValues (
     UnpackedValues->digests[HaIndex].hashAlg = TempPackedHa->hashAlg;
     *PackedSize                             += sizeof (TempPackedHa->hashAlg);
 
-    AlgorithmSize = GetHashSizeFromAlgo (TempPackedHa->hashAlg);
+    AlgorithmSize = Tpm2GetHashSizeFromAlgo (TempPackedHa->hashAlg);
     if (AlgorithmSize == 0) {
       DEBUG ((
         DEBUG_ERROR,
@@ -343,7 +343,7 @@ DumpEvent (
   for (Index = 0; Index < UnpackedEvent.Digest.count; Index++) {
     DEBUG ((DEBUG_ERROR, "[%a] -   Digest[%d]\n", __FUNCTION__, Index));
 
-    DigestSize = GetHashSizeFromAlgo (UnpackedEvent.Digest.digests[Index].hashAlg);
+    DigestSize = Tpm2GetHashSizeFromAlgo (UnpackedEvent.Digest.digests[Index].hashAlg);
     ASSERT (DigestSize != 0);
 
     if (DigestSize != 0) {
@@ -399,7 +399,7 @@ GetPcrEvent2Size (
   HashAlgo     = TcgPcrEvent2->Digest.digests[0].hashAlg;
   DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest.digests[0].digest;
   for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
-    DigestSize = GetHashSizeFromAlgo (HashAlgo);
+    DigestSize = Tpm2GetHashSizeFromAlgo (HashAlgo);
     //
     // Prepare next
     //

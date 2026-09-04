@@ -1,7 +1,7 @@
 /** @file
   This module implements Tcg2 Protocol.
 
-Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2015 - 2024, Intel Corporation. All rights reserved.<BR>
 (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -15,6 +15,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/GlobalVariable.h>
 #include <Guid/HobList.h>
 #include <Guid/TcgEventHob.h>
+#include <Guid/Tcg2EventLogScaled.h>
 #include <Guid/EventGroup.h>
 #include <Guid/EventExitBootServiceFailed.h>
 #include <Guid/ImageAuthentication.h>
@@ -39,7 +40,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/Tpm2CommandLib.h>
-#include <Library/Tpm2HelpLib.h> // MU_CHANGE
+#include <Library/Tpm2HelpLib.h>
 #include <Library/PcdLib.h>
 #include <Library/UefiLib.h>
 #include <Library/Tpm2DeviceLib.h>
@@ -47,13 +48,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PerformanceLib.h>
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/Tcg2PhysicalPresenceLib.h>
-// MS_CHANGE_23086
-// MSChange [BEGIN] - Add the OemTpm2InitLib
+// MU_CHANGE_23086
+// MU_CHANGE [BEGIN] - Add the OemTpm2InitLib
 #include <Library/OemTpm2InitLib.h>
-// MSChange [END]
-
-// #define PERF_ID_TCG2_DXE  0x3120 // MS_CHANGE
-
+// MU_CHANGE [END]
 // MU_CHANGE [BEGIN] - Measure Firmware Debugger Enabled
 #include <Library/DeviceStateLib.h>
 #include <Library/PanicLib.h>
@@ -87,6 +85,13 @@ TCG2_EVENT_INFO_STRUCT  mTcg2EventInfo[] = {
 
 #define TCG_EVENT_LOG_AREA_COUNT_MAX  2
 
+// Maximum number of times the TCG event log can be dynamically scaled
+// before the log is considered truncated.
+#define TCG_EVENT_LOG_MAX_SCALE_COUNT  4
+
+// Payload written as the last event of the FinalEventLog when it becomes truncated.
+#define TCG_LOG_TRUNCATION_EVENT_STRING  "TCG Event Log Truncated"
+
 typedef struct {
   EFI_TCG2_EVENT_LOG_FORMAT    EventLogFormat;
   EFI_PHYSICAL_ADDRESS         Lasa;
@@ -96,14 +101,25 @@ typedef struct {
   BOOLEAN                      EventLogStarted;
   BOOLEAN                      EventLogTruncated;
   UINTN                        Next800155EventOffset;
+  UINTN                        ScaleCount;
 } TCG_EVENT_LOG_AREA_STRUCT;
 
+// Mapping of TPM return status to BIOS/OS TPM support and related flags (TPMPresentFlag, TpmUpdateFlag)
+// +-------------------+---------------------+-------------------+----------------+---------------+
+// | TPM Return Status | Support TPM in BIOS | Support TPM in OS | TPMPresentFlag | TpmUpdateFlag |
+// |-------------------|---------------------|-------------------|----------------|---------------|
+// | SUCCESS           | YES                 | YES               | TRUE           | FALSE         |
+// | FIELD_UPGRADE     | YES                 | NO                | FALSE          | TRUE          |
+// | Other FAIL        | NO                  | NO                | FALSE          | FALSE         |
+// +-------------------+---------------------+-------------------+----------------+---------------+
 typedef struct _TCG_DXE_DATA {
   EFI_TCG2_BOOT_SERVICE_CAPABILITY    BsCap;
+  BOOLEAN                             TpmUpdateFlag;
   TCG_EVENT_LOG_AREA_STRUCT           EventLogAreaStruct[TCG_EVENT_LOG_AREA_COUNT_MAX];
   BOOLEAN                             GetEventLogCalled[TCG_EVENT_LOG_AREA_COUNT_MAX];
   TCG_EVENT_LOG_AREA_STRUCT           FinalEventLogAreaStruct[TCG_EVENT_LOG_AREA_COUNT_MAX];
   EFI_TCG2_FINAL_EVENTS_TABLE         *FinalEventsTable[TCG_EVENT_LOG_AREA_COUNT_MAX];
+  TCG_EVENT_LOG_AREA_STRUCT           AcpiEventLogAreaStruct[TCG_EVENT_LOG_AREA_COUNT_MAX];
 } TCG_DXE_DATA;
 
 TCG_DXE_DATA  mTcgDxeData = {
@@ -120,6 +136,7 @@ TCG_DXE_DATA  mTcgDxeData = {
     0,                                         // NumberOfPCRBanks
     0,                                         // ActivePcrBanks
   },
+  FALSE,
 };
 
 UINTN   mBootAttempts  = 0;
@@ -134,6 +151,7 @@ VARIABLE_TYPE  mVariableType[] = {
 };
 
 EFI_HANDLE  mImageHandle;
+BOOLEAN     mReadyToBoot = FALSE;
 
 /**
   Measure PE image into TPM log based on the authenticode image hashing in
@@ -216,35 +234,35 @@ InitNoActionEvent (
   if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SHA1) != 0) {
     HashAlgId = TPM_ALG_SHA1;
     CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
+    DigestBuffer += sizeof (TPMI_ALG_HASH) + Tpm2GetHashSizeFromAlgo (HashAlgId);
     DigestListCount++;
   }
 
   if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SHA256) != 0) {
     HashAlgId = TPM_ALG_SHA256;
     CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
+    DigestBuffer += sizeof (TPMI_ALG_HASH) + Tpm2GetHashSizeFromAlgo (HashAlgId);
     DigestListCount++;
   }
 
   if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SHA384) != 0) {
     HashAlgId = TPM_ALG_SHA384;
     CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
+    DigestBuffer += sizeof (TPMI_ALG_HASH) + Tpm2GetHashSizeFromAlgo (HashAlgId);
     DigestListCount++;
   }
 
   if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SHA512) != 0) {
     HashAlgId = TPM_ALG_SHA512;
     CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
+    DigestBuffer += sizeof (TPMI_ALG_HASH) + Tpm2GetHashSizeFromAlgo (HashAlgId);
     DigestListCount++;
   }
 
   if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SM3_256) != 0) {
     HashAlgId = TPM_ALG_SM3_256;
     CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
+    DigestBuffer += sizeof (TPMI_ALG_HASH) + Tpm2GetHashSizeFromAlgo (HashAlgId);
     DigestListCount++;
   }
 
@@ -563,7 +581,7 @@ DumpEvent2 (
   for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
     DEBUG ((DEBUG_SECURITY, "      HashAlgo : 0x%04x\n", HashAlgo));
     DEBUG ((DEBUG_SECURITY, "      Digest(%d): ", DigestIndex));
-    DigestSize = GetHashSizeFromAlgo (HashAlgo);
+    DigestSize = Tpm2GetHashSizeFromAlgo (HashAlgo);
     for (Index = 0; Index < DigestSize; Index++) {
       DEBUG ((DEBUG_SECURITY, "%02x ", DigestBuffer[Index]));
     }
@@ -609,7 +627,7 @@ GetPcrEvent2Size (
   HashAlgo     = TcgPcrEvent2->Digest.digests[0].hashAlg;
   DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest.digests[0].digest;
   for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
-    DigestSize = GetHashSizeFromAlgo (HashAlgo);
+    DigestSize = Tpm2GetHashSizeFromAlgo (HashAlgo);
     //
     // Prepare next
     //
@@ -819,6 +837,7 @@ Tcg2GetEventLog (
   @retval FALSE  This is NOT a Tcg800155PlatformIdEvent.
 
 **/
+STATIC
 BOOLEAN
 Is800155Event (
   IN      VOID    *NewEventHdr,
@@ -827,18 +846,26 @@ Is800155Event (
   IN      UINT32  NewEventSize
   )
 {
-  if ((((TCG_PCR_EVENT2_HDR *)NewEventHdr)->EventType == EV_NO_ACTION) &&
-      (NewEventSize >= sizeof (TCG_Sp800_155_PlatformId_Event2)) &&
-      ((CompareMem (
-          NewEventData,
-          TCG_Sp800_155_PlatformId_Event2_SIGNATURE,
-          sizeof (TCG_Sp800_155_PlatformId_Event2_SIGNATURE) - 1
-          ) == 0) ||
-       (CompareMem (
-          NewEventData,
-          TCG_Sp800_155_PlatformId_Event3_SIGNATURE,
-          sizeof (TCG_Sp800_155_PlatformId_Event3_SIGNATURE) - 1
-          ) == 0)))
+  if (((TCG_PCR_EVENT2_HDR *)NewEventHdr)->EventType != EV_NO_ACTION) {
+    return FALSE;
+  }
+
+  if ((NewEventSize >= sizeof (TCG_Sp800_155_PlatformId_Event2)) &&
+      (CompareMem (
+         NewEventData,
+         TCG_Sp800_155_PlatformId_Event2_SIGNATURE,
+         sizeof (TCG_Sp800_155_PlatformId_Event2_SIGNATURE) - 1
+         ) == 0))
+  {
+    return TRUE;
+  }
+
+  if ((NewEventSize >= sizeof (TCG_Sp800_155_PlatformId_Event3)) &&
+      (CompareMem (
+         NewEventData,
+         TCG_Sp800_155_PlatformId_Event3_SIGNATURE,
+         sizeof (TCG_Sp800_155_PlatformId_Event3_SIGNATURE) - 1
+         ) == 0))
   {
     return TRUE;
   }
@@ -886,7 +913,6 @@ TcgCommLogEvent (
     DEBUG ((DEBUG_INFO, "  NewLogSize - 0x%x\n", NewLogSize));
     DEBUG ((DEBUG_INFO, "  LogSize    - 0x%x\n", EventLogAreaStruct->EventLogSize));
     DEBUG ((DEBUG_INFO, "TcgCommLogEvent - %r\n", EFI_OUT_OF_RESOURCES));
-    ASSERT (FALSE); // MU_CHANGE: Assert to catch systematic TCG log truncation during DEBUG testing.
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -932,6 +958,128 @@ TcgCommLogEvent (
     NewEventSize
     );
   return EFI_SUCCESS;
+}
+
+/**
+  Get TPML_DIGEST_VALUES compact binary buffer size.
+
+  @param[in]     DigestListBin    TPML_DIGEST_VALUES compact binary buffer.
+
+  @return TPML_DIGEST_VALUES compact binary buffer size.
+**/
+UINT32
+GetDigestListBinSize (
+  IN VOID  *DigestListBin
+  )
+{
+  UINTN          Index;
+  UINT16         DigestSize;
+  UINT32         TotalSize;
+  UINT32         Count;
+  TPMI_ALG_HASH  HashAlg;
+  UINT8          *Current;
+
+  Current   = (UINT8 *)DigestListBin;
+  Count     = ReadUnaligned32 ((UINT32 *)Current);
+  TotalSize = sizeof (Count);
+  Current  += sizeof (Count);
+  for (Index = 0; Index < Count; Index++) {
+    HashAlg    = ReadUnaligned16 ((UINT16 *)Current);
+    TotalSize += sizeof (HashAlg);
+    Current   += sizeof (HashAlg);
+
+    DigestSize = Tpm2GetHashSizeFromAlgo (HashAlg);
+    TotalSize += DigestSize;
+    Current   += DigestSize;
+  }
+
+  return TotalSize;
+}
+
+/**
+  Build the EV_NO_ACTION truncation marker event.
+
+  @param[out]  EventHdr      TCG_PCR_EVENT2 header initialized for the
+                             truncation marker.
+  @param[out]  EventHdrSize  Size in bytes of the serialized header
+                             (excluding the payload string).
+**/
+STATIC
+VOID
+BuildTruncationEvent (
+  OUT TCG_PCR_EVENT2_HDR  *EventHdr,
+  OUT UINT32              *EventHdrSize
+  )
+{
+  InitNoActionEvent (EventHdr, sizeof (TCG_LOG_TRUNCATION_EVENT_STRING));
+  *EventHdrSize = (UINT32)(sizeof (EventHdr->PCRIndex) +
+                           sizeof (EventHdr->EventType) +
+                           GetDigestListBinSize (&EventHdr->Digests) +
+                           sizeof (EventHdr->EventSize));
+}
+
+/**
+  Compute the total size in bytes of the EV_NO_ACTION truncation marker event
+  (header for the active PCR banks + truncation payload).
+
+  Used to reserve headroom in the Final Events log so the marker is always
+  guaranteed to fit when truncation occurs.
+
+  @return  Size in bytes of the truncation marker event.
+**/
+STATIC
+UINTN
+GetTruncationEventSize (
+  VOID
+  )
+{
+  TCG_PCR_EVENT2_HDR  NoActionEvent;
+  UINT32              EventHdrSize;
+
+  BuildTruncationEvent (&NoActionEvent, &EventHdrSize);
+
+  return EventHdrSize + sizeof (TCG_LOG_TRUNCATION_EVENT_STRING);
+}
+
+/**
+  Append an EV_NO_ACTION truncation marker as the final entry of the Final
+  Events log. The marker is written into the headroom reserved at log
+  initialization (see Final log Laml setup in SetupEventLog) so it is always
+  guaranteed to fit even when the log is otherwise full.
+
+  @param[in,out] EventLogAreaStruct  Final Events log area.
+
+  @retval EFI_SUCCESS  The truncation marker was logged.
+  @retval Other        TcgCommLogEvent failed; nothing was logged.
+**/
+STATIC
+EFI_STATUS
+AppendTruncationMarker (
+  IN OUT TCG_EVENT_LOG_AREA_STRUCT  *EventLogAreaStruct
+  )
+{
+  EFI_STATUS          Status;
+  TCG_PCR_EVENT2_HDR  TruncationHdr;
+  UINT32              TruncationHdrSize;
+
+  BuildTruncationEvent (&TruncationHdr, &TruncationHdrSize);
+
+  // Restore the reserved space so TcgCommLogEvent accepts the marker.
+  EventLogAreaStruct->Laml += TruncationHdrSize + sizeof (TCG_LOG_TRUNCATION_EVENT_STRING);
+
+  Status = TcgCommLogEvent (
+             EventLogAreaStruct,
+             &TruncationHdr,
+             TruncationHdrSize,
+             (UINT8 *)TCG_LOG_TRUNCATION_EVENT_STRING,
+             sizeof (TCG_LOG_TRUNCATION_EVENT_STRING)
+             );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to log truncation marker - %r\n", __func__, Status));
+  }
+
+  return Status;
 }
 
 /**
@@ -1019,6 +1167,11 @@ TcgDxeLogEvent (
                NewEventSize
                );
     if (Status == EFI_OUT_OF_RESOURCES) {
+      Status = AppendTruncationMarker (EventLogAreaStruct);
+      if (!EFI_ERROR (Status)) {
+        (mTcgDxeData.FinalEventsTable[Index])->NumberOfEvents++;
+      }
+
       EventLogAreaStruct->EventLogTruncated = TRUE;
       return EFI_VOLUME_FULL;
     } else if (Status == EFI_SUCCESS) {
@@ -1032,41 +1185,34 @@ TcgDxeLogEvent (
     }
   }
 
-  return Status;
-}
+  //
+  // Also record to the fixed-size ACPI event log region.
+  //
+  EventLogAreaStruct = &mTcgDxeData.AcpiEventLogAreaStruct[Index];
 
-/**
-  Get TPML_DIGEST_VALUES compact binary buffer size.
-
-  @param[in]     DigestListBin    TPML_DIGEST_VALUES compact binary buffer.
-
-  @return TPML_DIGEST_VALUES compact binary buffer size.
-**/
-UINT32
-GetDigestListBinSize (
-  IN VOID  *DigestListBin
-  )
-{
-  UINTN          Index;
-  UINT16         DigestSize;
-  UINT32         TotalSize;
-  UINT32         Count;
-  TPMI_ALG_HASH  HashAlg;
-
-  Count         = ReadUnaligned32 (DigestListBin);
-  TotalSize     = sizeof (Count);
-  DigestListBin = (UINT8 *)DigestListBin + sizeof (Count);
-  for (Index = 0; Index < Count; Index++) {
-    HashAlg       = ReadUnaligned16 (DigestListBin);
-    TotalSize    += sizeof (HashAlg);
-    DigestListBin = (UINT8 *)DigestListBin + sizeof (HashAlg);
-
-    DigestSize    = GetHashSizeFromAlgo (HashAlg);
-    TotalSize    += DigestSize;
-    DigestListBin = (UINT8 *)DigestListBin + DigestSize;
+  if (EventLogAreaStruct->Lasa == 0) {
+    // No need to handle ACPI event log region.
+    return EFI_SUCCESS;
   }
 
-  return TotalSize;
+  if (!EventLogAreaStruct->EventLogTruncated) {
+    Status = TcgCommLogEvent (
+               EventLogAreaStruct,
+               NewEventHdr,
+               NewEventHdrSize,
+               NewEventData,
+               NewEventSize
+               );
+    if (Status == EFI_OUT_OF_RESOURCES) {
+      AppendTruncationMarker (EventLogAreaStruct);
+      EventLogAreaStruct->EventLogTruncated = TRUE;
+      Status                                = EFI_SUCCESS;
+    } else if (Status == EFI_SUCCESS) {
+      EventLogAreaStruct->EventLogStarted = TRUE;
+    }
+  }
+
+  return Status;
 }
 
 /**
@@ -1104,15 +1250,15 @@ CopyDigestListBinToBuffer (
   for (Index = 0; Index < Count; Index++) {
     HashAlg       = ReadUnaligned16 (DigestListBin);
     DigestListBin = (UINT8 *)DigestListBin + sizeof (HashAlg);
-    DigestSize    = GetHashSizeFromAlgo (HashAlg);
+    DigestSize    = Tpm2GetHashSizeFromAlgo (HashAlg);
 
-    if (IsHashAlgSupportedInHashAlgorithmMask (HashAlg, HashAlgorithmMask)) {
+    if (Tpm2IsHashAlgSupportedInHashAlgorithmMask (HashAlg, HashAlgorithmMask)) {
       CopyMem (Buffer, &HashAlg, sizeof (HashAlg));
       Buffer = (UINT8 *)Buffer + sizeof (HashAlg);
       CopyMem (Buffer, DigestListBin, DigestSize);
       Buffer = (UINT8 *)Buffer + DigestSize;
       DigestListCount++;
-      (*HashAlgorithmMaskCopied) |= GetHashMaskFromAlgo (HashAlg);
+      (*HashAlgorithmMaskCopied) |= Tpm2GetHashMaskFromAlgo (HashAlg);
     } else {
       DEBUG ((DEBUG_ERROR, "WARNING: CopyDigestListBinToBuffer Event log has HashAlg unsupported by PCR bank (0x%x)\n", HashAlg));
     }
@@ -1123,6 +1269,153 @@ CopyDigestListBinToBuffer (
   WriteUnaligned32 (DigestListCountPtr, DigestListCount);
 
   return Buffer;
+}
+
+/**
+  Dynamically scale the TCG event log, this should only occur when the
+  log is filled/truncated.
+
+  @param[in, out] EventLogAreaStruct  The event log area data structure.
+
+  @retval EFI_SUCCESS           Log was successfully scaled.
+  @retval EFI_OUT_OF_RESOURCES  Allocation failed.
+  @retval EFI_VOLUME_FULL       EventLog truncated.
+
+**/
+STATIC
+EFI_STATUS
+TcgScaleEventLog (
+  IN OUT  TCG_EVENT_LOG_AREA_STRUCT  *EventLogAreaStruct
+  )
+{
+  EFI_STATUS            Status;
+  EFI_PHYSICAL_ADDRESS  NewLasa;
+  UINT64                NewLaml;
+  EFI_PHYSICAL_ADDRESS  OldLasa;
+  UINT64                OldLaml;
+  EFI_TPL               OldTpl;
+
+  // Make sure EventLogAreaStruct is valid.
+  if (EventLogAreaStruct == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // If the log was scaled the maximum number of times, mark it as truncated.
+  if (EventLogAreaStruct->ScaleCount >= TCG_EVENT_LOG_MAX_SCALE_COUNT) {
+    DEBUG ((DEBUG_ERROR, "%a: Scale limit reached (%u)\n", __func__, TCG_EVENT_LOG_MAX_SCALE_COUNT));
+    return EFI_VOLUME_FULL;
+  }
+
+  NewLaml = LShiftU64 (EventLogAreaStruct->Laml, 1);
+  if (NewLaml <= EventLogAreaStruct->Laml) {
+    DEBUG ((DEBUG_ERROR, "%a: Laml overflow (0x%lx * 2)\n", __func__, EventLogAreaStruct->Laml));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  Status = gBS->AllocatePages (
+                  AllocateAnyPages,
+                  EfiBootServicesData,
+                  EFI_SIZE_TO_PAGES ((UINTN)NewLaml),
+                  &NewLasa
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to allocate new TCG event log\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  // Enter a critical section, we do not want to be interrupted while copying.
+  OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
+
+  // Copy the data from the old event log to the new event log.
+  CopyMem ((VOID *)(UINTN)NewLasa, (VOID *)(UINTN)EventLogAreaStruct->Lasa, EventLogAreaStruct->EventLogSize);
+
+  // Store the old Lasa and Laml before updating.
+  OldLasa = EventLogAreaStruct->Lasa;
+  OldLaml = EventLogAreaStruct->Laml;
+
+  DEBUG ((DEBUG_INFO, "OldLasa: 0x%lx, OldLaml: 0x%lx\n", OldLasa, OldLaml));
+  DEBUG ((DEBUG_INFO, "NewLasa: 0x%lx, NewLaml: 0x%lx\n", NewLasa, NewLaml));
+
+  // Update the EventLogAreaStruct.
+  EventLogAreaStruct->Lasa = NewLasa;
+  EventLogAreaStruct->Laml = NewLaml;
+
+  // Update the LastEvent pointer. LastEvent = Lasa + Offset. To calculate
+  // the offset we can do: Offset = LastEvent - Lasa.
+  EventLogAreaStruct->LastEvent = (UINT8 *)(UINTN)NewLasa + ((UINTN)EventLogAreaStruct->LastEvent - (UINTN)OldLasa);
+
+  // Track the number of times we've scaled.
+  EventLogAreaStruct->ScaleCount++;
+
+  // Exit the critical section once we finish copying/updated the struct.
+  gBS->RestoreTPL (OldTpl);
+
+  // Free the old log region.
+  gBS->FreePages (OldLasa, EFI_SIZE_TO_PAGES ((UINTN)OldLaml));
+
+  // Notify that the event log was scaled.
+  EfiEventGroupSignal (&gTcg2EventLogScaledGuid);
+
+  return Status;
+}
+
+/**
+  Check if the TCG log needs to be dynamically scaled.
+
+  @param[in] EventLogAreaStruct  Pointer to the event log area structure.
+  @param[in] NewEventHdrSize     New event header size.
+  @param[in] NewEventSize        New event data size.
+
+  @retval TRUE   Dynamic scaling needed.
+  @retval FALSE  Dynamic scaling not needed.
+
+**/
+STATIC
+BOOLEAN
+TcgLogDynamicScalingNeeded (
+  IN      TCG_EVENT_LOG_AREA_STRUCT  *EventLogAreaStruct,
+  IN      UINT32                     NewEventHdrSize,
+  IN      UINT32                     NewEventSize
+  )
+{
+  UINTN  NewLogSize;
+
+  // Make sure EventLogAreaStruct is valid.
+  if (EventLogAreaStruct == NULL) {
+    return FALSE;
+  }
+
+  // Validate NewEventSize + NewEventHdrSize doesn't cause an overflow.
+  if (NewEventSize > MAX_ADDRESS - NewEventHdrSize) {
+    ASSERT (FALSE);
+    return FALSE;
+  }
+
+  NewLogSize = NewEventHdrSize + NewEventSize;
+
+  // Validate EventLogSize + NewLogSize doesn't cause an overflow.
+  if (NewLogSize > MAX_ADDRESS - EventLogAreaStruct->EventLogSize) {
+    ASSERT (FALSE);
+    return FALSE;
+  }
+
+  // Determine if dynamic scaling is needed.
+  if (NewLogSize + EventLogAreaStruct->EventLogSize > EventLogAreaStruct->Laml) {
+    DEBUG ((DEBUG_INFO, "  Laml       - 0x%lx\n", EventLogAreaStruct->Laml));
+    DEBUG ((DEBUG_INFO, "  NewLogSize - 0x%lx\n", NewLogSize));
+    DEBUG ((DEBUG_INFO, "  LogSize    - 0x%lx\n", EventLogAreaStruct->EventLogSize));
+    DEBUG ((DEBUG_ERROR, "Dynamic scaling required! Recommended to update your TCG log size!\n"));
+
+    // Log an error if we attempt to scale post ReadyToBoot.
+    if (mReadyToBoot) {
+      DEBUG ((DEBUG_ERROR, "Unexpected dynamic scaling occurring post ReadyToBoot!\n"));
+    }
+
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 /**
@@ -1149,13 +1442,14 @@ TcgDxeLogHashEvent (
   TCG_PCR_EVENT2  TcgPcrEvent2;
   UINT8           *DigestBuffer;
   UINT32          *EventSizePtr;
+  BOOLEAN         DynamicScalingNeeded;
 
   RetStatus = EFI_SUCCESS;
   for (Index = 0; Index < sizeof (mTcg2EventInfo)/sizeof (mTcg2EventInfo[0]); Index++) {
     if ((mTcgDxeData.BsCap.SupportedEventLogs & mTcg2EventInfo[Index].LogFormat) != 0) {
       switch (mTcg2EventInfo[Index].LogFormat) {
         case EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2:
-          Status = GetDigestFromDigestList (TPM_ALG_SHA1, DigestList, &NewEventHdr->Digest);
+          Status = Tpm2GetDigestFromDigestList (TPM_ALG_SHA1, DigestList, &NewEventHdr->Digest);
           if (!EFI_ERROR (Status)) {
             //
             // Enter critical region
@@ -1184,8 +1478,29 @@ TcgDxeLogHashEvent (
           TcgPcrEvent2.PCRIndex  = NewEventHdr->PCRIndex;
           TcgPcrEvent2.EventType = NewEventHdr->EventType;
           DigestBuffer           = (UINT8 *)&TcgPcrEvent2.Digest;
-          EventSizePtr           = CopyDigestListToBuffer (DigestBuffer, DigestList, mTcgDxeData.BsCap.ActivePcrBanks);
+          EventSizePtr           = Tpm2CopyDigestListToBuffer (DigestBuffer, DigestList, mTcgDxeData.BsCap.ActivePcrBanks);
           CopyMem (EventSizePtr, &NewEventHdr->EventSize, sizeof (NewEventHdr->EventSize));
+
+          // Continually scale until we have enough space to log. We need to dynamically
+          // scale the TCG log before we enter a critical region.
+          while (TRUE) {
+            DynamicScalingNeeded = TcgLogDynamicScalingNeeded (
+                                     &mTcgDxeData.EventLogAreaStruct[Index],
+                                     sizeof (TcgPcrEvent2.PCRIndex) + sizeof (TcgPcrEvent2.EventType) + GetDigestListBinSize (DigestBuffer) + sizeof (TcgPcrEvent2.EventSize),
+                                     NewEventHdr->EventSize
+                                     );
+
+            if (!DynamicScalingNeeded) {
+              break;
+            }
+
+            Status = TcgScaleEventLog (&mTcgDxeData.EventLogAreaStruct[Index]);
+            if (EFI_ERROR (Status)) {
+              mTcgDxeData.EventLogAreaStruct[Index].EventLogTruncated = TRUE;
+              DEBUG ((DEBUG_ERROR, "Unable to scale the TCG event log!\n"));
+              return Status;
+            }
+          }
 
           //
           // Enter critical region
@@ -1421,7 +1736,7 @@ Tcg2LogEvent (
   EFI_STATUS         Status;
   TCG_PCR_EVENT_HDR  NewEventHdr;
 
-  DEBUG ((DEBUG_VERBOSE, "%a - Entry\n", __FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "%a - Entry\n", __func__));
 
   if ((This == NULL) || (Event == NULL) || (DigestList == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -1445,7 +1760,7 @@ Tcg2LogEvent (
 
   Status = TcgDxeLogHashEvent (DigestList, &NewEventHdr, Event->Event);
 
-  DEBUG ((DEBUG_VERBOSE, "%a - Exit. Status = %r\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_VERBOSE, "%a - Exit. Status = %r\n", __func__, Status));
   return Status;
 }
 
@@ -1476,16 +1791,14 @@ Tcg2SubmitCommand (
   )
 {
   EFI_STATUS  Status;
+  TPM_RC      ResponseCode;
+  UINT32      CurrentOutputBlockSize;
 
   if ((This == NULL) ||
       (InputParameterBlockSize == 0) || (InputParameterBlock == NULL) ||
       (OutputParameterBlockSize == 0) || (OutputParameterBlock == NULL))
   {
     return EFI_INVALID_PARAMETER;
-  }
-
-  if (!mTcgDxeData.BsCap.TPMPresentFlag) {
-    return EFI_DEVICE_ERROR;
   }
 
   if (InputParameterBlockSize > mTcgDxeData.BsCap.MaxCommandSize) {
@@ -1496,12 +1809,35 @@ Tcg2SubmitCommand (
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = Tpm2SubmitCommand (
-             InputParameterBlockSize,
-             InputParameterBlock,
-             &OutputParameterBlockSize,
-             OutputParameterBlock
-             );
+  //
+  // Always attempt to submit the command, but if the TPM is already flagged
+  // as not present, we expect it to fail other than the capsule update scenario.
+  //
+  CurrentOutputBlockSize = OutputParameterBlockSize;
+  Status                 = Tpm2SubmitCommand (
+                             InputParameterBlockSize,
+                             InputParameterBlock,
+                             &CurrentOutputBlockSize,
+                             OutputParameterBlock
+                             );
+  if (!mTcgDxeData.BsCap.TPMPresentFlag) {
+    // Special handling when TPM is thought to be absent
+    if ((CurrentOutputBlockSize >= sizeof (TPM2_RESPONSE_HEADER)) && !EFI_ERROR (Status)) {
+      // Command succeeded, check if it's actually TPM in update mode
+      ResponseCode = SwapBytes32 (ReadUnaligned32 ((UINT32 *)(OutputParameterBlock + 6)));
+      if (ResponseCode == TPM_RC_UPGRADE) {
+        // TPM is present but in update mode!
+        mTcgDxeData.TpmUpdateFlag        = TRUE;
+        mTcgDxeData.BsCap.TPMPresentFlag = TRUE;
+        return Status;        // Return success
+      }
+    }
+
+    // TPM is actually absent, return device error
+    return EFI_DEVICE_ERROR;
+  }
+
+  // Normal path: TPM is present, return whatever Tpm2SubmitCommand returned
   return Status;
 }
 
@@ -1668,26 +2004,71 @@ SetupEventLog (
   DEBUG ((DEBUG_INFO, "SetupEventLog\n"));
 
   //
-  // 1. Create Log Area
+  // 0. Create ACPI Log Area.
   //
   for (Index = 0; Index < sizeof (mTcg2EventInfo)/sizeof (mTcg2EventInfo[0]); Index++) {
     if ((mTcgDxeData.BsCap.SupportedEventLogs & mTcg2EventInfo[Index].LogFormat) != 0) {
-      mTcgDxeData.EventLogAreaStruct[Index].EventLogFormat = mTcg2EventInfo[Index].LogFormat;
-      if (PcdGet8 (PcdTpm2AcpiTableRev) >= 4) {
+      if ((PcdGet8 (PcdTpm2AcpiTableRev) >= 4) &&
+          (mTcg2EventInfo[Index].LogFormat == EFI_TCG2_EVENT_LOG_FORMAT_TCG_2))
+      {
+        // PcdTcgLogAreaMinLen is platform-configurable; ensure it has room for the
+        // EV_NO_ACTION truncation marker event.
+        if (PcdGet32 (PcdTcgLogAreaMinLen) < GetTruncationEventSize ()) {
+          DEBUG ((DEBUG_ERROR, "Insufficient AcpiEventLogArea length\n"));
+          return EFI_INVALID_PARAMETER;
+        }
+
         Status = gBS->AllocatePages (
                         AllocateAnyPages,
                         EfiACPIMemoryNVS,
                         EFI_SIZE_TO_PAGES (PcdGet32 (PcdTcgLogAreaMinLen)),
                         &Lasa
                         );
+
+        if (EFI_ERROR (Status)) {
+          return Status;
+        }
+
+        SetMem ((VOID *)(UINTN)Lasa, PcdGet32 (PcdTcgLogAreaMinLen), 0xFF);
+
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogFormat        = mTcg2EventInfo[Index].LogFormat;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].Lasa                  = Lasa;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].Laml                  = PcdGet32 (PcdTcgLogAreaMinLen) - GetTruncationEventSize ();
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogSize          = 0;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].LastEvent             = (VOID *)(UINTN)Lasa;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogStarted       = FALSE;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogTruncated     = FALSE;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].Next800155EventOffset = 0;
+
+        PcdSet32S (PcdTpm2AcpiTableLaml, PcdGet32 (PcdTcgLogAreaMinLen));
+        PcdSet64S (PcdTpm2AcpiTableLasa, mTcgDxeData.AcpiEventLogAreaStruct[Index].Lasa);
       } else {
-        Status = gBS->AllocatePages (
-                        AllocateAnyPages,
-                        EfiBootServicesData,
-                        EFI_SIZE_TO_PAGES (PcdGet32 (PcdTcgLogAreaMinLen)),
-                        &Lasa
-                        );
+        // No need to handle EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2 or if PcdTpm2AcpiTableRev < 4
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogFormat        = mTcg2EventInfo[Index].LogFormat;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].Lasa                  = 0;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].Laml                  = 0;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogSize          = 0;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].LastEvent             = 0;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogStarted       = FALSE;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogTruncated     = FALSE;
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].Next800155EventOffset = 0;
       }
+    }
+  }
+
+  //
+  // 1. Create Log Area
+  //
+  for (Index = 0; Index < sizeof (mTcg2EventInfo)/sizeof (mTcg2EventInfo[0]); Index++) {
+    if ((mTcgDxeData.BsCap.SupportedEventLogs & mTcg2EventInfo[Index].LogFormat) != 0) {
+      mTcgDxeData.EventLogAreaStruct[Index].EventLogFormat = mTcg2EventInfo[Index].LogFormat;
+
+      Status = gBS->AllocatePages (
+                      AllocateAnyPages,
+                      EfiBootServicesData,
+                      EFI_SIZE_TO_PAGES (PcdGet32 (PcdTcgLogAreaMinLen)),
+                      &Lasa
+                      );
 
       if (EFI_ERROR (Status)) {
         return Status;
@@ -1696,17 +2077,7 @@ SetupEventLog (
       mTcgDxeData.EventLogAreaStruct[Index].Lasa                  = Lasa;
       mTcgDxeData.EventLogAreaStruct[Index].Laml                  = PcdGet32 (PcdTcgLogAreaMinLen);
       mTcgDxeData.EventLogAreaStruct[Index].Next800155EventOffset = 0;
-
-      if ((PcdGet8 (PcdTpm2AcpiTableRev) >= 4) ||
-          (mTcg2EventInfo[Index].LogFormat == EFI_TCG2_EVENT_LOG_FORMAT_TCG_2))
-      {
-        //
-        // Report TCG2 event log address and length, so that they can be reported in TPM2 ACPI table.
-        // Ignore the return status, because those fields are optional.
-        //
-        PcdSet32S (PcdTpm2AcpiTableLaml, (UINT32)mTcgDxeData.EventLogAreaStruct[Index].Laml);
-        PcdSet64S (PcdTpm2AcpiTableLasa, mTcgDxeData.EventLogAreaStruct[Index].Lasa);
-      }
+      mTcgDxeData.EventLogAreaStruct[Index].ScaleCount            = 0;
 
       //
       // To initialize them as 0xFF is recommended
@@ -1799,6 +2170,9 @@ SetupEventLog (
         mTcgDxeData.EventLogAreaStruct[Index].Next800155EventOffset = \
           mTcgDxeData.EventLogAreaStruct[Index].EventLogSize;
 
+        mTcgDxeData.AcpiEventLogAreaStruct[Index].Next800155EventOffset = \
+          mTcgDxeData.AcpiEventLogAreaStruct[Index].EventLogSize;
+
         //
         // Tcg800155PlatformIdEvent. Event format is TCG_PCR_EVENT2
         //
@@ -1857,6 +2231,13 @@ SetupEventLog (
   for (Index = 0; Index < sizeof (mTcg2EventInfo)/sizeof (mTcg2EventInfo[0]); Index++) {
     if ((mTcgDxeData.BsCap.SupportedEventLogs & mTcg2EventInfo[Index].LogFormat) != 0) {
       if (mTcg2EventInfo[Index].LogFormat == EFI_TCG2_EVENT_LOG_FORMAT_TCG_2) {
+        // PcdTcg2FinalLogAreaLen is platform-configurable; ensure it has room for both the
+        // EFI_TCG2_FINAL_EVENTS_TABLE header and the EV_NO_ACTION truncation marker event.
+        if (PcdGet32 (PcdTcg2FinalLogAreaLen) < sizeof (EFI_TCG2_FINAL_EVENTS_TABLE) + GetTruncationEventSize ()) {
+          DEBUG ((DEBUG_ERROR, "Insufficient FinalEventLogArea length\n"));
+          return EFI_INVALID_PARAMETER;
+        }
+
         Status = gBS->AllocatePages (
                         AllocateAnyPages,
                         EfiACPIMemoryNVS,
@@ -1878,7 +2259,7 @@ SetupEventLog (
 
         mTcgDxeData.FinalEventLogAreaStruct[Index].EventLogFormat        = mTcg2EventInfo[Index].LogFormat;
         mTcgDxeData.FinalEventLogAreaStruct[Index].Lasa                  = Lasa + sizeof (EFI_TCG2_FINAL_EVENTS_TABLE);
-        mTcgDxeData.FinalEventLogAreaStruct[Index].Laml                  = PcdGet32 (PcdTcg2FinalLogAreaLen) - sizeof (EFI_TCG2_FINAL_EVENTS_TABLE);
+        mTcgDxeData.FinalEventLogAreaStruct[Index].Laml                  = PcdGet32 (PcdTcg2FinalLogAreaLen) - sizeof (EFI_TCG2_FINAL_EVENTS_TABLE) - GetTruncationEventSize ();
         mTcgDxeData.FinalEventLogAreaStruct[Index].EventLogSize          = 0;
         mTcgDxeData.FinalEventLogAreaStruct[Index].LastEvent             = (VOID *)(UINTN)mTcgDxeData.FinalEventLogAreaStruct[Index].Lasa;
         mTcgDxeData.FinalEventLogAreaStruct[Index].EventLogStarted       = FALSE;
@@ -2336,8 +2717,6 @@ ReadAndMeasureSecureVariable (
   OUT     VOID      **VarData
   )
 {
-  // MU_CHANGE [BEGIN] - TPM Replay Feature
-
   return ReadAndMeasureVariable (
            7,
            EV_EFI_VARIABLE_DRIVER_CONFIG,
@@ -2346,8 +2725,6 @@ ReadAndMeasureSecureVariable (
            VarSize,
            VarData
            );
-
-  // MU_CHANGE [END] - TPM Replay Feature
 }
 
 /**
@@ -2620,9 +2997,10 @@ OnReadyToBoot (
   EFI_STATUS    Status;
   TPM_PCRINDEX  PcrIndex;
 
-  PERF_FUNCTION_BEGIN (); // MU_CHANGE
+  PERF_FUNCTION_BEGIN ();
 
-  // MU_CHANGE_23086
+  mReadyToBoot = TRUE;
+
   // MU_CHANGE [BEGIN] - Call OEM init hook.
   Status = OemTpm2InitDxeReadyToBootEvent (mBootAttempts);
   if (EFI_ERROR (Status)) {
@@ -2724,7 +3102,7 @@ OnReadyToBoot (
   // Increase boot attempt counter.
   //
   mBootAttempts++;
-  PERF_FUNCTION_END (); // MU_CHANGE
+  PERF_FUNCTION_END ();
 }
 
 /**
@@ -3019,7 +3397,7 @@ DriverEntry (
   // Get supported PCR and current Active PCRs
   //
   Status = Tpm2GetCapabilitySupportedAndActivePcrs (&TpmHashAlgorithmBitmap, &ActivePCRBanks);
-  DEBUG ((DEBUG_INFO, "TpmHashAlgorithmBitmap = 0x%X, ActivePCRBanks = 0x%X\n", TpmHashAlgorithmBitmap, ActivePCRBanks));   // MU_CHANGE
+  DEBUG ((DEBUG_INFO, "TpmHashAlgorithmBitmap = 0x%X, ActivePCRBanks = 0x%X\n", TpmHashAlgorithmBitmap, ActivePCRBanks));
   ASSERT_EFI_ERROR (Status);
 
   mTcgDxeData.BsCap.HashAlgorithmBitmap = TpmHashAlgorithmBitmap & PcdGet32 (PcdTcg2HashAlgorithmBitmap);
@@ -3030,7 +3408,7 @@ DriverEntry (
   //
   NumberOfPCRBanks = 0;
   for (Index = 0; Index < 32; Index++) {
-    if ((mTcgDxeData.BsCap.HashAlgorithmBitmap & (1u << Index)) != 0) {
+    if ((mTcgDxeData.BsCap.HashAlgorithmBitmap & LShiftU64 (1, Index)) != 0) {
       NumberOfPCRBanks++;
     }
   }

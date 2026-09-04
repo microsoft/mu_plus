@@ -618,6 +618,7 @@ Done:
   @param[in]  AuthDataSize        Size of the Authenticode Signature in bytes.
 
   @retval EFI_UNSUPPORTED             Hash algorithm is not supported.
+  @retval EFI_BAD_BUFFER_SIZE         AuthData provided is invalid size.
   @retval EFI_SUCCESS                 Hash successfully.
 
 **/
@@ -640,8 +641,8 @@ HashPeImageByType (
   //    The DigestAlgorithmIdentifiers can be used to determine the hash algorithm in PE/COFF hashing
   //    This field has the fixed offset (+32) in final Authenticode ASN.1 data.
   //    Fixed offset (+32) is calculated based on two bytes of length encoding.
+  //
   if ((AuthDataSize > 1) && ((*(AuthData + 1) & TWO_BYTE_ENCODE) != TWO_BYTE_ENCODE)) {
-    //
     //
     // Only support two bytes of Long Form of Length Encoding.
     //
@@ -882,9 +883,9 @@ IsCertHashFoundInDbx (
     return Status;
   }
 
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((DbxSize > 0) && (SignatureListSize >= (UINTN)DbxList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     //
     // Determine Hash Algorithm of Certificate in the forbidden database.
     //
@@ -1029,9 +1030,9 @@ IsSignatureFoundInDatabase (
   // Enumerate all signature data in SigDB to check if signature exists for executable.
   //
   CertList = (EFI_SIGNATURE_LIST *)Data;
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((DataSize > 0) && (DataSize >= (UINTN)CertList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     CertCount = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
     Cert      = (EFI_SIGNATURE_DATA *)((UINT8 *)CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
     if ((CertList->SignatureSize == sizeof (EFI_SIGNATURE_DATA) - 1 + SignatureSize) && (CompareGuid (&CertList->SignatureType, CertType))) {
@@ -1196,9 +1197,9 @@ PassTimestampCheck (
   }
 
   CertList = (EFI_SIGNATURE_LIST *)DbtData;
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((DbtDataSize > 0) && (DbtDataSize >= (UINTN)CertList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     if (CompareGuid (&CertList->SignatureType, &gEfiCertX509Guid)) {
       Cert      = (EFI_SIGNATURE_DATA *)((UINT8 *)CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
       CertCount = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
@@ -1324,9 +1325,9 @@ IsForbiddenByDbx (
   //
   CertList     = (EFI_SIGNATURE_LIST *)Data;
   CertListSize = DataSize;
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((CertListSize > 0) && (CertListSize >= (UINTN)CertList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     if (CompareGuid (&CertList->SignatureType, &gEfiCertX509Guid)) {
       CertData  = (EFI_SIGNATURE_DATA *)((UINT8 *)CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
       CertCount = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
@@ -1531,9 +1532,9 @@ IsAllowedByDb (
   // Find X509 certificate in Signature List to verify the signature in pkcs7 signed data.
   //
   CertList = (EFI_SIGNATURE_LIST *)Data;
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((DataSize > 0) && (DataSize >= (UINTN)CertList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     if (CompareGuid (&CertList->SignatureType, &gEfiCertX509Guid)) {
       CertData  = (EFI_SIGNATURE_DATA *)((UINT8 *)CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
       CertCount = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
@@ -1630,7 +1631,7 @@ Done:
       in the security database "db", and no valid signature nor any hash value of the image may
       be reflected in the security database "dbx".
     Otherwise, the image is not signed,
-      The SHA256 hash value of the image must match a record in the security database "db", and
+      The hash value of the image must match a record in the security database "db", and
       not be reflected in the security data base "dbx".
 
   Caution: This function may receive untrusted input.
@@ -1712,6 +1713,17 @@ DxeImageVerificationHandler (
   IsVerified        = FALSE;
   IsFound           = FALSE;
   IsFoundInDatabase = FALSE;
+
+  //
+  // Sanity check:
+  // Ensure that either File or FileBuffer is provided.
+  // Return EFI_INVALID_PARAMETER if both are NULL.
+  // This prevents security verification from proceeding
+  // when no valid input buffer is available.
+  //
+  if ((File == NULL) && (FileBuffer == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   //
   // Check the image type and get policy setting.
@@ -1850,7 +1862,7 @@ DxeImageVerificationHandler (
   //
   if ((SecDataDir == NULL) || (SecDataDir->Size == 0)) {
     //
-    // This image is not signed. The SHA256 hash value of the image must match a record in the security database "db",
+    // This image is not signed. The hash value of the image must match a record in the security database "db",
     // and not be reflected in the security data base "dbx".
     //
     HashAlg = sizeof (mHash) / sizeof (HASH_TABLE);
@@ -2060,14 +2072,14 @@ Failed:
   //
   NameStr = ConvertDevicePathToText (File, FALSE, TRUE);
 
-  // MU_CHANGE [BEGIN] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - unguardednullreturndereference
   if (NameStr != NULL) {
     AddImageExeInfo (Action, NameStr, File, SignatureList, SignatureListSize);
     DEBUG ((DEBUG_INFO, "The image doesn't pass verification: %s\n", NameStr));
     FreePool (NameStr);
   }
 
-  // MU_CHANGE [END] - CodeQL change
+  // MU_CHANGE End - CodeQL change - unguardednullreturndereference
 
   if (SignatureList != NULL) {
     FreePool (SignatureList);
