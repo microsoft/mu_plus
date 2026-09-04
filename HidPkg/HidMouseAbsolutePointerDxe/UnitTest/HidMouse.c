@@ -645,7 +645,7 @@ TestOnMouseReportFuncForBootMouseValidWithZAndExtra (
 
   ZeroMem (&Input, sizeof (Input));
   Input.XDisplacement = 75;
-  Input.YDisplacement = 212;
+  Input.YDisplacement = 127;
   Input.ZDisplacement = 17;
 
   OnMouseReport (BootMouse, (UINT8 *)&Input, sizeof (Input) + 3, &device); // just add extra bytes to reported length since it should never be looked at
