@@ -259,11 +259,11 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenPlatformCheckReturnsUnsupported (
   )
 {
   // Arrange
-  BOOLEAN                      SupportsEmu;
-  EFI_HANDLE                   SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
-  EFI_SIMPLE_NETWORK_MODE      Mode;
-  UINTN                        MacContext;
+  BOOLEAN                           SupportsEmu;
+  EFI_HANDLE                        SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL       Snp;
+  EFI_SIMPLE_NETWORK_MODE           Mode;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT  MacContext = { 0 };
 
   Mode.State                = EfiSimpleNetworkInitialized;
   Mode.IfType               = NET_IFTYPE_ETHERNET;
@@ -273,7 +273,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenPlatformCheckReturnsUnsupported (
   will_return (PlatformMacEmulationSnpCheck, FALSE);
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, &MacContext);
 
   // Assert
   assert_true (SupportsEmu == FALSE);
