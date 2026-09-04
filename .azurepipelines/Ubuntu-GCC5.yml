@@ -16,7 +16,10 @@
 
 variables:
 - group: architectures-arm64-x86-64
-- group: tool-chain-ubuntu-gcc
+- name: tool_chain_tag
+  value: GCC
+- name: vm_image
+  value: ubuntu-latest
 - group: coverage
 
 extends:
