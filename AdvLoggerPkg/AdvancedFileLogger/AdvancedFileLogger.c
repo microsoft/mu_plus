@@ -19,6 +19,14 @@ UINT32      mWritingSemaphore        = 0;
 EFI_EVENT  mReadyToBootEvent      = NULL;
 EFI_EVENT  mExitBootServicesEvent = NULL;
 
+//
+// Set once the in-memory log has been flushed to media during a reset
+// notification. Prevents re-flushing on a nested reset (for example, a
+// capsule-armed warm-to-cold reset conversion) after storage controllers have
+// already been shut down.
+//
+STATIC BOOLEAN  mLogsFlushedOnReset = FALSE;
+
 /**
     WriteLogFiles
 
@@ -88,11 +96,29 @@ OnResetNotification (
 {
   EFI_TPL  OldTpl;
 
+  //
+  // A single logical reset can raise the reset notification more than once. For
+  // example, a capsule-armed reset converts a warm reset into a cold reset by
+  // issuing a second, nested ResetSystem () call. Storage drivers such as
+  // NvmExpressDxe shut their controllers down on the first notification (through
+  // the reset notification protocol, which fires after this platform-specific
+  // reset filter) and do not re-initialize them. Re-writing the logs on the
+  // nested reset would then issue I/O to a powered-down NVMe controller,
+  // stalling for the full command timeout (~5 seconds) and logging a fatal NVMe
+  // WHEA telemetry record. The logs are already flushed on the first
+  // notification, so flush only once per reset sequence.
+  //
+  if (mLogsFlushedOnReset) {
+    DEBUG ((DEBUG_INFO, "OnResetNotification: logs already flushed, skipping nested reset.\n"));
+    return;
+  }
+
   OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
   gBS->RestoreTPL (OldTpl);
 
   DEBUG ((DEBUG_INFO, "OnResetNotification\n"));
   if (OldTpl <= TPL_CALLBACK) {
+    mLogsFlushedOnReset = TRUE;
     WriteLogFiles ();
   } else {
     DEBUG ((DEBUG_ERROR, "Unable to write log at reset\n"));
