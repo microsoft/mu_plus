@@ -42,9 +42,9 @@ InitializeUIToolKit (
 
   // Determine if the GOP is available.
   //
-  Status = gBS->LocateProtocol (
+  Status = gBS->HandleProtocol (
+                  gST->ConsoleOutHandle,
                   &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
                   (VOID **)&mUITGop
                   );
 
