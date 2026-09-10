@@ -39,8 +39,7 @@ use core::{
     ptr,
     sync::atomic::{AtomicPtr, Ordering},
 };
-use patina::BinaryGuid;
-use patina::{boot_services, uefi_protocol::ProtocolInterface};
+use patina::{BinaryGuid, protocol::ProtocolInterface, uefi::boot_services};
 use r_efi::efi;
 
 //Global static logger instance - this is a singleton.
@@ -248,7 +247,7 @@ mod tests {
         DEBUG_WARN, LOGGER, debug,
     };
     use core::{slice::from_raw_parts, sync::atomic::Ordering};
-    use patina::boot_services::MockBootServices;
+    use patina::uefi::boot_services::MockBootServices;
     use std::{println, str};
     static ADVANCED_LOGGER_INSTANCE: AdvancedLoggerProtocolInterface =
         AdvancedLoggerProtocolInterface { signature: 0, version: 0, write_log: mock_advanced_logger_write };
