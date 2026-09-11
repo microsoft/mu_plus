@@ -30,8 +30,10 @@ typedef struct {
 /**
   Get the ACPI table.
 
-  @retval EFI_SUCCESS           The ACPI table is got.
-  @retval EFI_NOT_FOUND         The ACPI table is not found.
+  @retval EFI_SUCCESS            The ACPI table is found.
+  @retval EFI_INVALID_PARAMETER  The ACPI Table is NULL.
+  @retval EFI_ALREADY_STARTED    The ACPI table was found previously.
+  @retval EFI_NOT_FOUND          The ACPI table is not found.
 **/
 EFI_STATUS
 GetAcpiTable (
