@@ -142,8 +142,9 @@ FindAcpiPtr (
 /**
   Get the ACPI table.
 
-  @retval EFI_SUCCESS           The ACPI table is got.
-  @retval EFI_NOT_FOUND         The ACPI table is not found.
+  @retval EFI_SUCCESS            The ACPI table is found.
+  @retval EFI_INVALID_PARAMETER  The ACPI Table is NULL.
+  @retval EFI_NOT_FOUND          The ACPI table is not found.
 **/
 EFI_STATUS
 GetAcpiTable (
@@ -156,8 +157,6 @@ GetAcpiTable (
 
   if (AcpiTable == NULL) {
     return EFI_INVALID_PARAMETER;
-  } else if (*AcpiTable != NULL) {
-    return EFI_ALREADY_STARTED;
   }
 
   *AcpiTable = NULL;
@@ -172,11 +171,9 @@ GetAcpiTable (
                );
   }
 
-  if (EFI_ERROR (Status)) {
+  if (EFI_ERROR (Status) || (AcpiConfigurationTable == NULL)) {
     return EFI_NOT_FOUND;
   }
-
-  ASSERT (AcpiConfigurationTable != NULL);
 
   *AcpiTable = FindAcpiPtr (
                  (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)AcpiConfigurationTable,
