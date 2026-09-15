@@ -11,21 +11,13 @@
 
 #include <AdvancedLoggerInternal.h>
 
-/**
-  Include a copy of PeiMain.h from PeiCore in order to access the Platform Blob data member.
-
-  This is breaking the rules, but PeiCore on a system using ROM for PeiPreMem has no place
-  to store long term data besides the Hob or Ppi list.  Accessing these list for high
-  frequency operations is a performance issue.
-**/
-#include "../../AdvancedLoggerLib/PeiCore/PeiMain.h"
-
 #include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/HobLib.h>
 #include <Library/MmUnblockMemoryLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PeiServicesLib.h>
 
 #include "AdvancedLoggerSecDebugAgent.h"
@@ -55,21 +47,20 @@ InitializeDebugAgent (
   IN DEBUG_AGENT_CONTINUE  Function  OPTIONAL
   )
 {
-  EFI_PHYSICAL_ADDRESS    CarBase;
-  UINTN                   DebugLevel;
-  EFI_HOB_GUID_TYPE       *GuidHob;
-  UINTN                   LogBufferSize;
-  ADVANCED_LOGGER_INFO    *LoggerInfo;
-  ADVANCED_LOGGER_PTR     *LogPtr;
-  ADVANCED_LOGGER_PTR     *LogPtrSec;
-  EFI_PHYSICAL_ADDRESS    NewLogBuffer;
-  ADVANCED_LOGGER_INFO    *NewLoggerInfo;
-  PEI_CORE_INSTANCE       *PeiCoreInstance;
-  CONST EFI_PEI_SERVICES  **PeiServices;
-  EFI_SEC_PEI_HAND_OFF    *SecCoreData;
-  EFI_PHYSICAL_ADDRESS    SecLogBuffer;
-  EFI_STATUS              Status;
-  CHAR8                   *TargetLog;
+  EFI_PHYSICAL_ADDRESS  CarBase;
+  UINTN                 DebugLevel;
+  EFI_HOB_GUID_TYPE     *GuidHob;
+  UINTN                 LogBufferSize;
+  ADVANCED_LOGGER_INFO  *LoggerInfo;
+  ADVANCED_LOGGER_PTR   *LogPtr;
+  ADVANCED_LOGGER_PTR   *LogPtrSec;
+  EFI_PHYSICAL_ADDRESS  NewLogBuffer;
+  ADVANCED_LOGGER_INFO  *NewLoggerInfo;
+  EFI_PHYSICAL_ADDRESS  *Scratchpad;
+  EFI_SEC_PEI_HAND_OFF  *SecCoreData;
+  EFI_PHYSICAL_ADDRESS  SecLogBuffer;
+  EFI_STATUS            Status;
+  CHAR8                 *TargetLog;
 
   if (InitFlag == DEBUG_AGENT_INIT_PREMEM_SEC) {
     SecCoreData = (EFI_SEC_PEI_HAND_OFF *)Context;
@@ -212,9 +203,14 @@ InitializeDebugAgent (
           NewLoggerInfo->LogCurrentOffset = LoggerInfo->LogCurrentOffset;
           NewLoggerInfo->InPermanentRAM   = TRUE;
 
-          PeiServices                   = GetPeiServicesTablePointer ();
-          PeiCoreInstance               = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
-          PeiCoreInstance->PlatformBlob = PA_FROM_PTR (NewLoggerInfo);
+          //
+          // Cache the new Logger Info pointer in the platform-provided scratchpad so PEI_CORE
+          // can locate it without a HOB lookup on every debug print.
+          //
+          Scratchpad = (EFI_PHYSICAL_ADDRESS *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerScratchpadBase);
+          if (Scratchpad != NULL) {
+            *Scratchpad = PA_FROM_PTR (NewLoggerInfo);
+          }
 
           //
           // Update the HOB Buffer LoggerInfo pointers

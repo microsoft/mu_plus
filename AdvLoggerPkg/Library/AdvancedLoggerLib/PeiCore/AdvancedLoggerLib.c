@@ -14,15 +14,6 @@
 #include <AdvancedLoggerInternalProtocol.h>
 #include <Library/AdvancedLoggerAccessLib.h>
 
-/**
-  Include a copy of PeiMain.h from PeiCore in order to access the Platform Blob data member.
-
-  This is breaking the rules, but PeiCore on a system using ROM for PeiPreMem has no place
-  to store long term data besides the Hob or Ppi list.  Accessing these list for high
-  frequency operations is a performance issue.
-**/
-#include "PeiMain.h"
-
 #include <Ppi/AdvancedLogger.h>
 
 #include <Library/AdvancedLoggerHdwPortLib.h>
@@ -164,6 +155,106 @@ AdvancedLoggerAssertPpi (
 }
 
 /**
+  Get the cached Logger Information block pointer from the scratchpad region.
+
+  If the platform has not provided a scratchpad region (the Pcd is 0), NULL is returned and
+  the caller falls back to locating the Logger Info via the HOB list.
+
+  @return   ADVANCED_LOGGER_INFO *    Cached Logger Info pointer, or NULL.
+
+**/
+STATIC
+ADVANCED_LOGGER_INFO *
+GetCachedLoggerInfo (
+  VOID
+  )
+{
+  EFI_PHYSICAL_ADDRESS  *Scratchpad;
+
+  Scratchpad = (EFI_PHYSICAL_ADDRESS *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerScratchpadBase);
+  if (Scratchpad == NULL) {
+    return NULL;
+  }
+
+  return ALI_FROM_PA (*Scratchpad);
+}
+
+/**
+  Cache the Logger Information block pointer in the scratchpad region.
+
+  If the platform has not provided a scratchpad region this function simply returns.
+
+  @param  LoggerInfo  Pointer to the ADVANCED_LOGGER_INFO block to cache.
+
+  @return NONE
+
+**/
+STATIC
+VOID
+SetCachedLoggerInfo (
+  IN ADVANCED_LOGGER_INFO  *LoggerInfo
+  )
+{
+  EFI_PHYSICAL_ADDRESS  *Scratchpad;
+
+  Scratchpad = (EFI_PHYSICAL_ADDRESS *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerScratchpadBase);
+  if (Scratchpad != NULL) {
+    *Scratchpad = PA_FROM_PTR (LoggerInfo);
+  }
+}
+
+/**
+  Reserve the scratchpad memory region.
+
+  The scratchpad lives at a fixed, platform-provided address (PcdAdvancedLoggerScratchpadBase)
+  that is expected to be in system memory but outside the PHIT free memory region, so that the
+  PEI Core memory services never hand it out to another consumer.
+
+  A Memory Allocation HOB is produced for the region so that it is not otherwise allocated in PEI.
+
+  @return NONE
+
+**/
+STATIC
+VOID
+ReserveScratchpadRegion (
+  VOID
+  )
+{
+  EFI_PHYSICAL_ADDRESS  ScratchpadBase;
+
+  ScratchpadBase = (EFI_PHYSICAL_ADDRESS)FixedPcdGet64 (PcdAdvancedLoggerScratchpadBase);
+  if ((ScratchpadBase == 0) || ((ScratchpadBase & EFI_PAGE_MASK) != 0)) {
+    //
+    // The base must be page aligned for the Memory Allocation HOB to be honored.
+    //
+    ASSERT ((ScratchpadBase & EFI_PAGE_MASK) == 0);
+    return;
+  }
+
+  DEBUG_CODE (
+  {
+    // In debug code only, check that the scratchpad is not in the PHIT free memory region. This is
+    // a misconfiguration that could lead to memory corruption.
+    EFI_HOB_HANDOFF_INFO_TABLE  *PhitHob;
+
+    PhitHob = (EFI_HOB_HANDOFF_INFO_TABLE *)GetFirstHob (EFI_HOB_TYPE_HANDOFF);
+    ASSERT (PhitHob != NULL);
+
+    // We only need to check the base is not in the free memory region because we've already confirmed it is
+    // page aligned and the length is a single page.
+    ASSERT (!(ScratchpadBase >= PhitHob->EfiFreeMemoryBottom && ScratchpadBase < PhitHob->EfiFreeMemoryTop));
+  }
+    );
+
+  BuildMemoryAllocationHob (
+    ScratchpadBase,
+    EFI_PAGE_SIZE,
+    EfiBootServicesData
+    );
+}
+
+/**
    This function installs the full Advanced Logger memory buffer.
 
    This function is only called when there is no SEC Advanced Logger, and PEI needs
@@ -192,7 +283,6 @@ InstallPermanentMemoryBuffer (
   EFI_PHYSICAL_ADDRESS  NewLogBuffer;
   ADVANCED_LOGGER_INFO  *NewLoggerInfo;
   EFI_PHYSICAL_ADDRESS  OldLoggerBuffer;
-  PEI_CORE_INSTANCE     *PeiCoreInstance;
   EFI_STATUS            Status;
 
   DEBUG ((DEBUG_INFO, "%a: Find PeiCore HOB for Install Permanent Buffer...\n", __func__));
@@ -228,8 +318,7 @@ InstallPermanentMemoryBuffer (
         NewLoggerInfo->LogCurrentOffset = LoggerInfo->LogCurrentOffset;
         NewLoggerInfo->InPermanentRAM   = TRUE;
 
-        PeiCoreInstance               = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
-        PeiCoreInstance->PlatformBlob = PA_FROM_PTR (NewLoggerInfo);
+        SetCachedLoggerInfo (NewLoggerInfo);
 
         //
         // Update the HOB pointer
@@ -426,9 +515,9 @@ RecoverLogBufferFromHobs (
 /**
   Get the Logger Information block
 
-  If the PeiCore ADVANCED_LOGGER_INFO block has not been created, create the a new one. Then
+  If the PeiCore ADVANCED_LOGGER_INFO block has not been created, create a new one. Then
   store a pointer to the block in the Hob for DXE, and update the saved Log Pointer to SEC (if
-  present) and in the PeiCoreInstance.
+  present) and in the scratchpad.
 
   @param  NONE
 
@@ -445,7 +534,6 @@ AdvancedLoggerGetLoggerInfo (
   EFI_HOB_GUID_TYPE                 *GuidHob;
   EFI_HOB_GUID_TYPE                 *GuidHobInterim;
   EFI_HOB_GUID_TYPE                 *GuidHobInterimBuf;
-  PEI_CORE_INSTANCE                 *PeiCoreInstance;
   ADVANCED_LOGGER_INFO              *LoggerInfo;
   ADVANCED_LOGGER_INFO              *LoggerInfoSec;
   ADVANCED_LOGGER_PTR               *LogPtr;
@@ -470,8 +558,7 @@ AdvancedLoggerGetLoggerInfo (
     return LoggerInfoSec;
   }
 
-  PeiCoreInstance = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
-  LoggerInfo      = ALI_FROM_PA (PeiCoreInstance->PlatformBlob);
+  LoggerInfo = GetCachedLoggerInfo ();
   if ((LoggerInfo != NULL) && (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE)) {
     // Logger Info was saved from an earlier call - Return LoggerInfo.
     return LoggerInfo;
@@ -482,18 +569,28 @@ AdvancedLoggerGetLoggerInfo (
   //  This is specific to the PeiCore being the start of advanced logger support
   GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
   if (GuidHob != NULL) {
-    LoggerInfo = RecoverLogBufferFromHobs ();
-    if (LoggerInfo != NULL) {
-      LogPtr                                                       = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
-      (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
-      LogPtr->LogBuffer                                            = PA_FROM_PTR (LoggerInfo);
+    LogPtr     = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
+    LoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
 
-      LoggerInfo->LogCurrentOffset = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo) + USED_LOG_SIZE (LoggerInfo);
-      LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+    // if the log buffer has not been migrated yet, we might be in a race condition between
+    // memory allocations being migrated and the permanent memory event being signaled. Check
+    // the memory allocation HOBs to use the updated address in case it has changed.
+    if (!(LoggerInfo->InPermanentRAM)) {
+      LoggerInfo = RecoverLogBufferFromHobs ();
+      if (LoggerInfo != NULL) {
+        SetCachedLoggerInfo (LoggerInfo);
+        LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
 
-      // return the pointer
-      return LoggerInfo;
+        LoggerInfo->LogCurrentOffset = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo) + USED_LOG_SIZE (LoggerInfo);
+        LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+      } else {
+        // didn't find a memory allocation HOB, so use the HOB
+        LoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
+      }
     }
+
+    // return the pointer
+    return LoggerInfo;
   }
 
   GuidHobInterim = GetFirstGuidHob (&gAdvancedLoggerInterimHobGuid);
@@ -581,12 +678,14 @@ AdvancedLoggerGetLoggerInfo (
       // Mark the Hob valid by setting its GUID
 
       CopyGuid (&GuidHob->Name, &gAdvancedLoggerHobGuid);
+      ReserveScratchpadRegion ();
+
       //
       // Update the HOB pointers to point to the current LoggerInfo
       //
-      LogPtr->LogBuffer                                            = PA_FROM_PTR (LoggerInfo);
-      LogPtr->Signature                                            = ADVANCED_LOGGER_PTR_SIGNATURE;
-      (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
+      LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
+      LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
+      SetCachedLoggerInfo (LoggerInfo);
 
       //
       // If LoggerInfo from SEC, then update the SEC pointer to point to the new

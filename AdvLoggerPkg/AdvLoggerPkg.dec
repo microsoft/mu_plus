@@ -138,6 +138,15 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
 
+  ## PcdAdvancedLoggerScratchpadBase - Physical address of a single page available for caching the
+  #  pointer to the Advanced Logger buffer. This is an optimization for the SEC Debug Agent and
+  #  PEI Core AdvancedLoggerLib instances. These instances use the scratchpad to avoid the performance
+  #  impact of a HOB lookup on every debug print. This address must be outside of the PHIT free memory
+  #  region so that PEI Core will not allocate it. A memory allocation HOB will be produced for this,
+  #  but if it is in the PHIT free memory region, the memory allocation HOB will be ignored. The default
+  #  value of 0 disables the scratchpad and HOB lookups will be performed instead.
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerScratchpadBase|0x00000000|UINT64|0x00010199
 
 [UserExtensions.TianoCore."ExtraFiles"]
   AdvLoggerPkgExtra.uni
