@@ -259,5 +259,9 @@ GetIvrsAcpiTable (
   VOID
   )
 {
+  if (mAcpiIVRSTable != NULL) {
+    return EFI_SUCCESS;
+  }
+
   return GetAcpiTable (IVRS_HEADER_SIGNATURE, (VOID **)&mAcpiIVRSTable);
 }

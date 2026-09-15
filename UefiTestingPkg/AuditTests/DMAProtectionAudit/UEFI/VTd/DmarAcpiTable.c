@@ -325,5 +325,9 @@ GetDmarAcpiTable (
   VOID
   )
 {
+  if (mAcpiDmarTable != NULL) {
+    return EFI_SUCCESS;
+  }
+
   return GetAcpiTable (EFI_ACPI_4_0_DMA_REMAPPING_TABLE_SIGNATURE, (VOID **)&mAcpiDmarTable);
 }
