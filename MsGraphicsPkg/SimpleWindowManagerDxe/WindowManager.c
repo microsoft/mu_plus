@@ -1507,9 +1507,9 @@ GopRegisteredCallback (
 
   // Determine if the Graphics Output Protocol is available on the Console Out handle.
   //
-  Status = gBS->LocateProtocol (
+  Status = gBS->HandleProtocol (
+                  gST->ConsoleOutHandle,
                   &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
                   (VOID **)&mGop
                   );
 
