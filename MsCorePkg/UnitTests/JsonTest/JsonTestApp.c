@@ -484,6 +484,7 @@ JsonParseTest (
 
 static
 UNIT_TEST_STATUS
+EFIAPI
 JsonEncodeTest (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -525,6 +526,7 @@ JsonEncodeTest (
   */
 static
 UNIT_TEST_STATUS
+EFIAPI
 JsonParseNullP1 (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -549,6 +551,7 @@ JsonParseNullP1 (
   */
 static
 UNIT_TEST_STATUS
+EFIAPI
 JsonParseNullP2 (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -574,6 +577,7 @@ JsonParseNullP2 (
   */
 static
 UNIT_TEST_STATUS
+EFIAPI
 JsonParseNullP3 (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -598,6 +602,7 @@ JsonParseNullP3 (
   */
 static
 UNIT_TEST_STATUS
+EFIAPI
 JsonEncodeNullP1 (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -623,6 +628,7 @@ JsonEncodeNullP1 (
   */
 static
 UNIT_TEST_STATUS
+EFIAPI
 JsonEncodeNullP2 (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -647,6 +653,7 @@ JsonEncodeNullP2 (
   */
 static
 UNIT_TEST_STATUS
+EFIAPI
 JsonEncodeNullP3 (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -671,6 +678,7 @@ JsonEncodeNullP3 (
   */
 static
 UNIT_TEST_STATUS
+EFIAPI
 JsonEncodeNullP4 (
   IN UNIT_TEST_CONTEXT  Context
   )
