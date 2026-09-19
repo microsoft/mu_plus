@@ -330,40 +330,30 @@ impl HidReportReceiver for PointerHidHandler {
                             debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
                             (field.report_handler)(self, field.field, report);
                         }
-                        GENERIC_DESKTOP_X => {
-                            if counters.x < self.contact_count {
-                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
-                                (field.report_handler)(self, field.field, report);
-                                counters.x += 1;
-                            }
+                        GENERIC_DESKTOP_X if counters.x < self.contact_count => {
+                            debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                            (field.report_handler)(self, field.field, report);
+                            counters.x += 1;
                         }
-                        GENERIC_DESKTOP_Y => {
-                            if counters.y < self.contact_count {
-                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
-                                (field.report_handler)(self, field.field, report);
-                                counters.y += 1;
-                            }
+                        GENERIC_DESKTOP_Y if counters.y < self.contact_count => {
+                            debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                            (field.report_handler)(self, field.field, report);
+                            counters.y += 1;
                         }
-                        GENERIC_DESKTOP_Z | GENERIC_DESKTOP_WHEEL => {
-                            if counters.z < self.contact_count {
-                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
-                                (field.report_handler)(self, field.field, report);
-                                counters.z += 1;
-                            }
+                        GENERIC_DESKTOP_Z | GENERIC_DESKTOP_WHEEL if counters.z < self.contact_count => {
+                            debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                            (field.report_handler)(self, field.field, report);
+                            counters.z += 1;
                         }
-                        BUTTON_MIN..=BUTTON_MAX => {
-                            if counters.button < self.contact_count {
-                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
-                                (field.report_handler)(self, field.field, report);
-                                counters.button += 1;
-                            }
+                        BUTTON_MIN..=BUTTON_MAX if counters.button < self.contact_count => {
+                            debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                            (field.report_handler)(self, field.field, report);
+                            counters.button += 1;
                         }
-                        DIGITIZER_SWITCH_MIN..=DIGITIZER_SWITCH_MAX => {
-                            if counters.switch < self.contact_count {
-                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
-                                (field.report_handler)(self, field.field, report);
-                                counters.switch += 1;
-                            }
+                        DIGITIZER_SWITCH_MIN..=DIGITIZER_SWITCH_MAX if counters.switch < self.contact_count => {
+                            debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                            (field.report_handler)(self, field.field, report);
+                            counters.switch += 1;
                         }
                         _ => (), //other usages irrelevant
                     }
