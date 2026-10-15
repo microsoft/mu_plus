@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "fixture_id": "secure-boot-key-audit-v1",
+  "version": 2,
+  "fixture_id": "secure-boot-key-audit-v2",
   "scenarios": [
     "rsa2048-pk-a-to-b-to-a",
     "setup-mode-to-mldsa87",
@@ -9,9 +9,27 @@
   ],
   "private_keys_emitted": false,
   "signature_owner": "d4f18610-2ce9-4d6c-a3c2-0bd4727db67b",
-  "unsigned_image": "/home/doug/git/pqc/mu_tiano_platforms/Build/QemuQ35PkgX64/DEBUG_GCC5/X64/HelloUefiApp.efi",
+  "unsigned_image": {
+    "name": "HelloUefiApp.efi",
+    "size": 20480,
+    "sha256": "89babed68d2591d54e2e99c99fba801aec700b2960a03104db95e6bf2e89867c"
+  },
   "image_authenticode_sha512": "079f01d83798ec3ef14f796794aa60fb05b2f3212a1e26f56136768dc7c522a0aaef2c5d328b197397aeea354a594bb0057b2f4b6d66b252322b822bc34bcf1a",
-  "certificate_tbs_sha512": "7b5ddb5a8089d1f9decf3fb0a052380dcfa57ac36315297b9e359118fb53621dc7f8700bd3549e615be6b38e84333b205c57659ae451068459fb7f9527f3b1eb",
+  "roles": {
+    "mldsa_pk_update_authority": {
+      "certificate_artifact": "gSecureBootKeyAuditPkMldsa",
+      "subject": "CN=UEFI 2.12 Audit ML-DSA-87 PK",
+      "certificate_sha256": "714eff09faa3f324e4c15d4f2d4ced8d2428013644184fd48c240e8311a0701f",
+      "public_key_sha256": "38842843bd61bc24ce5b843579b8893645b2b27b21e1d3bbf3a8d2d51bc02998"
+    },
+    "mldsa_image_signer": {
+      "certificate_location": "gSecureBootKeyAuditHelloMldsa:authenticode",
+      "subject": "CN=UEFI 2.12 Audit ML-DSA-87 Image Signer",
+      "certificate_sha256": "345239fad7409d74c6a3668747795f89d16613cbd72f732e97ab20af09bb3b07",
+      "public_key_sha256": "68dd57e90cf6abe1a9b98de6ee8752c5a497f4c86a1f4806de2ca6ab3a205daa",
+      "tbs_sha512": "bc620ec9594c4f886e373489577a07f81c9c3d4c0710aec34c21788d12c611fa61ce3da77ddd8e5b8dcb2e665811a7f5446678861968808266e49342a7f9bfb4"
+    }
+  },
   "required_ecit": {
     "database_update_authorization": [
       "EFI_CERT_X509_GUID"
@@ -34,91 +52,91 @@
   "artifacts": {
     "gSecureBootKeyAuditPkA": {
       "size": 799,
-      "sha256": "dea7d6cf2ee48d762d381fc4751da5202da54fed3a7d8e8e4f939f962d588853"
+      "sha256": "012c92ac08ddf250d3994aa74d7d6a139d6e22a6a47cc13e8cfa3616f9935d35"
     },
     "gSecureBootKeyAuditPkB": {
       "size": 799,
-      "sha256": "dada43bd0249a9fb8f419bc48f3880e367278fd81fcbebec045db85a89ec298d"
+      "sha256": "3d0d527cdf79f1771cb37ff98302175d887b6b82dc990953a097184babb3b75f"
     },
     "gSecureBootKeyAuditPkMldsa": {
       "size": 7502,
-      "sha256": "b8571aa54116e505a9e277e0b88de4d74749b1194185fb61f4458c67587ecb9c"
+      "sha256": "2719fdb8471722a4eaaf812bed4b04eb3d1ee9afd94d26bb4485eacbe62992c6"
     },
     "gSecureBootKeyAuditSetupPkA": {
       "size": 839,
-      "sha256": "cc11f1e5e8131de9fd5a38fef15d53da5f1813da407530fe0cdcbd3a4eb22663"
+      "sha256": "e4743a602210cee1b8285f7d524e9f6351c56e3382bc48b6414299b7b491dda2"
     },
     "gSecureBootKeyAuditPkAToB": {
       "size": 1993,
-      "sha256": "5a4bd232f6ccb9481f62319fc4a15c13610230773f9c4535b992087c1388c061"
+      "sha256": "13d784cdc5a5006aa711c6b33c1c6ef049a77ff8bfb474ec528786685480a0fe"
     },
     "gSecureBootKeyAuditPkBToA": {
       "size": 1993,
-      "sha256": "3fe8dbfba898b486402fcd7a301f5161d6e079b3d013e1022288da9bbbe673c4"
+      "sha256": "99d28c99da1b7902e0dde2ba60d12ae2e223956407178e0914648981f7c0349d"
     },
     "gSecureBootKeyAuditDeleteByA": {
       "size": 1194,
-      "sha256": "89b98b6a698d725295d27cc55271347927273281accdc39d9b7d31d7a9b0c095"
+      "sha256": "f9bcf1dbe75b0b01b8efa71172cfc3cb6273688a8e148f8b6cd51747b6912513"
     },
     "gSecureBootKeyAuditSetupPkMldsa": {
       "size": 7542,
-      "sha256": "b826d69851157d44eaa0ae7103b08ad3136e715df453ea0f00a941d8636846bf"
+      "sha256": "a279eba2c6312c0220fe6f691ec8128633264429b145655aa0c6c91438e0df54"
     },
     "gSecureBootKeyAuditDeleteByMldsa": {
       "size": 12270,
-      "sha256": "b975d025c51e0804e2694180a116c74877ff537148a36382c390fadb3265fb98"
+      "sha256": "f093c3383699ff87f0bdd0957dee4600d382d9b15391c3a7ea4b47a7c71a44d0"
     },
     "gSecureBootKeyAuditSetupPkAForMldsa": {
       "size": 839,
-      "sha256": "e25bc8107f3cd5b9312161a4b75141550e08543b7b187fab31660c0fa3a28e99"
+      "sha256": "7eba378ad506776b54854e39d9845f1eec2c69be6077ae6495a9812e70cf9705"
     },
     "gSecureBootKeyAuditPkAToMldsa": {
       "size": 8696,
-      "sha256": "24f9ab3b3bbfc18c92e89ba2f1b04febcce95131194959bf1d7b69fb35409599"
+      "sha256": "a968f2d518fc4d0d111eab00082d1657964a4638de7e8261a501cae94901f1c9"
     },
     "gSecureBootKeyAuditPkMldsaToA": {
       "size": 13069,
-      "sha256": "7e0de1dc3a708f983a9e7b2521c437875934afc8c6fcb9ea9cc75ebb35cc2cdc"
+      "sha256": "dc444b6c47738fe13f95ff295b10473f201937e23a266aafdec2185cd8b458a8"
     },
     "gSecureBootKeyAuditDeleteByAAfterMldsa": {
       "size": 1194,
-      "sha256": "8ee40b924a81c8416f21d3931222c6e7b520cce550153de2b808243412692dd3"
+      "sha256": "05779a88cb09c56407984d13d9a5f0b01a0340ff9e536e8a843b7cbdb1d7c7ca"
     },
     "gSecureBootKeyAuditRecoveryDeleteByA": {
       "size": 1194,
-      "sha256": "b1c154462e66a4b901ff45f80a3f55f5457571d921c4b4b83f26484567212539"
+      "sha256": "d17340c24347eb20ccb1ad0f0a50bb9d6fa35f9e6c7861d742d646cd861944db"
     },
     "gSecureBootKeyAuditRecoveryDeleteByB": {
       "size": 1194,
-      "sha256": "f31d40754d22a8cbec52359d359a9be0e9595c31873d30ec0fe7c0bf788db9ea"
+      "sha256": "bbd2cc51e3ff509dd1ca6bc2085ccde764b4d7966cc401fc2f586c4604ac9694"
     },
     "gSecureBootKeyAuditRecoveryDeleteByMldsa": {
       "size": 12270,
-      "sha256": "b604fc5876ff8fb10ec4e0d15a61620173e3f4560beda3628e59a899c5612c35"
+      "sha256": "3feed6114e312774747e164c00d59ed4005e6a2aa489373ac1d660bb1a7c717a"
     },
     "gSecureBootKeyAuditDbTbsHashV1": {
       "size": 124,
-      "sha256": "b134442b55234f771396ed90e4faa3661a603286f74f0401c3ebd9c079553c84"
+      "sha256": "d48a68f8de61d12c831f4b40e129a1264684bb104854bec9d6e6326e62f4e687"
     },
     "gSecureBootKeyAuditDbTbsHashV2": {
       "size": 92,
-      "sha256": "5621c7582dba2f4bce77b52b3cef31288f83bc4fb1c64cab39c62b559968a25f"
+      "sha256": "a2cc679641b9fdbac42fbf16f3dbd632703f2ffd86cfbbfe59e55bc277e73a92"
     },
     "gSecureBootKeyAuditEnrollDbTbsHashV1": {
       "size": 12394,
-      "sha256": "a19ebaa2f8338316abf02fdec65068e2d25de469351eedc92e0adf3d69948920"
+      "sha256": "23f67d226833a339fb2b36e7834d6f93999ceb2244c2a5004e436625430c6986"
     },
     "gSecureBootKeyAuditEnrollDbTbsHashV2": {
       "size": 12362,
-      "sha256": "ffe6539dce8fd714c45b69866c82403a4fd80bb9ea18fcf52d83ec821b53633f"
+      "sha256": "6a86a66538775c9c4077ef4198d0aefe90ab3185a35eaeb16da65e959bba60de"
     },
     "gSecureBootKeyAuditDeleteDbByMldsa": {
       "size": 12270,
-      "sha256": "f141818edf349eb76e1717c21f80c6183aad1874d00332928484fb472d7da898"
+      "sha256": "33d218a66ab37c01feb2aecf6c51c2b016fde0182ac4c590161dd8e458f8271a"
     },
     "gSecureBootKeyAuditHelloMldsa": {
-      "size": 33000,
-      "sha256": "958d77d95fb66c2319890d043c553b2834d5c63fd58009f60130192e7989ad18"
+      "size": 33032,
+      "sha256": "7f76155c49353610bc3c02d65e3f0c41cda578021be91b1a205ea41927dbcf67"
     }
   }
 }

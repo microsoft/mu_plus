@@ -33,8 +33,10 @@ The ML-DSA authenticated updates use pure ML-DSA-87 CMS as specified by RFC
 digest algorithm is SHA-512.
 
 The image tests use SHA-512 Authenticode and pure ML-DSA-87. The generator
-embeds the signer certificate in the signed image and stores only its
-TBSCertificate hash in `db`.
+uses separate ML-DSA-87 keys for the PK/update authority and image signer. It
+embeds the image-signer certificate in the signed image, stores only that
+certificate's TBSCertificate hash in `db`, and uses the PK authority to
+authenticate the `db` update.
 
 The final correlation test reports each ECIT claim independently from the
 observed operation as verified, over-reported, under-reported, verified absent,
@@ -119,7 +121,38 @@ The generator writes:
 - `UEFI/TestData.c`, containing public certificates, signature lists,
   authenticated updates, the signed test image, fixture ID, and manifest hash;
   and
-- `Host/TestData.manifest.json`, containing hashes and ECIT prerequisites.
+- `Host/TestData.manifest.json`, containing artifact hashes, explicit
+  certificate roles, unsigned-image identity, and ECIT prerequisites.
 
 RSA and ML-DSA private keys exist only in memory while the generator runs and
 are never written to disk or emitted into the application.
+
+## Independently verify the public fixture
+
+After generation, verify the exact arrays that will be compiled into the
+firmware:
+
+```bash
+python3 Host/VerifyTestData.py
+python3 -m unittest -v Host/test_verify_test_data.py
+```
+
+The verifier does not import the generator or use its construction helpers. It
+parses `UEFI/TestData.c` and independently checks:
+
+- every artifact size and SHA-256 binding in the versioned manifest;
+- X.509 ESL layout and generated self-signed certificate signatures;
+- every authenticated-variable envelope, payload, signer role, detached CMS
+  signature, algorithm, issuer, and serial number;
+- PE Certificate Table bounds and alignment, the Authenticode SHA-512 digest,
+  `SpcIndirectDataContent`, signed attributes, embedded certificate, and
+  ML-DSA-87 signature;
+- V1 and V2 SHA-512 TBSCertificate-hash ESLs against the embedded image-signer
+  certificate; and
+- distinct certificate and public-key fingerprints for the ML-DSA PK/update
+  authority and image-signer roles.
+
+The command also corrupts the final Authenticode object after rebinding its
+manifest artifact hash and requires independent signature verification to
+reject it. The unit tests additionally reject role-key reuse and malformed ESL
+structure.

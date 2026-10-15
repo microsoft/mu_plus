@@ -31,7 +31,7 @@ from pathlib import Path
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import mldsa, rsa
-from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.x509.oid import NameOID
 from edk2toollib.uefi.authenticated_variables_structure_support import (
     EfiSignatureDataFactory,
@@ -50,7 +50,7 @@ EFI_CERT_X509_SHA512_GUID = uuid.UUID("446dbf63-2502-4cda-bcfa-2465d2b0fe9d")
 EFI_CERT_V2_X509_SHA512_GUID = uuid.UUID("4d46147a-fa79-43a9-8836-00341c708a70")
 SIGNATURE_OWNER = uuid.UUID("d4f18610-2ce9-4d6c-a3c2-0bd4727db67b")
 VARIABLE_ATTRIBUTES = "NV,BS,RT,AT"
-FIXTURE_ID = "secure-boot-key-audit-v1"
+FIXTURE_ID = "secure-boot-key-audit-v2"
 
 SHA256_WITH_RSA_OID = "1.2.840.113549.1.1.11"
 SHA256_OID = "2.16.840.1.101.3.4.2.1"
@@ -191,13 +191,13 @@ ARTIFACT_DESCRIPTIONS = {
         "Update signature: pure ML-DSA-87.",
     ),
     "gSecureBootKeyAuditDbTbsHashV1": (
-        "V1 EFI signature list containing the ML-DSA certificate TBS hash.",
+        "V1 EFI signature list containing the image-signer TBS hash.",
         "Signature type: EFI_CERT_X509_SHA512_GUID.",
         "Signature data: owner GUID, SHA-512 TBSCertificate digest, EFI_TIME.",
         "The zero EFI_TIME denotes a non-revocation image authorization entry.",
     ),
     "gSecureBootKeyAuditDbTbsHashV2": (
-        "UEFI 2.12 V2 EFI signature list containing the ML-DSA TBS hash.",
+        "UEFI 2.12 V2 EFI signature list containing the image-signer TBS hash.",
         "Signature type: EFI_CERT_V2_X509_SHA512_GUID.",
         "Signature data: SHA-512 TBSCertificate digest only.",
         "V2 deliberately omits SignatureOwner and EFI_TIME.",
@@ -706,18 +706,21 @@ def generate(
     key_mldsa, certificate_mldsa = generate_mldsa_certificate(
         "UEFI 2.12 Audit ML-DSA-87 PK"
     )
+    key_image_mldsa, certificate_image_mldsa = generate_mldsa_certificate(
+        "UEFI 2.12 Audit ML-DSA-87 Image Signer"
+    )
 
     pk_a = certificate_to_esl(certificate_a)
     pk_b = certificate_to_esl(certificate_b)
     pk_mldsa = certificate_to_esl(certificate_mldsa)
-    db_tbs_hash_v1 = certificate_tbs_hash_to_esl(certificate_mldsa, 1)
-    db_tbs_hash_v2 = certificate_tbs_hash_to_esl(certificate_mldsa, 2)
+    db_tbs_hash_v1 = certificate_tbs_hash_to_esl(certificate_image_mldsa, 1)
+    db_tbs_hash_v2 = certificate_tbs_hash_to_esl(certificate_image_mldsa, 2)
 
     unsigned_image = prepare_unsigned_pe_image(unsigned_image_path.read_bytes())
     image_digest = authenticode_digest(unsigned_image, hashlib.sha512)
     authenticode_signature, _ = mldsa_authenticode_signature(
-        key_mldsa,
-        certificate_mldsa,
+        key_image_mldsa,
+        certificate_image_mldsa,
         image_digest,
     )
     signed_image = apply_authenticode_signature(
@@ -852,7 +855,7 @@ def generate(
             raise ValueError(f"{name} does not contain its expected payload")
 
     manifest = {
-        "version": 1,
+        "version": 2,
         "fixture_id": FIXTURE_ID,
         "scenarios": [
             "rsa2048-pk-a-to-b-to-a",
@@ -862,11 +865,45 @@ def generate(
         ],
         "private_keys_emitted": False,
         "signature_owner": str(SIGNATURE_OWNER),
-        "unsigned_image": str(unsigned_image_path),
+        "unsigned_image": {
+            "name": unsigned_image_path.name,
+            "size": len(unsigned_image),
+            "sha256": hashlib.sha256(unsigned_image).hexdigest(),
+        },
         "image_authenticode_sha512": image_digest.hex(),
-        "certificate_tbs_sha512": hashlib.sha512(
-            certificate_mldsa.tbs_certificate_bytes
-        ).hexdigest(),
+        "roles": {
+            "mldsa_pk_update_authority": {
+                "certificate_artifact": "gSecureBootKeyAuditPkMldsa",
+                "subject": certificate_mldsa.subject.rfc4514_string(),
+                "certificate_sha256": hashlib.sha256(
+                    certificate_mldsa.public_bytes(Encoding.DER)
+                ).hexdigest(),
+                "public_key_sha256": hashlib.sha256(
+                    certificate_mldsa.public_key().public_bytes(
+                        Encoding.DER,
+                        PublicFormat.SubjectPublicKeyInfo,
+                    )
+                ).hexdigest(),
+            },
+            "mldsa_image_signer": {
+                "certificate_location": (
+                    "gSecureBootKeyAuditHelloMldsa:authenticode"
+                ),
+                "subject": certificate_image_mldsa.subject.rfc4514_string(),
+                "certificate_sha256": hashlib.sha256(
+                    certificate_image_mldsa.public_bytes(Encoding.DER)
+                ).hexdigest(),
+                "public_key_sha256": hashlib.sha256(
+                    certificate_image_mldsa.public_key().public_bytes(
+                        Encoding.DER,
+                        PublicFormat.SubjectPublicKeyInfo,
+                    )
+                ).hexdigest(),
+                "tbs_sha512": hashlib.sha512(
+                    certificate_image_mldsa.tbs_certificate_bytes
+                ).hexdigest(),
+            },
+        },
         "required_ecit": {
             "database_update_authorization": ["EFI_CERT_X509_GUID"],
             "database_update_verification": [
