@@ -1,0 +1,47 @@
+## @file
+# Secure Boot key ECIT audit application.
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SecureBootKeyAuditApp
+  FILE_GUID                      = 7385D03A-AE30-47C7-B46C-B2724B50308B
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 0.2
+  ENTRY_POINT                    = SecureBootKeyAuditAppEntry
+
+[Sources]
+  SecureBootKeyAuditApp.c
+  TestData.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SecurityPkg/SecurityPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+  UnitTestLib
+
+[Guids]
+  gEfiCertX509Guid
+  gEfiCertX509Sha512Guid
+  gEfiCertV2X509Sha512Guid
+  gEfiCryptoIndicatorTableGuid
+  gEfiEcitFeatureSbDatabaseUpdateAuthorizationGuid
+  gEfiEcitFeatureSbDatabaseUpdateVerificationGuid
+  gEfiEcitFeatureSbImageAuthorizationGuid
+  gEfiEcitFeatureSbImageVerificationGuid
+  gEfiGlobalVariableGuid
+  gEfiImageSecurityDatabaseGuid
