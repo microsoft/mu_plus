@@ -31,7 +31,10 @@ variable store. They:
    an explicitly logged recovery phase; and
 9. write a versioned, CRC-protected journal to the test volume, request a cold
    reboot, resume the active unit test, reread ECIT and Secure Boot state, and
-   prove both match the pre-reboot evidence.
+   prove both match the pre-reboot evidence; and
+10. enroll a `db` entry with an ML-DSA-87 authenticated update, replay the
+    identical envelope, require `EFI_SECURITY_VIOLATION`, and prove the `db`
+    attributes, size, bytes, and SHA-256 remain unchanged.
 
 The ML-DSA authenticated updates use pure ML-DSA-87 CMS as specified by RFC
 9882. Because the detached CMS signatures omit signed attributes, their CMS
@@ -56,10 +59,16 @@ attributes, sizes, and recognized state before any explicit recovery mutation.
 A recovery attempt validates the complete mode/PK/`db` tuple before its first
 `SetVariable()` call; unknown or inconsistent state remains untouched for host
 evidence capture and baseline restoration.
+
 A failure can still leave test state installed if firmware accepts a mutation
 but becomes unable to authenticate the matching cleanup update. Run only with
 a disposable QEMU variable store or on a dedicated physical test device with
 an independently proven recovery path.
+
+Authenticated-variable conformance steps use a data-driven executor that
+validates the required pre-state, exact returned status, expected post-state,
+and atomicity for rejected operations. It emits before/after variable
+SHA-256 evidence into the unit-test log.
 
 ## Platform qualification requirement
 

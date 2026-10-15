@@ -861,6 +861,7 @@ def generate(
             "rsa2048-pk-a-to-b-to-a",
             "setup-mode-to-mldsa87",
             "rsa2048-to-mldsa87-to-rsa2048",
+            "mldsa87-authenticated-update-replay",
             "mldsa87-authenticode-tbs-hash",
         ],
         "private_keys_emitted": False,

@@ -26,20 +26,19 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UnitTestLib.h>
 
+#include "AuditRecovery.h"
+#include "AuditScenario.h"
 #include "AuditTypes.h"
+#include "SecureBootState.h"
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
-#define UNIT_TEST_APP_VERSION  "0.6"
+#define UNIT_TEST_APP_VERSION  "0.7"
 
 #define SHA256_WITH_RSA_OID  "1.2.840.113549.1.1.11"
 #define SHA256_OID           "2.16.840.1.101.3.4.2.1"
 #define SHA512_OID           "2.16.840.1.101.3.4.2.3"
 #define ML_DSA_87_OID        "2.16.840.1.101.3.4.3.19"
-
-#define SECURE_BOOT_KEY_ATTRIBUTES  \
-  (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | \
-   EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
 
 #define MAX_ECIT_LENGTH  SIZE_1MB
 
@@ -56,12 +55,6 @@ typedef struct {
   EFI_DEVICE_PATH_PROTOCOL    End;
 } TEST_IMAGE_DEVICE_PATH;
 #pragma pack ()
-
-STATIC
-EFI_STATUS
-CaptureBaselineSnapshot (
-  OUT AUDIT_BASELINE_SNAPSHOT  *Snapshot
-  );
 
 STATIC EFI_GUID  mAuditJournalGuid = {
   0x7ec54fb2, 0xef9f, 0x4e03, { 0x81, 0xf0, 0x56, 0xbb, 0xe1, 0x2d, 0xa6, 0xe9 }
@@ -644,406 +637,6 @@ EcitCorrelationClassifierTest (
 }
 
 STATIC
-EFI_STATUS
-ReadVariable (
-  IN  CONST CHAR16    *Name,
-  IN  CONST EFI_GUID  *Guid,
-  OUT UINT32          *Attributes,
-  OUT UINT8           **Data,
-  OUT UINTN           *DataSize
-  )
-{
-  EFI_STATUS  Status;
-
-  *Data       = NULL;
-  *DataSize   = 0;
-  *Attributes = 0;
-
-  Status = gRT->GetVariable (
-                  (CHAR16 *)Name,
-                  (EFI_GUID *)Guid,
-                  Attributes,
-                  DataSize,
-                  NULL
-                  );
-  if (Status == EFI_NOT_FOUND) {
-    return Status;
-  }
-
-  if (Status != EFI_BUFFER_TOO_SMALL) {
-    return Status;
-  }
-
-  *Data = AllocatePool (*DataSize);
-  if (*Data == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  Status = gRT->GetVariable (
-                  (CHAR16 *)Name,
-                  (EFI_GUID *)Guid,
-                  Attributes,
-                  DataSize,
-                  *Data
-                  );
-  if (EFI_ERROR (Status)) {
-    FreePool (*Data);
-    *Data = NULL;
-  }
-
-  return Status;
-}
-
-STATIC
-EFI_STATUS
-ReadModeVariable (
-  IN  CONST CHAR16  *Name,
-  OUT UINT8         *Value
-  )
-{
-  UINT32  Attributes;
-  UINTN   DataSize;
-
-  DataSize = sizeof (*Value);
-  return gRT->GetVariable (
-                (CHAR16 *)Name,
-                &gEfiGlobalVariableGuid,
-                &Attributes,
-                &DataSize,
-                Value
-                );
-}
-
-STATIC
-BOOLEAN
-PkMatches (
-  IN CONST UINT8  *Pk,
-  IN UINTN        PkSize,
-  IN CONST UINT8  *Expected,
-  IN UINTN        ExpectedSize
-  )
-{
-  return (BOOLEAN)(
-                   (PkSize == ExpectedSize) &&
-                   (CompareMem (Pk, Expected, PkSize) == 0)
-                   );
-}
-
-STATIC
-EFI_STATUS
-VerifyPk (
-  IN CONST UINT8  *Expected,
-  IN UINTN        ExpectedSize
-  )
-{
-  UINT32      Attributes;
-  UINT8       *Pk;
-  UINTN       PkSize;
-  EFI_STATUS  Status;
-
-  Status = ReadVariable (
-             EFI_PLATFORM_KEY_NAME,
-             &gEfiGlobalVariableGuid,
-             &Attributes,
-             &Pk,
-             &PkSize
-             );
-  if (ExpectedSize == 0) {
-    if (Status == EFI_NOT_FOUND) {
-      return EFI_SUCCESS;
-    }
-
-    if (!EFI_ERROR (Status)) {
-      FreePool (Pk);
-    }
-
-    return EFI_COMPROMISED_DATA;
-  }
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if ((Attributes != SECURE_BOOT_KEY_ATTRIBUTES) ||
-      !PkMatches (Pk, PkSize, Expected, ExpectedSize))
-  {
-    Status = EFI_COMPROMISED_DATA;
-  }
-
-  FreePool (Pk);
-  return Status;
-}
-
-STATIC
-EFI_STATUS
-VerifyDb (
-  IN CONST UINT8  *Expected,
-  IN UINTN        ExpectedSize
-  )
-{
-  UINT32      Attributes;
-  UINT8       *Db;
-  UINTN       DbSize;
-  EFI_STATUS  Status;
-
-  Status = ReadVariable (
-             EFI_IMAGE_SECURITY_DATABASE,
-             &gEfiImageSecurityDatabaseGuid,
-             &Attributes,
-             &Db,
-             &DbSize
-             );
-  if (ExpectedSize == 0) {
-    if (Status == EFI_NOT_FOUND) {
-      return EFI_SUCCESS;
-    }
-
-    if (!EFI_ERROR (Status)) {
-      FreePool (Db);
-    }
-
-    return EFI_COMPROMISED_DATA;
-  }
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if ((Attributes != SECURE_BOOT_KEY_ATTRIBUTES) ||
-      !PkMatches (Db, DbSize, Expected, ExpectedSize))
-  {
-    Status = EFI_COMPROMISED_DATA;
-  }
-
-  FreePool (Db);
-  return Status;
-}
-
-STATIC
-EFI_STATUS
-ApplyPkUpdate (
-  IN CONST UINT8  *AuthenticatedUpdate,
-  IN UINTN        AuthenticatedUpdateSize,
-  IN CONST UINT8  *ExpectedPk,
-  IN UINTN        ExpectedPkSize
-  )
-{
-  EFI_STATUS  Status;
-
-  Status = gRT->SetVariable (
-                  EFI_PLATFORM_KEY_NAME,
-                  &gEfiGlobalVariableGuid,
-                  SECURE_BOOT_KEY_ATTRIBUTES,
-                  AuthenticatedUpdateSize,
-                  (VOID *)AuthenticatedUpdate
-                  );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  return VerifyPk (ExpectedPk, ExpectedPkSize);
-}
-
-STATIC
-EFI_STATUS
-ApplyDbUpdate (
-  IN CONST UINT8  *AuthenticatedUpdate,
-  IN UINTN        AuthenticatedUpdateSize,
-  IN CONST UINT8  *ExpectedDb,
-  IN UINTN        ExpectedDbSize
-  )
-{
-  EFI_STATUS  Status;
-
-  Status = gRT->SetVariable (
-                  EFI_IMAGE_SECURITY_DATABASE,
-                  &gEfiImageSecurityDatabaseGuid,
-                  SECURE_BOOT_KEY_ATTRIBUTES,
-                  AuthenticatedUpdateSize,
-                  (VOID *)AuthenticatedUpdate
-                  );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  return VerifyDb (ExpectedDb, ExpectedDbSize);
-}
-
-STATIC
-BOOLEAN
-RecoveryStateIsRecognized (
-  IN CONST AUDIT_BASELINE_SNAPSHOT  *Snapshot
-  )
-{
-  if ((Snapshot->PkState == AuditVariableStateAbsent) &&
-      (Snapshot->DbState == AuditVariableStateAbsent))
-  {
-    return (BOOLEAN)(
-                     (Snapshot->SetupMode == SETUP_MODE) &&
-                     (Snapshot->SecureBoot == SECURE_BOOT_MODE_DISABLE)
-                     );
-  }
-
-  if ((Snapshot->SetupMode != USER_MODE) ||
-      (Snapshot->SecureBoot != SECURE_BOOT_MODE_ENABLE) ||
-      (Snapshot->PkAttributes != SECURE_BOOT_KEY_ATTRIBUTES))
-  {
-    return FALSE;
-  }
-
-  if ((Snapshot->PkState == AuditVariableStatePkA) ||
-      (Snapshot->PkState == AuditVariableStatePkB))
-  {
-    return (BOOLEAN)(Snapshot->DbState == AuditVariableStateAbsent);
-  }
-
-  if (Snapshot->PkState != AuditVariableStatePkMldsa) {
-    return FALSE;
-  }
-
-  if (Snapshot->DbState == AuditVariableStateAbsent) {
-    return TRUE;
-  }
-
-  return (BOOLEAN)(
-                   ((Snapshot->DbState == AuditVariableStateDbV1) ||
-                    (Snapshot->DbState == AuditVariableStateDbV2)) &&
-                   (Snapshot->DbAttributes == SECURE_BOOT_KEY_ATTRIBUTES)
-                   );
-}
-
-STATIC
-EFI_STATUS
-RecoverDb (
-  VOID
-  )
-{
-  UINT32      Attributes;
-  UINT8       *Db;
-  UINTN       DbSize;
-  EFI_STATUS  Status;
-
-  Status = ReadVariable (
-             EFI_IMAGE_SECURITY_DATABASE,
-             &gEfiImageSecurityDatabaseGuid,
-             &Attributes,
-             &Db,
-             &DbSize
-             );
-  if (Status == EFI_NOT_FOUND) {
-    return EFI_SUCCESS;
-  }
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if (!PkMatches (
-         Db,
-         DbSize,
-         gSecureBootKeyAuditDbTbsHashV1,
-         gSecureBootKeyAuditDbTbsHashV1Size
-         ) &&
-      !PkMatches (
-         Db,
-         DbSize,
-         gSecureBootKeyAuditDbTbsHashV2,
-         gSecureBootKeyAuditDbTbsHashV2Size
-         ))
-  {
-    FreePool (Db);
-    UT_LOG_ERROR ("Refusing to modify an unknown existing db\n");
-    return EFI_ACCESS_DENIED;
-  }
-
-  FreePool (Db);
-  return ApplyDbUpdate (
-           gSecureBootKeyAuditDeleteDbByMldsa,
-           gSecureBootKeyAuditDeleteDbByMldsaSize,
-           NULL,
-           0
-           );
-}
-
-STATIC
-EFI_STATUS
-RecoverSetupModeInternal (
-  VOID
-  )
-{
-  AUDIT_BASELINE_SNAPSHOT  Snapshot;
-  EFI_STATUS               Status;
-
-  Status = CaptureBaselineSnapshot (&Snapshot);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if (!RecoveryStateIsRecognized (&Snapshot)) {
-    UT_LOG_ERROR (
-      "Refusing recovery from unrecognized state: setup_mode=%u secure_boot=%u "
-      "pk_state=%u db_state=%u\n",
-      Snapshot.SetupMode,
-      Snapshot.SecureBoot,
-      Snapshot.PkState,
-      Snapshot.DbState
-      );
-    return EFI_ACCESS_DENIED;
-  }
-
-  if (Snapshot.PkState == AuditVariableStateAbsent) {
-    return EFI_SUCCESS;
-  }
-
-  if (Snapshot.DbState != AuditVariableStateAbsent) {
-    Status = RecoverDb ();
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-  }
-
-  switch (Snapshot.PkState) {
-    case AuditVariableStatePkA:
-      return ApplyPkUpdate (
-               gSecureBootKeyAuditRecoveryDeleteByA,
-               gSecureBootKeyAuditRecoveryDeleteByASize,
-               NULL,
-               0
-               );
-    case AuditVariableStatePkB:
-      return ApplyPkUpdate (
-               gSecureBootKeyAuditRecoveryDeleteByB,
-               gSecureBootKeyAuditRecoveryDeleteByBSize,
-               NULL,
-               0
-               );
-    case AuditVariableStatePkMldsa:
-      return ApplyPkUpdate (
-               gSecureBootKeyAuditRecoveryDeleteByMldsa,
-               gSecureBootKeyAuditRecoveryDeleteByMldsaSize,
-               NULL,
-               0
-               );
-    default:
-      return EFI_ACCESS_DENIED;
-  }
-}
-
-STATIC
-EFI_STATUS
-RecoverSetupMode (
-  VOID
-  )
-{
-  EFI_STATUS  Status;
-
-  UT_LOG_INFO ("[AUDIT_RECOVERY] phase=begin\n");
-  Status = RecoverSetupModeInternal ();
-  UT_LOG_INFO ("[AUDIT_RECOVERY] phase=end status=%r\n", Status);
-  return Status;
-}
-
-STATIC
 UNIT_TEST_STATUS
 EFIAPI
 RecoveryStateClassifierTest (
@@ -1098,192 +691,6 @@ RecoveryStateClassifierTest (
   }
 
   return UNIT_TEST_PASSED;
-}
-
-STATIC
-CONST CHAR8 *
-AuditVariableStateName (
-  IN AUDIT_VARIABLE_STATE  State
-  )
-{
-  switch (State) {
-    case AuditVariableStateAbsent:
-      return "ABSENT";
-    case AuditVariableStatePkA:
-      return "PK_A";
-    case AuditVariableStatePkB:
-      return "PK_B";
-    case AuditVariableStatePkMldsa:
-      return "PK_MLDSA87";
-    case AuditVariableStateDbV1:
-      return "DB_TBS_V1";
-    case AuditVariableStateDbV2:
-      return "DB_TBS_V2";
-    case AuditVariableStateUnknown:
-      return "UNKNOWN";
-    default:
-      return "UNREAD";
-  }
-}
-
-STATIC
-EFI_STATUS
-CaptureBaselineSnapshot (
-  OUT AUDIT_BASELINE_SNAPSHOT  *Snapshot
-  )
-{
-  UINT32      Attributes;
-  UINT8       *Data;
-  UINTN       DataSize;
-  EFI_STATUS  Status;
-
-  ZeroMem (Snapshot, sizeof (*Snapshot));
-  Snapshot->SetupMode  = 0xFF;
-  Snapshot->SecureBoot = 0xFF;
-  Snapshot->PkState    = AuditVariableStateUnread;
-  Snapshot->DbState    = AuditVariableStateUnread;
-
-  Status = ReadModeVariable (EFI_SETUP_MODE_NAME, &Snapshot->SetupMode);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  Status = ReadModeVariable (EFI_SECURE_BOOT_MODE_NAME, &Snapshot->SecureBoot);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  Status = ReadVariable (
-             EFI_PLATFORM_KEY_NAME,
-             &gEfiGlobalVariableGuid,
-             &Attributes,
-             &Data,
-             &DataSize
-             );
-  if (Status == EFI_NOT_FOUND) {
-    Snapshot->PkState = AuditVariableStateAbsent;
-  } else if (EFI_ERROR (Status)) {
-    return Status;
-  } else {
-    Snapshot->PkAttributes = Attributes;
-    Snapshot->PkSize       = DataSize;
-    if (PkMatches (Data, DataSize, gSecureBootKeyAuditPkA, gSecureBootKeyAuditPkASize)) {
-      Snapshot->PkState = AuditVariableStatePkA;
-    } else if (PkMatches (Data, DataSize, gSecureBootKeyAuditPkB, gSecureBootKeyAuditPkBSize)) {
-      Snapshot->PkState = AuditVariableStatePkB;
-    } else if (PkMatches (
-                 Data,
-                 DataSize,
-                 gSecureBootKeyAuditPkMldsa,
-                 gSecureBootKeyAuditPkMldsaSize
-                 ))
-    {
-      Snapshot->PkState = AuditVariableStatePkMldsa;
-    } else {
-      Snapshot->PkState = AuditVariableStateUnknown;
-    }
-
-    FreePool (Data);
-  }
-
-  Status = ReadVariable (
-             EFI_IMAGE_SECURITY_DATABASE,
-             &gEfiImageSecurityDatabaseGuid,
-             &Attributes,
-             &Data,
-             &DataSize
-             );
-  if (Status == EFI_NOT_FOUND) {
-    Snapshot->DbState = AuditVariableStateAbsent;
-  } else if (EFI_ERROR (Status)) {
-    return Status;
-  } else {
-    Snapshot->DbAttributes = Attributes;
-    Snapshot->DbSize       = DataSize;
-    if (PkMatches (
-          Data,
-          DataSize,
-          gSecureBootKeyAuditDbTbsHashV1,
-          gSecureBootKeyAuditDbTbsHashV1Size
-          ))
-    {
-      Snapshot->DbState = AuditVariableStateDbV1;
-    } else if (PkMatches (
-                 Data,
-                 DataSize,
-                 gSecureBootKeyAuditDbTbsHashV2,
-                 gSecureBootKeyAuditDbTbsHashV2Size
-                 ))
-    {
-      Snapshot->DbState = AuditVariableStateDbV2;
-    } else {
-      Snapshot->DbState = AuditVariableStateUnknown;
-    }
-
-    FreePool (Data);
-  }
-
-  return EFI_SUCCESS;
-}
-
-STATIC
-EFI_STATUS
-InspectSetupModeBaseline (
-  OUT AUDIT_BASELINE_SNAPSHOT  *Snapshot
-  )
-{
-  EFI_STATUS  Status;
-
-  Status = CaptureBaselineSnapshot (Snapshot);
-  if (EFI_ERROR (Status)) {
-    UT_LOG_ERROR ("[AUDIT_EVIDENCE] stage=preflight capture_status=%r\n", Status);
-    return Status;
-  }
-
-  UT_LOG_INFO (
-    "[AUDIT_EVIDENCE] stage=preflight setup_mode=%u secure_boot=%u "
-    "pk_state=%a pk_attributes=0x%08x pk_size=%u "
-    "db_state=%a db_attributes=0x%08x db_size=%u\n",
-    Snapshot->SetupMode,
-    Snapshot->SecureBoot,
-    AuditVariableStateName (Snapshot->PkState),
-    Snapshot->PkAttributes,
-    Snapshot->PkSize,
-    AuditVariableStateName (Snapshot->DbState),
-    Snapshot->DbAttributes,
-    Snapshot->DbSize
-    );
-
-  if ((Snapshot->SetupMode == SETUP_MODE) &&
-      (Snapshot->SecureBoot == SECURE_BOOT_MODE_DISABLE) &&
-      (Snapshot->PkState == AuditVariableStateAbsent) &&
-      (Snapshot->DbState == AuditVariableStateAbsent))
-  {
-    return EFI_SUCCESS;
-  }
-
-  if ((Snapshot->PkState == AuditVariableStateUnknown) ||
-      (Snapshot->PkState == AuditVariableStateUnread) ||
-      (Snapshot->DbState == AuditVariableStateUnknown) ||
-      (Snapshot->DbState == AuditVariableStateUnread))
-  {
-    UT_LOG_ERROR ("Refusing to recover an unknown Secure Boot state\n");
-    return EFI_ACCESS_DENIED;
-  }
-
-  UT_LOG_WARNING ("Recognized interrupted test state requires explicit recovery\n");
-  return EFI_NOT_READY;
-}
-
-STATIC
-EFI_STATUS
-RequireSetupModeBaseline (
-  VOID
-  )
-{
-  AUDIT_BASELINE_SNAPSHOT  Snapshot;
-
-  return InspectSetupModeBaseline (&Snapshot);
 }
 
 STATIC
@@ -1927,6 +1334,102 @@ BuildTamperedImage (
 STATIC
 UNIT_TEST_STATUS
 EFIAPI
+AuthenticatedVariableReplayTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  AUDIT_AUTH_VARIABLE_SCENARIO  EnrollScenario;
+  EFI_STATUS                    RecoveryStatus;
+  AUDIT_AUTH_VARIABLE_SCENARIO  ReplayScenario;
+  UNIT_TEST_STATUS              Result;
+  EFI_STATUS                    Status;
+
+  Result = UNIT_TEST_ERROR_TEST_FAILED;
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("The replay test baseline is unsafe: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             gSecureBootKeyAuditSetupPkMldsa,
+             gSecureBootKeyAuditSetupPkMldsaSize,
+             gSecureBootKeyAuditPkMldsa,
+             gSecureBootKeyAuditPkMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Unable to establish the ML-DSA replay-test authority: %r\n", Status);
+    goto Exit;
+  }
+
+  ZeroMem (&EnrollScenario, sizeof (EnrollScenario));
+  EnrollScenario.ScenarioId              = "db-tbs-v1-enrollment";
+  EnrollScenario.VariableName            = EFI_IMAGE_SECURITY_DATABASE;
+  EnrollScenario.VendorGuid              = &gEfiImageSecurityDatabaseGuid;
+  EnrollScenario.Attributes              = SECURE_BOOT_KEY_ATTRIBUTES;
+  EnrollScenario.AuthenticatedUpdate     = gSecureBootKeyAuditEnrollDbTbsHashV1;
+  EnrollScenario.AuthenticatedUpdateSize = gSecureBootKeyAuditEnrollDbTbsHashV1Size;
+  EnrollScenario.ExpectedStatus          = EFI_SUCCESS;
+  EnrollScenario.ExpectedAfter           = gSecureBootKeyAuditDbTbsHashV1;
+  EnrollScenario.ExpectedAfterSize       = gSecureBootKeyAuditDbTbsHashV1Size;
+  EnrollScenario.ExpectedAfterAttributes = SECURE_BOOT_KEY_ATTRIBUTES;
+  EnrollScenario.ExpectMutation          = TRUE;
+
+  Status = ExecuteAuthVariableScenario (&EnrollScenario);
+  if (EFI_ERROR (Status)) {
+    RecordEcitObservations (
+      mMldsaUpdateClaims,
+      ARRAY_SIZE (mMldsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
+    goto Exit;
+  }
+
+  RecordEcitObservations (
+    mMldsaUpdateClaims,
+    ARRAY_SIZE (mMldsaUpdateClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+
+  ZeroMem (&ReplayScenario, sizeof (ReplayScenario));
+  ReplayScenario.ScenarioId               = "db-tbs-v1-replay-rejected";
+  ReplayScenario.VariableName             = EFI_IMAGE_SECURITY_DATABASE;
+  ReplayScenario.VendorGuid               = &gEfiImageSecurityDatabaseGuid;
+  ReplayScenario.Attributes               = SECURE_BOOT_KEY_ATTRIBUTES;
+  ReplayScenario.AuthenticatedUpdate      = gSecureBootKeyAuditEnrollDbTbsHashV1;
+  ReplayScenario.AuthenticatedUpdateSize  = gSecureBootKeyAuditEnrollDbTbsHashV1Size;
+  ReplayScenario.ExpectedStatus           = EFI_SECURITY_VIOLATION;
+  ReplayScenario.ExpectedBefore           = gSecureBootKeyAuditDbTbsHashV1;
+  ReplayScenario.ExpectedBeforeSize       = gSecureBootKeyAuditDbTbsHashV1Size;
+  ReplayScenario.ExpectedBeforeAttributes = SECURE_BOOT_KEY_ATTRIBUTES;
+  ReplayScenario.ExpectedAfter            = gSecureBootKeyAuditDbTbsHashV1;
+  ReplayScenario.ExpectedAfterSize        = gSecureBootKeyAuditDbTbsHashV1Size;
+  ReplayScenario.ExpectedAfterAttributes  = SECURE_BOOT_KEY_ATTRIBUTES;
+  ReplayScenario.ExpectMutation           = FALSE;
+
+  Status = ExecuteAuthVariableScenario (&ReplayScenario);
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Result = UNIT_TEST_PASSED;
+
+Exit:
+  RecoveryStatus = RecoverSetupMode ();
+  if (EFI_ERROR (RecoveryStatus)) {
+    UT_LOG_ERROR ("Unable to recover the replay-test PK/db state: %r\n", RecoveryStatus);
+    Result = UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return Result;
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
 RsaPkRotationTest (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -2534,6 +2037,15 @@ SecureBootKeyAuditAppEntry (
     "Enroll ML-DSA-87 PK directly from Setup Mode",
     "MldsaSetupEnrollment",
     MldsaSetupEnrollmentTest,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Reject replayed authenticated db updates atomically",
+    "AuthenticatedVariableReplay",
+    AuthenticatedVariableReplayTest,
     NULL,
     NULL,
     NULL
