@@ -3,9 +3,11 @@
 `SecureBootKeyAuditApp` performs an initial end-to-end check of the UEFI 2.12
 Crypto Indicator Table claims for Secure Boot database updates.
 
-The scenarios require a disposable Setup Mode variable store. They:
+The scenarios require a disposable or independently recoverable Setup Mode
+variable store. They:
 
-1. validate the ECIT header, checksum, entries, and bounds;
+1. parse the ECIT header, checksum, entries, bounds, and advertised claims once
+   without using those claims to gate safe operational tests;
 2. require X.509 database-update authorization plus RSA/SHA-256 and
    ML-DSA-87/SHA-512 update verification;
 3. rotate RSA-2048 PK A to RSA-2048 PK B and back;
@@ -18,7 +20,10 @@ The scenarios require a disposable Setup Mode variable store. They:
    enrollment, reject a body-tampered image after enrollment, then separately
    load and start the authorized ML-DSA-87-signed UEFI application; and
 7. repeat the image authorization with the UEFI 2.12 V2 digest-only
-   TBSCertificate-hash format.
+   TBSCertificate-hash format; and
+8. simulate an interrupted run with a recognized test PK, preserve a read-only
+   preflight snapshot, prove inspection does not mutate the PK, and then enter
+   an explicitly logged recovery phase.
 
 The ML-DSA authenticated updates use pure ML-DSA-87 CMS as specified by RFC
 9882. Because the detached CMS signatures omit signed attributes, their CMS
@@ -28,10 +33,40 @@ The image tests use SHA-512 Authenticode and pure ML-DSA-87. The generator
 embeds the signer certificate in the signed image and stores only its
 TBSCertificate hash in `db`.
 
+The final correlation test reports each ECIT claim independently from the
+observed operation as verified, over-reported, under-reported, verified absent,
+not tested, inconclusive, or not independently verifiable. Because the current
+ECIT verification payload is a flat OID set, the SHA-512 plus ML-DSA-87 image
+profile is reported as an operationally successful candidate pair with
+`FLAT_PROFILE_AMBIGUITY`, not as an exact profile advertised by ECIT.
+
 The application refuses to mutate an existing PK or `db` unless it exactly
-matches generated test data. A failure can still leave test state installed if
-firmware accepts a mutation but becomes unable to authenticate the matching
-cleanup update. Run only with a disposable QEMU variable store.
+matches generated test data. Baseline preflight is read-only and logs the mode,
+attributes, sizes, and recognized state before any explicit recovery mutation.
+A failure can still leave test state installed if firmware accepts a mutation
+but becomes unable to authenticate the matching cleanup update. Run only with
+a disposable QEMU variable store or on a dedicated physical test device with
+an independently proven recovery path.
+
+## Platform qualification requirement
+
+Release qualification requires successful execution on both the reference
+QEMU platform and a physical device that advertises the capabilities under
+test. Physical-device execution is destructive testing of Secure Boot
+variables and must only be performed on a dedicated device for which the
+operator:
+
+- is authorized to clear and restore the Secure Boot variable store;
+- has backed up the platform's known-good Secure Boot configuration;
+- has verified a recovery mechanism that does not depend on the keys or
+  authenticated-update path under test; and
+- can recover the device if a partially accepted transition leaves it unable
+  to authenticate the generated cleanup update.
+
+The recovery mechanism must be exercised before the audit, not merely
+documented. Examples include a platform firmware recovery flow, an
+out-of-band management recovery mechanism, or direct flash restoration. Do
+not run the mutating scenarios on an end-user or production device.
 
 ## Generate the public fixture
 

@@ -27,7 +27,7 @@
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
-#define UNIT_TEST_APP_VERSION  "0.3"
+#define UNIT_TEST_APP_VERSION  "0.4"
 
 #define SHA256_WITH_RSA_OID  "1.2.840.113549.1.1.11"
 #define SHA256_OID           "2.16.840.1.101.3.4.2.1"
@@ -44,6 +44,73 @@ typedef struct {
   CONST UINT8    *Data;
   UINTN          Size;
 } ECIT_PAYLOAD_VIEW;
+
+typedef enum {
+  EcitClaimUnknown,
+  EcitClaimAbsent,
+  EcitClaimAdvertised
+} ECIT_CLAIM_STATE;
+
+typedef enum {
+  EcitObservationNotTested,
+  EcitObservationSuccess,
+  EcitObservationFailure,
+  EcitObservationInconclusive
+} ECIT_OBSERVATION_STATE;
+
+typedef enum {
+  EcitCoverageVerified,
+  EcitCoverageOverReported,
+  EcitCoverageUnderReported,
+  EcitCoverageVerifiedAbsent,
+  EcitCoverageNotIndependentlyVerifiable,
+  EcitCoverageNotTested,
+  EcitCoverageInconclusive
+} ECIT_COVERAGE_STATE;
+
+typedef enum {
+  EcitDbUpdateAuthorizationX509,
+  EcitDbUpdateVerificationRsaSha256,
+  EcitDbUpdateVerificationSha256,
+  EcitDbUpdateVerificationMldsa87,
+  EcitDbUpdateVerificationSha512,
+  EcitImageAuthorizationTbsV1Sha512,
+  EcitImageAuthorizationTbsV2Sha512,
+  EcitImageVerificationMldsa87,
+  EcitImageVerificationSha512,
+  EcitImageVerificationMldsa87Sha512Profile,
+  EcitClaimCount
+} ECIT_CLAIM_ID;
+
+typedef struct {
+  CONST CHAR8               *Name;
+  ECIT_CLAIM_STATE          Claim;
+  ECIT_OBSERVATION_STATE    Observation;
+  EFI_STATUS                ObservationStatus;
+  BOOLEAN                   CandidateProfile;
+} ECIT_CLAIM_RESULT;
+
+typedef enum {
+  AuditVariableStateUnread,
+  AuditVariableStateAbsent,
+  AuditVariableStatePkA,
+  AuditVariableStatePkB,
+  AuditVariableStatePkMldsa,
+  AuditVariableStateDbV1,
+  AuditVariableStateDbV2,
+  AuditVariableStateUnknown
+} AUDIT_VARIABLE_STATE;
+
+typedef struct {
+  UINT8                   SetupMode;
+  UINT8                   SecureBoot;
+  AUDIT_VARIABLE_STATE    PkState;
+  UINT32                  PkAttributes;
+  UINTN                   PkSize;
+  AUDIT_VARIABLE_STATE    DbState;
+  UINT32                  DbAttributes;
+  UINTN                   DbSize;
+} AUDIT_BASELINE_SNAPSHOT;
 
 #pragma pack (1)
 typedef struct {
@@ -68,6 +135,39 @@ STATIC TEST_IMAGE_DEVICE_PATH  mTestImageDevicePath = {
     END_ENTIRE_DEVICE_PATH_SUBTYPE,
     { (UINT8)sizeof (EFI_DEVICE_PATH_PROTOCOL), 0                                         }
   }
+};
+
+STATIC EFI_STATUS  mEcitParseStatus = EFI_NOT_READY;
+
+STATIC ECIT_CLAIM_RESULT  mEcitClaimResults[EcitClaimCount] = {
+  { "db-update-authorization:x509",                   EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "db-update-verification:rsa-sha256",              EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "db-update-verification:sha256",                  EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "db-update-verification:mldsa87",                 EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "db-update-verification:sha512",                  EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "image-authorization:tbs-v1-sha512",              EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "image-authorization:tbs-v2-sha512",              EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "image-verification:mldsa87",                     EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "image-verification:sha512",                      EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
+  { "image-verification-profile:sha512-with-mldsa87", EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, TRUE  }
+};
+
+STATIC CONST ECIT_CLAIM_ID  mRsaUpdateClaims[] = {
+  EcitDbUpdateAuthorizationX509,
+  EcitDbUpdateVerificationRsaSha256,
+  EcitDbUpdateVerificationSha256
+};
+
+STATIC CONST ECIT_CLAIM_ID  mMldsaUpdateClaims[] = {
+  EcitDbUpdateAuthorizationX509,
+  EcitDbUpdateVerificationMldsa87,
+  EcitDbUpdateVerificationSha512
+};
+
+STATIC CONST ECIT_CLAIM_ID  mMldsaImageVerificationClaims[] = {
+  EcitImageVerificationMldsa87,
+  EcitImageVerificationSha512,
+  EcitImageVerificationMldsa87Sha512Profile
 };
 
 STATIC
@@ -146,7 +246,7 @@ GuidPayloadContains (
 
 STATIC
 EFI_STATUS
-ValidateEcitClaims (
+ParseEcitClaims (
   VOID
   )
 {
@@ -276,53 +376,316 @@ ValidateEcitClaims (
     return EFI_COMPROMISED_DATA;
   }
 
-  if ((Authorization.Data == NULL) ||
-      (Verification.Data == NULL) ||
-      (ImageAuthorization.Data == NULL) ||
-      (ImageVerification.Data == NULL))
-  {
-    UT_LOG_ERROR ("ECIT is missing a required Secure Boot entry\n");
-    return EFI_NOT_FOUND;
-  }
+  mEcitClaimResults[EcitDbUpdateAuthorizationX509].Claim =
+    GuidPayloadContains (&Authorization, &gEfiCertX509Guid) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitDbUpdateVerificationRsaSha256].Claim =
+    CsvContainsToken (Verification.Data, Verification.Size, SHA256_WITH_RSA_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitDbUpdateVerificationSha256].Claim =
+    CsvContainsToken (Verification.Data, Verification.Size, SHA256_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitDbUpdateVerificationMldsa87].Claim =
+    CsvContainsToken (Verification.Data, Verification.Size, ML_DSA_87_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitDbUpdateVerificationSha512].Claim =
+    CsvContainsToken (Verification.Data, Verification.Size, SHA512_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitImageAuthorizationTbsV1Sha512].Claim =
+    GuidPayloadContains (&ImageAuthorization, &gEfiCertX509Sha512Guid) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitImageAuthorizationTbsV2Sha512].Claim =
+    GuidPayloadContains (&ImageAuthorization, &gEfiCertV2X509Sha512Guid) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitImageVerificationMldsa87].Claim =
+    CsvContainsToken (ImageVerification.Data, ImageVerification.Size, ML_DSA_87_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitImageVerificationSha512].Claim =
+    CsvContainsToken (ImageVerification.Data, ImageVerification.Size, SHA512_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
+  mEcitClaimResults[EcitImageVerificationMldsa87Sha512Profile].Claim = EcitClaimUnknown;
 
-  if (!GuidPayloadContains (&Authorization, &gEfiCertX509Guid)) {
-    UT_LOG_ERROR ("ECIT does not advertise X.509 database-update authorization\n");
-    return EFI_UNSUPPORTED;
-  }
-
-  if (!CsvContainsToken (Verification.Data, Verification.Size, SHA256_WITH_RSA_OID) ||
-      !CsvContainsToken (Verification.Data, Verification.Size, SHA256_OID) ||
-      !CsvContainsToken (Verification.Data, Verification.Size, ML_DSA_87_OID) ||
-      !CsvContainsToken (Verification.Data, Verification.Size, SHA512_OID))
-  {
-    UT_LOG_ERROR ("ECIT does not advertise the RSA/SHA-256 and ML-DSA-87/SHA-512 update profiles\n");
-    return EFI_UNSUPPORTED;
-  }
-
-  if (!GuidPayloadContains (&ImageAuthorization, &gEfiCertX509Sha512Guid) ||
-      !GuidPayloadContains (&ImageAuthorization, &gEfiCertV2X509Sha512Guid))
-  {
-    UT_LOG_ERROR ("ECIT does not advertise V1 and V2 SHA-512 TBS-hash image authorization\n");
-    return EFI_UNSUPPORTED;
-  }
-
-  if (!CsvContainsToken (
-         ImageVerification.Data,
-         ImageVerification.Size,
-         ML_DSA_87_OID
-         ) ||
-      !CsvContainsToken (
-         ImageVerification.Data,
-         ImageVerification.Size,
-         SHA512_OID
-         ))
-  {
-    UT_LOG_ERROR ("ECIT does not advertise ML-DSA-87/SHA-512 image verification\n");
-    return EFI_UNSUPPORTED;
-  }
-
-  UT_LOG_INFO ("ECIT advertises the required update and image capabilities\n");
+  UT_LOG_INFO ("ECIT claims parsed independently from operational tests\n");
   return EFI_SUCCESS;
+}
+
+STATIC
+VOID
+RecordEcitObservation (
+  IN ECIT_CLAIM_ID           ClaimId,
+  IN ECIT_OBSERVATION_STATE  Observation,
+  IN EFI_STATUS              Status
+  )
+{
+  if ((ClaimId >= EcitClaimCount) ||
+      (mEcitClaimResults[ClaimId].Observation == EcitObservationSuccess))
+  {
+    return;
+  }
+
+  mEcitClaimResults[ClaimId].Observation       = Observation;
+  mEcitClaimResults[ClaimId].ObservationStatus = Status;
+}
+
+STATIC
+VOID
+RecordEcitObservations (
+  IN CONST ECIT_CLAIM_ID     *ClaimIds,
+  IN UINTN                   ClaimCount,
+  IN ECIT_OBSERVATION_STATE  Observation,
+  IN EFI_STATUS              Status
+  )
+{
+  UINTN  Index;
+
+  for (Index = 0; Index < ClaimCount; Index++) {
+    RecordEcitObservation (ClaimIds[Index], Observation, Status);
+  }
+}
+
+STATIC
+ECIT_COVERAGE_STATE
+CorrelateEcitResult (
+  IN ECIT_CLAIM_STATE        Claim,
+  IN ECIT_OBSERVATION_STATE  Observation,
+  IN BOOLEAN                 CandidateProfile,
+  IN EFI_STATUS              ParseStatus
+  )
+{
+  if (EFI_ERROR (ParseStatus) || (Observation == EcitObservationInconclusive)) {
+    return EcitCoverageInconclusive;
+  }
+
+  if (CandidateProfile || (Claim == EcitClaimUnknown)) {
+    return EcitCoverageNotIndependentlyVerifiable;
+  }
+
+  if (Observation == EcitObservationNotTested) {
+    return EcitCoverageNotTested;
+  }
+
+  if (Claim == EcitClaimAdvertised) {
+    return (Observation == EcitObservationSuccess) ?
+           EcitCoverageVerified :
+           EcitCoverageOverReported;
+  }
+
+  return (Observation == EcitObservationSuccess) ?
+         EcitCoverageUnderReported :
+         EcitCoverageVerifiedAbsent;
+}
+
+STATIC
+CONST CHAR8 *
+EcitClaimStateName (
+  IN ECIT_CLAIM_STATE  Claim
+  )
+{
+  switch (Claim) {
+    case EcitClaimAdvertised:
+      return "ADVERTISED";
+    case EcitClaimAbsent:
+      return "ABSENT";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+STATIC
+CONST CHAR8 *
+EcitObservationStateName (
+  IN ECIT_OBSERVATION_STATE  Observation
+  )
+{
+  switch (Observation) {
+    case EcitObservationSuccess:
+      return "SUCCESS";
+    case EcitObservationFailure:
+      return "FAILURE";
+    case EcitObservationInconclusive:
+      return "INCONCLUSIVE";
+    default:
+      return "NOT_TESTED";
+  }
+}
+
+STATIC
+CONST CHAR8 *
+EcitCoverageStateName (
+  IN ECIT_COVERAGE_STATE  Coverage
+  )
+{
+  switch (Coverage) {
+    case EcitCoverageVerified:
+      return "VERIFIED";
+    case EcitCoverageOverReported:
+      return "OVER_REPORTED";
+    case EcitCoverageUnderReported:
+      return "UNDER_REPORTED";
+    case EcitCoverageVerifiedAbsent:
+      return "VERIFIED_ABSENT";
+    case EcitCoverageNotIndependentlyVerifiable:
+      return "NOT_INDEPENDENTLY_VERIFIABLE";
+    case EcitCoverageNotTested:
+      return "NOT_TESTED";
+    default:
+      return "INCONCLUSIVE";
+  }
+}
+
+STATIC
+CONST CHAR8 *
+EcitCoverageReason (
+  IN CONST ECIT_CLAIM_RESULT  *Result,
+  IN ECIT_COVERAGE_STATE      Coverage
+  )
+{
+  if (EFI_ERROR (mEcitParseStatus)) {
+    return "ECIT_PARSE_FAILED";
+  }
+
+  if (Result->CandidateProfile) {
+    return "FLAT_PROFILE_AMBIGUITY";
+  }
+
+  switch (Coverage) {
+    case EcitCoverageNotTested:
+      return "NO_OPERATIONAL_OBSERVATION";
+    case EcitCoverageOverReported:
+    case EcitCoverageVerifiedAbsent:
+      return "OPERATION_FAILED";
+    default:
+      return "NONE";
+  }
+}
+
+STATIC
+VOID
+EFIAPI
+EcitSuiteSetup (
+  VOID
+  )
+{
+  UINTN  Index;
+
+  for (Index = 0; Index < EcitClaimCount; Index++) {
+    mEcitClaimResults[Index].Claim             = EcitClaimUnknown;
+    mEcitClaimResults[Index].Observation       = EcitObservationNotTested;
+    mEcitClaimResults[Index].ObservationStatus = EFI_NOT_READY;
+  }
+
+  mEcitParseStatus = ParseEcitClaims ();
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+EcitCorrelationReportTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  ECIT_COVERAGE_STATE  Coverage;
+  UINTN                Counts[EcitCoverageInconclusive + 1];
+  UINTN                Index;
+  UINTN                AdvertisedClaims;
+
+  ZeroMem (Counts, sizeof (Counts));
+  AdvertisedClaims = 0;
+
+  for (Index = 0; Index < EcitClaimCount; Index++) {
+    Coverage = CorrelateEcitResult (
+                 mEcitClaimResults[Index].Claim,
+                 mEcitClaimResults[Index].Observation,
+                 mEcitClaimResults[Index].CandidateProfile,
+                 mEcitParseStatus
+                 );
+    Counts[Coverage]++;
+    if (!mEcitClaimResults[Index].CandidateProfile &&
+        (mEcitClaimResults[Index].Claim == EcitClaimAdvertised))
+    {
+      AdvertisedClaims++;
+    }
+
+    UT_LOG_INFO (
+      "[ECIT_RESULT] name=%a claim=%a observation=%a coverage=%a reason=%a status=%r\n",
+      mEcitClaimResults[Index].Name,
+      EcitClaimStateName (mEcitClaimResults[Index].Claim),
+      EcitObservationStateName (mEcitClaimResults[Index].Observation),
+      EcitCoverageStateName (Coverage),
+      EcitCoverageReason (&mEcitClaimResults[Index], Coverage),
+      mEcitClaimResults[Index].ObservationStatus
+      );
+  }
+
+  UT_LOG_INFO (
+    "[ECIT_SUMMARY] rows=%u advertised_claims=%u verified=%u over_reported=%u under_reported=%u "
+    "verified_absent=%u not_independently_verifiable=%u not_tested=%u inconclusive=%u\n",
+    EcitClaimCount,
+    AdvertisedClaims,
+    Counts[EcitCoverageVerified],
+    Counts[EcitCoverageOverReported],
+    Counts[EcitCoverageUnderReported],
+    Counts[EcitCoverageVerifiedAbsent],
+    Counts[EcitCoverageNotIndependentlyVerifiable],
+    Counts[EcitCoverageNotTested],
+    Counts[EcitCoverageInconclusive]
+    );
+
+  if (EFI_ERROR (mEcitParseStatus) ||
+      (Counts[EcitCoverageOverReported] != 0) ||
+      (Counts[EcitCoverageUnderReported] != 0) ||
+      (Counts[EcitCoverageNotTested] != 0) ||
+      (Counts[EcitCoverageInconclusive] != 0))
+  {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+EcitClaimsParseTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  if (EFI_ERROR (mEcitParseStatus)) {
+    UT_LOG_ERROR ("ECIT parsing failed: %r\n", mEcitParseStatus);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+EcitCorrelationClassifierTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  UT_ASSERT_EQUAL (
+    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationSuccess, FALSE, EFI_SUCCESS),
+    EcitCoverageVerified
+    );
+  UT_ASSERT_EQUAL (
+    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationFailure, FALSE, EFI_SUCCESS),
+    EcitCoverageOverReported
+    );
+  UT_ASSERT_EQUAL (
+    CorrelateEcitResult (EcitClaimAbsent, EcitObservationSuccess, FALSE, EFI_SUCCESS),
+    EcitCoverageUnderReported
+    );
+  UT_ASSERT_EQUAL (
+    CorrelateEcitResult (EcitClaimAbsent, EcitObservationFailure, FALSE, EFI_SUCCESS),
+    EcitCoverageVerifiedAbsent
+    );
+  UT_ASSERT_EQUAL (
+    CorrelateEcitResult (EcitClaimUnknown, EcitObservationSuccess, TRUE, EFI_SUCCESS),
+    EcitCoverageNotIndependentlyVerifiable
+    );
+  UT_ASSERT_EQUAL (
+    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationNotTested, FALSE, EFI_SUCCESS),
+    EcitCoverageNotTested
+    );
+  UT_ASSERT_EQUAL (
+    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationInconclusive, FALSE, EFI_SUCCESS),
+    EcitCoverageInconclusive
+    );
+
+  return UNIT_TEST_PASSED;
 }
 
 STATIC
@@ -606,7 +969,7 @@ RecoverDb (
 
 STATIC
 EFI_STATUS
-RecoverSetupMode (
+RecoverSetupModeInternal (
   VOID
   )
 {
@@ -690,29 +1053,271 @@ RecoverSetupMode (
 
 STATIC
 EFI_STATUS
+RecoverSetupMode (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+
+  UT_LOG_INFO ("[AUDIT_RECOVERY] phase=begin\n");
+  Status = RecoverSetupModeInternal ();
+  UT_LOG_INFO ("[AUDIT_RECOVERY] phase=end status=%r\n", Status);
+  return Status;
+}
+
+STATIC
+CONST CHAR8 *
+AuditVariableStateName (
+  IN AUDIT_VARIABLE_STATE  State
+  )
+{
+  switch (State) {
+    case AuditVariableStateAbsent:
+      return "ABSENT";
+    case AuditVariableStatePkA:
+      return "PK_A";
+    case AuditVariableStatePkB:
+      return "PK_B";
+    case AuditVariableStatePkMldsa:
+      return "PK_MLDSA87";
+    case AuditVariableStateDbV1:
+      return "DB_TBS_V1";
+    case AuditVariableStateDbV2:
+      return "DB_TBS_V2";
+    case AuditVariableStateUnknown:
+      return "UNKNOWN";
+    default:
+      return "UNREAD";
+  }
+}
+
+STATIC
+EFI_STATUS
+CaptureBaselineSnapshot (
+  OUT AUDIT_BASELINE_SNAPSHOT  *Snapshot
+  )
+{
+  UINT32      Attributes;
+  UINT8       *Data;
+  UINTN       DataSize;
+  EFI_STATUS  Status;
+
+  ZeroMem (Snapshot, sizeof (*Snapshot));
+  Snapshot->SetupMode  = 0xFF;
+  Snapshot->SecureBoot = 0xFF;
+  Snapshot->PkState    = AuditVariableStateUnread;
+  Snapshot->DbState    = AuditVariableStateUnread;
+
+  Status = ReadModeVariable (EFI_SETUP_MODE_NAME, &Snapshot->SetupMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Status = ReadModeVariable (EFI_SECURE_BOOT_MODE_NAME, &Snapshot->SecureBoot);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Status = ReadVariable (
+             EFI_PLATFORM_KEY_NAME,
+             &gEfiGlobalVariableGuid,
+             &Attributes,
+             &Data,
+             &DataSize
+             );
+  if (Status == EFI_NOT_FOUND) {
+    Snapshot->PkState = AuditVariableStateAbsent;
+  } else if (EFI_ERROR (Status)) {
+    return Status;
+  } else {
+    Snapshot->PkAttributes = Attributes;
+    Snapshot->PkSize       = DataSize;
+    if (PkMatches (Data, DataSize, gSecureBootKeyAuditPkA, gSecureBootKeyAuditPkASize)) {
+      Snapshot->PkState = AuditVariableStatePkA;
+    } else if (PkMatches (Data, DataSize, gSecureBootKeyAuditPkB, gSecureBootKeyAuditPkBSize)) {
+      Snapshot->PkState = AuditVariableStatePkB;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditPkMldsa,
+                 gSecureBootKeyAuditPkMldsaSize
+                 ))
+    {
+      Snapshot->PkState = AuditVariableStatePkMldsa;
+    } else {
+      Snapshot->PkState = AuditVariableStateUnknown;
+    }
+
+    FreePool (Data);
+  }
+
+  Status = ReadVariable (
+             EFI_IMAGE_SECURITY_DATABASE,
+             &gEfiImageSecurityDatabaseGuid,
+             &Attributes,
+             &Data,
+             &DataSize
+             );
+  if (Status == EFI_NOT_FOUND) {
+    Snapshot->DbState = AuditVariableStateAbsent;
+  } else if (EFI_ERROR (Status)) {
+    return Status;
+  } else {
+    Snapshot->DbAttributes = Attributes;
+    Snapshot->DbSize       = DataSize;
+    if (PkMatches (
+          Data,
+          DataSize,
+          gSecureBootKeyAuditDbTbsHashV1,
+          gSecureBootKeyAuditDbTbsHashV1Size
+          ))
+    {
+      Snapshot->DbState = AuditVariableStateDbV1;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbTbsHashV2,
+                 gSecureBootKeyAuditDbTbsHashV2Size
+                 ))
+    {
+      Snapshot->DbState = AuditVariableStateDbV2;
+    } else {
+      Snapshot->DbState = AuditVariableStateUnknown;
+    }
+
+    FreePool (Data);
+  }
+
+  return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+InspectSetupModeBaseline (
+  OUT AUDIT_BASELINE_SNAPSHOT  *Snapshot
+  )
+{
+  EFI_STATUS  Status;
+
+  Status = CaptureBaselineSnapshot (Snapshot);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("[AUDIT_EVIDENCE] stage=preflight capture_status=%r\n", Status);
+    return Status;
+  }
+
+  UT_LOG_INFO (
+    "[AUDIT_EVIDENCE] stage=preflight setup_mode=%u secure_boot=%u "
+    "pk_state=%a pk_attributes=0x%08x pk_size=%u "
+    "db_state=%a db_attributes=0x%08x db_size=%u\n",
+    Snapshot->SetupMode,
+    Snapshot->SecureBoot,
+    AuditVariableStateName (Snapshot->PkState),
+    Snapshot->PkAttributes,
+    Snapshot->PkSize,
+    AuditVariableStateName (Snapshot->DbState),
+    Snapshot->DbAttributes,
+    Snapshot->DbSize
+    );
+
+  if ((Snapshot->SetupMode == SETUP_MODE) &&
+      (Snapshot->SecureBoot == SECURE_BOOT_MODE_DISABLE) &&
+      (Snapshot->PkState == AuditVariableStateAbsent) &&
+      (Snapshot->DbState == AuditVariableStateAbsent))
+  {
+    return EFI_SUCCESS;
+  }
+
+  if ((Snapshot->PkState == AuditVariableStateUnknown) ||
+      (Snapshot->PkState == AuditVariableStateUnread) ||
+      (Snapshot->DbState == AuditVariableStateUnknown) ||
+      (Snapshot->DbState == AuditVariableStateUnread))
+  {
+    UT_LOG_ERROR ("Refusing to recover an unknown Secure Boot state\n");
+    return EFI_ACCESS_DENIED;
+  }
+
+  UT_LOG_WARNING ("Recognized interrupted test state requires explicit recovery\n");
+  return EFI_NOT_READY;
+}
+
+STATIC
+EFI_STATUS
 RequireSetupModeBaseline (
   VOID
   )
 {
-  UINT8       SetupMode;
-  EFI_STATUS  Status;
+  AUDIT_BASELINE_SNAPSHOT  Snapshot;
 
+  return InspectSetupModeBaseline (&Snapshot);
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+InterruptedStateRecoveryTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  AUDIT_BASELINE_SNAPSHOT  Snapshot;
+  EFI_STATUS               RecoveryStatus;
+  UNIT_TEST_STATUS         Result;
+  EFI_STATUS               Status;
+
+  Result = UNIT_TEST_ERROR_TEST_FAILED;
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("The recovery test baseline is unsafe: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             gSecureBootKeyAuditSetupPkA,
+             gSecureBootKeyAuditSetupPkASize,
+             gSecureBootKeyAuditPkA,
+             gSecureBootKeyAuditPkASize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Unable to create the simulated interrupted state: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = InspectSetupModeBaseline (&Snapshot);
+  if (Status != EFI_NOT_READY) {
+    UT_LOG_ERROR ("Read-only preflight did not classify the interrupted state: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = VerifyPk (gSecureBootKeyAuditPkA, gSecureBootKeyAuditPkASize);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Read-only preflight modified the recognized PK state: %r\n", Status);
+    goto Exit;
+  }
+
+  UT_LOG_INFO ("[AUDIT_EVIDENCE] interrupted_state_preserved_before_recovery=TRUE\n");
   Status = RecoverSetupMode ();
   if (EFI_ERROR (Status)) {
-    return Status;
+    UT_LOG_ERROR ("Explicit recovery of the interrupted state failed: %r\n", Status);
+    goto Exit;
   }
 
-  Status = ReadModeVariable (EFI_SETUP_MODE_NAME, &SetupMode);
+  Status = RequireSetupModeBaseline ();
   if (EFI_ERROR (Status)) {
-    return Status;
+    UT_LOG_ERROR ("Explicit recovery did not restore the baseline: %r\n", Status);
+    goto Exit;
   }
 
-  if (SetupMode != SETUP_MODE) {
-    UT_LOG_ERROR ("SetupMode is %u; expected a disposable Setup Mode baseline\n", SetupMode);
-    return EFI_ACCESS_DENIED;
+  Result = UNIT_TEST_PASSED;
+
+Exit:
+  if (Result != UNIT_TEST_PASSED) {
+    RecoveryStatus = RecoverSetupMode ();
+    if (EFI_ERROR (RecoveryStatus)) {
+      UT_LOG_ERROR ("Unable to recover the simulated interrupted state: %r\n", RecoveryStatus);
+    }
   }
 
-  return VerifyPk (NULL, 0);
+  return Result;
 }
 
 STATIC
@@ -864,11 +1469,6 @@ RsaPkRotationTest (
 
   Result = UNIT_TEST_ERROR_TEST_FAILED;
 
-  Status = ValidateEcitClaims ();
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
-
   Status = RequireSetupModeBaseline ();
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("The PK baseline is unsafe: %r\n", Status);
@@ -898,6 +1498,12 @@ RsaPkRotationTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("PK A could not authorize rotation to PK B: %r\n", Status);
+    RecordEcitObservations (
+      mRsaUpdateClaims,
+      ARRAY_SIZE (mRsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
 
@@ -909,6 +1515,12 @@ RsaPkRotationTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("PK B could not authorize rotation back to PK A: %r\n", Status);
+    RecordEcitObservations (
+      mRsaUpdateClaims,
+      ARRAY_SIZE (mRsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
 
@@ -920,8 +1532,21 @@ RsaPkRotationTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("PK A could not authenticate final cleanup: %r\n", Status);
+    RecordEcitObservations (
+      mRsaUpdateClaims,
+      ARRAY_SIZE (mRsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
+
+  RecordEcitObservations (
+    mRsaUpdateClaims,
+    ARRAY_SIZE (mRsaUpdateClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
 
   Status = RequireSetupModeBaseline ();
   if (EFI_ERROR (Status)) {
@@ -955,11 +1580,6 @@ MldsaSetupEnrollmentTest (
 
   Result = UNIT_TEST_ERROR_TEST_FAILED;
 
-  Status = ValidateEcitClaims ();
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
-
   Status = RequireSetupModeBaseline ();
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("The PK baseline is unsafe: %r\n", Status);
@@ -987,8 +1607,21 @@ MldsaSetupEnrollmentTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("The ML-DSA-87 PK could not authenticate cleanup: %r\n", Status);
+    RecordEcitObservations (
+      mMldsaUpdateClaims,
+      ARRAY_SIZE (mMldsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
+
+  RecordEcitObservations (
+    mMldsaUpdateClaims,
+    ARRAY_SIZE (mMldsaUpdateClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
 
   Status = RequireSetupModeBaseline ();
   if (EFI_ERROR (Status)) {
@@ -1021,11 +1654,6 @@ RsaToMldsaRotationTest (
 
   Result = UNIT_TEST_ERROR_TEST_FAILED;
 
-  Status = ValidateEcitClaims ();
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
-
   Status = RequireSetupModeBaseline ();
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("The PK baseline is unsafe: %r\n", Status);
@@ -1051,8 +1679,21 @@ RsaToMldsaRotationTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("RSA PK A could not authorize the ML-DSA-87 PK: %r\n", Status);
+    RecordEcitObservations (
+      mRsaUpdateClaims,
+      ARRAY_SIZE (mRsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
+
+  RecordEcitObservations (
+    mRsaUpdateClaims,
+    ARRAY_SIZE (mRsaUpdateClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
 
   LogSecureBootMode ("RSA PK rolled to ML-DSA-87");
 
@@ -1064,8 +1705,21 @@ RsaToMldsaRotationTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("The ML-DSA-87 PK could not authorize RSA PK A: %r\n", Status);
+    RecordEcitObservations (
+      mMldsaUpdateClaims,
+      ARRAY_SIZE (mMldsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
+
+  RecordEcitObservations (
+    mMldsaUpdateClaims,
+    ARRAY_SIZE (mMldsaUpdateClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
 
   Status = ApplyPkUpdate (
              gSecureBootKeyAuditDeleteByAAfterMldsa,
@@ -1075,6 +1729,12 @@ RsaToMldsaRotationTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("RSA PK A could not authenticate final cleanup: %r\n", Status);
+    RecordEcitObservations (
+      mRsaUpdateClaims,
+      ARRAY_SIZE (mRsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
 
@@ -1099,11 +1759,12 @@ Exit:
 STATIC
 UNIT_TEST_STATUS
 RunMldsaImageTbsHashTest (
-  IN CONST CHAR8  *Version,
-  IN CONST UINT8  *EnrollDb,
-  IN UINTN        EnrollDbSize,
-  IN CONST UINT8  *ExpectedDb,
-  IN UINTN        ExpectedDbSize
+  IN CONST CHAR8    *Version,
+  IN ECIT_CLAIM_ID  ImageAuthorizationClaim,
+  IN CONST UINT8    *EnrollDb,
+  IN UINTN          EnrollDbSize,
+  IN CONST UINT8    *ExpectedDb,
+  IN UINTN          ExpectedDbSize
   )
 {
   EFI_HANDLE        LoadedImage;
@@ -1115,11 +1776,6 @@ RunMldsaImageTbsHashTest (
   LoadedImage   = NULL;
   Result        = UNIT_TEST_ERROR_TEST_FAILED;
   TamperedImage = NULL;
-
-  Status = ValidateEcitClaims ();
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
 
   Status = RequireSetupModeBaseline ();
   if (EFI_ERROR (Status)) {
@@ -1160,8 +1816,21 @@ RunMldsaImageTbsHashTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("ML-DSA-87 PK could not enroll the %a TBS hash in db: %r\n", Version, Status);
+    RecordEcitObservations (
+      mMldsaUpdateClaims,
+      ARRAY_SIZE (mMldsaUpdateClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
+
+  RecordEcitObservations (
+    mMldsaUpdateClaims,
+    ARRAY_SIZE (mMldsaUpdateClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
 
   Status = BuildTamperedImage (&TamperedImage);
   if (EFI_ERROR (Status)) {
@@ -1175,6 +1844,12 @@ RunMldsaImageTbsHashTest (
              gSecureBootKeyAuditHelloMldsaSize
              );
   if (EFI_ERROR (Status)) {
+    RecordEcitObservations (
+      mMldsaImageVerificationClaims,
+      ARRAY_SIZE (mMldsaImageVerificationClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
 
@@ -1191,9 +1866,23 @@ RunMldsaImageTbsHashTest (
                   );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("db TBS hash did not authorize the ML-DSA image: %r\n", Status);
+    RecordEcitObservation (ImageAuthorizationClaim, EcitObservationFailure, Status);
+    RecordEcitObservations (
+      mMldsaImageVerificationClaims,
+      ARRAY_SIZE (mMldsaImageVerificationClaims),
+      EcitObservationFailure,
+      Status
+      );
     goto Exit;
   }
 
+  RecordEcitObservation (ImageAuthorizationClaim, EcitObservationSuccess, EFI_SUCCESS);
+  RecordEcitObservations (
+    mMldsaImageVerificationClaims,
+    ARRAY_SIZE (mMldsaImageVerificationClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
   UT_LOG_INFO ("%a db TBS hash authorized the ML-DSA-87 image with LoadImage\n", Version);
 
   Status = gBS->StartImage (LoadedImage, NULL, NULL);
@@ -1256,6 +1945,7 @@ MldsaImageTbsHashV1Test (
 {
   return RunMldsaImageTbsHashTest (
            "V1",
+           EcitImageAuthorizationTbsV1Sha512,
            gSecureBootKeyAuditEnrollDbTbsHashV1,
            gSecureBootKeyAuditEnrollDbTbsHashV1Size,
            gSecureBootKeyAuditDbTbsHashV1,
@@ -1272,6 +1962,7 @@ MldsaImageTbsHashV2Test (
 {
   return RunMldsaImageTbsHashTest (
            "V2",
+           EcitImageAuthorizationTbsV2Sha512,
            gSecureBootKeyAuditEnrollDbTbsHashV2,
            gSecureBootKeyAuditEnrollDbTbsHashV2Size,
            gSecureBootKeyAuditDbTbsHashV2,
@@ -1308,7 +1999,7 @@ SecureBootKeyAuditAppEntry (
              Framework,
              "Secure Boot key ECIT audit",
              "SecureBootKeyAudit",
-             NULL,
+             EcitSuiteSetup,
              NULL
              );
   if (EFI_ERROR (Status)) {
@@ -1316,6 +2007,33 @@ SecureBootKeyAuditAppEntry (
     return Status;
   }
 
+  AddTestCase (
+    Suite,
+    "Parse ECIT capability claims",
+    "EcitClaimsParse",
+    EcitClaimsParseTest,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Classify ECIT claim and observation results",
+    "EcitCorrelationClassifier",
+    EcitCorrelationClassifierTest,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Preserve evidence before recovering interrupted test state",
+    "InterruptedStateRecovery",
+    InterruptedStateRecoveryTest,
+    NULL,
+    NULL,
+    NULL
+    );
   AddTestCase (
     Suite,
     "Rotate RSA-2048 PK A to B and back",
@@ -1357,6 +2075,15 @@ SecureBootKeyAuditAppEntry (
     "Authorize an ML-DSA-87 image with a V2 db TBS hash",
     "MldsaImageTbsHashV2",
     MldsaImageTbsHashV2Test,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Report ECIT claim and observation correlation",
+    "EcitCorrelationReport",
+    EcitCorrelationReportTest,
     NULL,
     NULL,
     NULL
