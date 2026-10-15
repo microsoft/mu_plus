@@ -122,6 +122,8 @@
 ###################################################################################################
 [Components]
   UefiTestingPkg/AuditTests/BootAuditTest/UEFI/BootAuditTestApp.inf
+  UefiTestingPkg/AuditTests/SecureBootKeyAudit/UEFI/HelloUefiApp.inf
+  UefiTestingPkg/AuditTests/SecureBootKeyAudit/UEFI/SecureBootKeyAuditApp.inf
   UefiTestingPkg/AuditTests/TpmEventLogAudit/TpmEventLogAuditTestApp.inf
   UefiTestingPkg/AuditTests/UefiVarLockAudit/UEFI/UefiVarLockAuditTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/ExceptionPersistenceTestApp/ExceptionPersistenceTestApp.inf
