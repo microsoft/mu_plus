@@ -29,6 +29,7 @@
 #include "AuditRecovery.h"
 #include "AuditScenario.h"
 #include "AuditTypes.h"
+#include "EcitCoverageReport.h"
 #include "SecureBootState.h"
 #include "TestData.h"
 
@@ -78,8 +79,9 @@ STATIC TEST_IMAGE_DEVICE_PATH  mTestImageDevicePath = {
   }
 };
 
-STATIC EFI_STATUS  mEcitParseStatus = EFI_NOT_READY;
-STATIC UINT8       mEcitSha256[SHA256_DIGEST_SIZE];
+STATIC EFI_STATUS                        mEcitParseStatus = EFI_NOT_READY;
+STATIC UINT8                             mEcitSha256[SHA256_DIGEST_SIZE];
+STATIC CONST EFI_CRYPTO_INDICATOR_TABLE  *mEcitTable;
 
 STATIC ECIT_CLAIM_RESULT  mEcitClaimResults[EcitClaimCount] = {
   { "db-update-authorization:x509",                   EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
@@ -342,6 +344,7 @@ ParseEcitClaims (
   mEcitClaimResults[EcitImageVerificationSha512].Claim =
     CsvContainsToken (ImageVerification.Data, ImageVerification.Size, SHA512_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
   mEcitClaimResults[EcitImageVerificationMldsa87Sha512Profile].Claim = EcitClaimUnknown;
+  mEcitTable                                                         = Table;
 
   UT_LOG_INFO ("ECIT claims parsed independently from operational tests\n");
   return EFI_SUCCESS;
@@ -506,6 +509,7 @@ EcitSuiteSetup (
 {
   UINTN  Index;
 
+  mEcitTable = NULL;
   ZeroMem (mEcitSha256, sizeof (mEcitSha256));
   for (Index = 0; Index < EcitClaimCount; Index++) {
     mEcitClaimResults[Index].Claim             = EcitClaimUnknown;
@@ -523,7 +527,7 @@ EcitCorrelationReportTest (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  ECIT_COVERAGE_STATE  Coverage;
+  ECIT_COVERAGE_STATE  CoverageRows[EcitClaimCount];
   UINTN                Counts[EcitCoverageInconclusive + 1];
   UINTN                Index;
   UINTN                AdvertisedClaims;
@@ -532,13 +536,13 @@ EcitCorrelationReportTest (
   AdvertisedClaims = 0;
 
   for (Index = 0; Index < EcitClaimCount; Index++) {
-    Coverage = CorrelateEcitResult (
-                 mEcitClaimResults[Index].Claim,
-                 mEcitClaimResults[Index].Observation,
-                 mEcitClaimResults[Index].CandidateProfile,
-                 mEcitParseStatus
-                 );
-    Counts[Coverage]++;
+    CoverageRows[Index] = CorrelateEcitResult (
+                            mEcitClaimResults[Index].Claim,
+                            mEcitClaimResults[Index].Observation,
+                            mEcitClaimResults[Index].CandidateProfile,
+                            mEcitParseStatus
+                            );
+    Counts[CoverageRows[Index]]++;
     if (!mEcitClaimResults[Index].CandidateProfile &&
         (mEcitClaimResults[Index].Claim == EcitClaimAdvertised))
     {
@@ -550,14 +554,14 @@ EcitCorrelationReportTest (
       mEcitClaimResults[Index].Name,
       EcitClaimStateName (mEcitClaimResults[Index].Claim),
       EcitObservationStateName (mEcitClaimResults[Index].Observation),
-      EcitCoverageStateName (Coverage),
-      EcitCoverageReason (&mEcitClaimResults[Index], Coverage),
+      EcitCoverageStateName (CoverageRows[Index]),
+      EcitCoverageReason (&mEcitClaimResults[Index], CoverageRows[Index]),
       mEcitClaimResults[Index].ObservationStatus
       );
   }
 
   UT_LOG_INFO (
-    "[ECIT_SUMMARY] rows=%u advertised_claims=%u verified=%u over_reported=%u under_reported=%u "
+    "[ECIT_SCENARIO_SUMMARY] rows=%u advertised_claims=%u verified=%u over_reported=%u under_reported=%u "
     "verified_absent=%u not_independently_verifiable=%u not_tested=%u inconclusive=%u\n",
     EcitClaimCount,
     AdvertisedClaims,
@@ -569,6 +573,10 @@ EcitCorrelationReportTest (
     Counts[EcitCoverageNotTested],
     Counts[EcitCoverageInconclusive]
     );
+
+  if (mEcitTable != NULL) {
+    LogEcitCoverageReport (mEcitTable, mEcitClaimResults, CoverageRows);
+  }
 
   if (EFI_ERROR (mEcitParseStatus) ||
       (Counts[EcitCoverageOverReported] != 0) ||

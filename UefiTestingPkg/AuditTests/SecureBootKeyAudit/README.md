@@ -70,6 +70,16 @@ validates the required pre-state, exact returned status, expected post-state,
 and atomicity for rejected operations. It emits before/after variable
 SHA-256 evidence into the unit-test log.
 
+The final ECIT correlation test emits both machine-readable `ECIT_RESULT` /
+`ECIT_SUMMARY` records and a DumpEcit-style coverage table.
+The table groups every ECIT entry, enumerates every advertised OID or signature
+list type, and shows its operational observation and validation state. Claims
+without a corresponding scenario are explicitly `NOT_TESTED` rather than
+omitted from the denominator. The overall verdict distinguishes `PASS` from
+`PASS_WITH_LIMITATIONS`, so incomplete coverage or an operationally successful
+but independently unverifiable profile is not hidden by the passing unit-test
+count.
+
 ## Platform qualification requirement
 
 Release qualification requires successful execution on both the reference

@@ -19,6 +19,8 @@
   AuditScenario.c
   AuditScenario.h
   AuditTypes.h
+  EcitCoverageReport.c
+  EcitCoverageReport.h
   SecureBootState.c
   SecureBootState.h
   SecureBootKeyAuditApp.c
@@ -54,6 +56,9 @@
   gEfiEcitFeatureSbDatabaseUpdateAuthorizationGuid
   gEfiEcitFeatureSbDatabaseUpdateVerificationGuid
   gEfiEcitFeatureSbImageAuthorizationGuid
+  gEfiEcitFeatureSbImageRevocationGuid
   gEfiEcitFeatureSbImageVerificationGuid
+  gEfiEcitFeatureEsrtFirmwareUpdateGuid
+  gEfiEcitFeatureSystemFirmwareUpdateGuid
   gEfiGlobalVariableGuid
   gEfiImageSecurityDatabaseGuid
