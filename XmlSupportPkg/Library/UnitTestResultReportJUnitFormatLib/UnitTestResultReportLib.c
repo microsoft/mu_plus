@@ -235,11 +235,13 @@ OutputUnitTestFrameworkReport (
          (LIST_ENTRY *)Test != &(Suite->UTS.TestCaseList);
          Test = (UNIT_TEST_LIST_ENTRY *)GetNextNode (&(Suite->UTS.TestCaseList), (LIST_ENTRY *)Test))
     {
-      CHAR8    *Name       = NULL;
-      CHAR8    *ClassName  = NULL;
-      CHAR8    *Log        = NULL;
-      CHAR8    *FailureMsg = NULL;
-      BOOLEAN  Skipped     = FALSE;
+      CHAR8        *Name        = NULL;
+      CHAR8        *ClassName   = NULL;
+      CHAR8        *Log         = NULL;
+      CONST CHAR8  *FailureMsg  = NULL;
+      CONST CHAR8  *FailureType = NULL;
+      BOOLEAN      Failed       = FALSE;
+      BOOLEAN      Skipped      = FALSE;
 
       TotalTests++;
 
@@ -247,19 +249,31 @@ OutputUnitTestFrameworkReport (
         Skipped = TRUE;
         TotalSkips++;
       } else {
-        // only count failures if there is a failuretype and no skip
-        if (Test->UT.FailureType != FAILURETYPE_NOFAILURE) {
+        Failed = (BOOLEAN)(
+                           (Test->UT.Result == UNIT_TEST_ERROR_TEST_FAILED) ||
+                           (Test->UT.FailureType != FAILURETYPE_NOFAILURE)
+                           );
+        if (Failed) {
           TotalFailures++;
         }
       }
 
-      Name       = Test->UT.Description;
-      ClassName  = Test->UT.Name;
-      Log        = Test->UT.Log;
-      FailureMsg = Test->UT.FailureMessage;
+      Name      = Test->UT.Description;
+      ClassName = Test->UT.Name;
+      Log       = Test->UT.Log;
+
+      if (Failed) {
+        if (Test->UT.FailureType == FAILURETYPE_NOFAILURE) {
+          FailureMsg  = "Test returned UNIT_TEST_ERROR_TEST_FAILED without assertion details.";
+          FailureType = "RETURNED_FAILURE";
+        } else {
+          FailureMsg  = Test->UT.FailureMessage;
+          FailureType = GetStringForFailureType (Test->UT.FailureType);
+        }
+      }
 
       // TODO:  need to handle timing.  Right now its hard coded to 1 second.
-      New_TestCaseInSuite (SuiteNode, Name, ClassName, 1, Log, FailureMsg, GetStringForFailureType (Test->UT.FailureType), Skipped);
+      New_TestCaseInSuite (SuiteNode, Name, ClassName, 1, Log, FailureMsg, FailureType, Skipped);
     } // End Test iteration
 
     Status = AddTestSuiteStats (SuiteNode, TotalTests, TotalFailures, TotalSkips, TotalErrors);
