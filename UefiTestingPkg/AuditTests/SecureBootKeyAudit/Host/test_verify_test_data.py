@@ -6,17 +6,24 @@
 ##
 
 import copy
+import datetime
 import hashlib
 import json
 import struct
 import unittest
 from pathlib import Path
 
-from VerifyTestData import (
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
+from cryptography.x509.oid import NameOID
+
+from Host.VerifyTestData import (
     VerificationError,
     parse_c_arrays,
     verify_corruption_negative,
     verify_fixture,
+    verify_self_signed_certificate,
 )
 
 
@@ -40,6 +47,25 @@ class VerifyTestDataTests(unittest.TestCase):
             manifest_data
         ).digest()
         return manifest_data
+
+    @staticmethod
+    def self_signed_certificate(private_key, algorithm):
+        """Create a certificate for testing rejected key profiles."""
+        name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Invalid Fixture")])
+        return (
+            x509.CertificateBuilder()
+            .subject_name(name)
+            .issuer_name(name)
+            .public_key(private_key.public_key())
+            .serial_number(1)
+            .not_valid_before(
+                datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
+            )
+            .not_valid_after(
+                datetime.datetime(2036, 1, 1, tzinfo=datetime.timezone.utc)
+            )
+            .sign(private_key, algorithm)
+        )
 
     def test_committed_fixture_is_valid(self) -> None:
         evidence = verify_fixture(
@@ -89,6 +115,30 @@ class VerifyTestDataTests(unittest.TestCase):
             "EFI_SIGNATURE_LIST size is wrong",
         ):
             verify_fixture(arrays, manifest, manifest_data)
+
+    def test_non_mldsa_pqc_role_is_rejected(self) -> None:
+        certificate = self.self_signed_certificate(
+            ed25519.Ed25519PrivateKey.generate(),
+            None,
+        )
+
+        with self.assertRaisesRegex(
+            VerificationError,
+            "key profile is unsupported",
+        ):
+            verify_self_signed_certificate(certificate)
+
+    def test_wrong_rsa_key_size_is_rejected(self) -> None:
+        certificate = self.self_signed_certificate(
+            rsa.generate_private_key(public_exponent=65537, key_size=1024),
+            hashes.SHA256(),
+        )
+
+        with self.assertRaisesRegex(
+            VerificationError,
+            "RSA key is not 2048 bits",
+        ):
+            verify_self_signed_certificate(certificate)
 
 
 if __name__ == "__main__":

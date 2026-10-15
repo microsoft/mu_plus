@@ -26,10 +26,11 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UnitTestLib.h>
 
+#include "AuditTypes.h"
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
-#define UNIT_TEST_APP_VERSION  "0.5"
+#define UNIT_TEST_APP_VERSION  "0.6"
 
 #define SHA256_WITH_RSA_OID  "1.2.840.113549.1.1.11"
 #define SHA256_OID           "2.16.840.1.101.3.4.2.1"
@@ -42,121 +43,25 @@
 
 #define MAX_ECIT_LENGTH  SIZE_1MB
 
-#define AUDIT_JOURNAL_FILE_NAME        L"SecureBootKeyAuditJournal.bin"
-#define AUDIT_JOURNAL_SIGNATURE        SIGNATURE_32 ('S', 'B', 'J', 'R')
-#define AUDIT_JOURNAL_VERSION          1
-#define AUDIT_JOURNAL_FIXTURE_ID_SIZE  32
-#define AUDIT_REBOOT_MARKER_NAME       L"SecureBootKeyAuditRebootPending"
+#define AUDIT_JOURNAL_FILE_NAME   L"SecureBootKeyAuditJournal.bin"
+#define AUDIT_JOURNAL_SIGNATURE   SIGNATURE_32 ('S', 'B', 'J', 'R')
+#define AUDIT_JOURNAL_VERSION     1
+#define AUDIT_REBOOT_MARKER_NAME  L"SecureBootKeyAuditRebootPending"
 #define AUDIT_REBOOT_MARKER_ATTRIBUTES \
   (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS)
 
-typedef struct {
-  CONST UINT8    *Data;
-  UINTN          Size;
-} ECIT_PAYLOAD_VIEW;
-
-typedef enum {
-  EcitClaimUnknown,
-  EcitClaimAbsent,
-  EcitClaimAdvertised
-} ECIT_CLAIM_STATE;
-
-typedef enum {
-  EcitObservationNotTested,
-  EcitObservationSuccess,
-  EcitObservationFailure,
-  EcitObservationInconclusive
-} ECIT_OBSERVATION_STATE;
-
-typedef enum {
-  EcitCoverageVerified,
-  EcitCoverageOverReported,
-  EcitCoverageUnderReported,
-  EcitCoverageVerifiedAbsent,
-  EcitCoverageNotIndependentlyVerifiable,
-  EcitCoverageNotTested,
-  EcitCoverageInconclusive
-} ECIT_COVERAGE_STATE;
-
-typedef enum {
-  EcitDbUpdateAuthorizationX509,
-  EcitDbUpdateVerificationRsaSha256,
-  EcitDbUpdateVerificationSha256,
-  EcitDbUpdateVerificationMldsa87,
-  EcitDbUpdateVerificationSha512,
-  EcitImageAuthorizationTbsV1Sha512,
-  EcitImageAuthorizationTbsV2Sha512,
-  EcitImageVerificationMldsa87,
-  EcitImageVerificationSha512,
-  EcitImageVerificationMldsa87Sha512Profile,
-  EcitClaimCount
-} ECIT_CLAIM_ID;
-
-typedef struct {
-  CONST CHAR8               *Name;
-  ECIT_CLAIM_STATE          Claim;
-  ECIT_OBSERVATION_STATE    Observation;
-  EFI_STATUS                ObservationStatus;
-  BOOLEAN                   CandidateProfile;
-} ECIT_CLAIM_RESULT;
-
-typedef enum {
-  AuditVariableStateUnread,
-  AuditVariableStateAbsent,
-  AuditVariableStatePkA,
-  AuditVariableStatePkB,
-  AuditVariableStatePkMldsa,
-  AuditVariableStateDbV1,
-  AuditVariableStateDbV2,
-  AuditVariableStateUnknown
-} AUDIT_VARIABLE_STATE;
-
-typedef struct {
-  UINT8                   SetupMode;
-  UINT8                   SecureBoot;
-  AUDIT_VARIABLE_STATE    PkState;
-  UINT32                  PkAttributes;
-  UINTN                   PkSize;
-  AUDIT_VARIABLE_STATE    DbState;
-  UINT32                  DbAttributes;
-  UINTN                   DbSize;
-} AUDIT_BASELINE_SNAPSHOT;
-
 #pragma pack (1)
-typedef enum {
-  AuditJournalPrepared = 1,
-  AuditJournalRebootPending,
-  AuditJournalPersistentlyVerified,
-  AuditJournalFailed
-} AUDIT_JOURNAL_PHASE;
-
-typedef struct {
-  UINT32    Signature;
-  UINT16    Version;
-  UINT16    Size;
-  UINT32    Crc32;
-  UINT32    Phase;
-  UINT32    BootCount;
-  UINT64    PriorResult;
-  CHAR8     FixtureId[AUDIT_JOURNAL_FIXTURE_ID_SIZE];
-  UINT8     ManifestSha256[SHA256_DIGEST_SIZE];
-  UINT8     EcitSha256[SHA256_DIGEST_SIZE];
-  UINT8     SetupMode;
-  UINT8     SecureBoot;
-  UINT16    Reserved;
-  UINT32    PkState;
-  UINT32    PkAttributes;
-  UINT64    PkSize;
-  UINT32    DbState;
-  UINT32    DbAttributes;
-  UINT64    DbSize;
-} AUDIT_JOURNAL;
-
 typedef struct {
   MEMMAP_DEVICE_PATH          MemMap;
   EFI_DEVICE_PATH_PROTOCOL    End;
 } TEST_IMAGE_DEVICE_PATH;
 #pragma pack ()
+
+STATIC
+EFI_STATUS
+CaptureBaselineSnapshot (
+  OUT AUDIT_BASELINE_SNAPSHOT  *Snapshot
+  );
 
 STATIC EFI_GUID  mAuditJournalGuid = {
   0x7ec54fb2, 0xef9f, 0x4e03, { 0x81, 0xf0, 0x56, 0xbb, 0xe1, 0x2d, 0xa6, 0xe9 }
@@ -965,6 +870,49 @@ ApplyDbUpdate (
 }
 
 STATIC
+BOOLEAN
+RecoveryStateIsRecognized (
+  IN CONST AUDIT_BASELINE_SNAPSHOT  *Snapshot
+  )
+{
+  if ((Snapshot->PkState == AuditVariableStateAbsent) &&
+      (Snapshot->DbState == AuditVariableStateAbsent))
+  {
+    return (BOOLEAN)(
+                     (Snapshot->SetupMode == SETUP_MODE) &&
+                     (Snapshot->SecureBoot == SECURE_BOOT_MODE_DISABLE)
+                     );
+  }
+
+  if ((Snapshot->SetupMode != USER_MODE) ||
+      (Snapshot->SecureBoot != SECURE_BOOT_MODE_ENABLE) ||
+      (Snapshot->PkAttributes != SECURE_BOOT_KEY_ATTRIBUTES))
+  {
+    return FALSE;
+  }
+
+  if ((Snapshot->PkState == AuditVariableStatePkA) ||
+      (Snapshot->PkState == AuditVariableStatePkB))
+  {
+    return (BOOLEAN)(Snapshot->DbState == AuditVariableStateAbsent);
+  }
+
+  if (Snapshot->PkState != AuditVariableStatePkMldsa) {
+    return FALSE;
+  }
+
+  if (Snapshot->DbState == AuditVariableStateAbsent) {
+    return TRUE;
+  }
+
+  return (BOOLEAN)(
+                   ((Snapshot->DbState == AuditVariableStateDbV1) ||
+                    (Snapshot->DbState == AuditVariableStateDbV2)) &&
+                   (Snapshot->DbAttributes == SECURE_BOOT_KEY_ATTRIBUTES)
+                   );
+}
+
+STATIC
 EFI_STATUS
 RecoverDb (
   VOID
@@ -1023,82 +971,62 @@ RecoverSetupModeInternal (
   VOID
   )
 {
-  UINT32      Attributes;
-  UINT8       *Pk;
-  UINTN       PkSize;
-  EFI_STATUS  Status;
+  AUDIT_BASELINE_SNAPSHOT  Snapshot;
+  EFI_STATUS               Status;
 
-  Status = RecoverDb ();
+  Status = CaptureBaselineSnapshot (&Snapshot);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Status = ReadVariable (
-             EFI_PLATFORM_KEY_NAME,
-             &gEfiGlobalVariableGuid,
-             &Attributes,
-             &Pk,
-             &PkSize
-             );
-  if (Status == EFI_NOT_FOUND) {
+  if (!RecoveryStateIsRecognized (&Snapshot)) {
+    UT_LOG_ERROR (
+      "Refusing recovery from unrecognized state: setup_mode=%u secure_boot=%u "
+      "pk_state=%u db_state=%u\n",
+      Snapshot.SetupMode,
+      Snapshot.SecureBoot,
+      Snapshot.PkState,
+      Snapshot.DbState
+      );
+    return EFI_ACCESS_DENIED;
+  }
+
+  if (Snapshot.PkState == AuditVariableStateAbsent) {
     return EFI_SUCCESS;
   }
 
-  if (EFI_ERROR (Status)) {
-    return Status;
+  if (Snapshot.DbState != AuditVariableStateAbsent) {
+    Status = RecoverDb ();
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
   }
 
-  if (PkMatches (
-        Pk,
-        PkSize,
-        gSecureBootKeyAuditPkA,
-        gSecureBootKeyAuditPkASize
-        ))
-  {
-    FreePool (Pk);
-    return ApplyPkUpdate (
-             gSecureBootKeyAuditRecoveryDeleteByA,
-             gSecureBootKeyAuditRecoveryDeleteByASize,
-             NULL,
-             0
-             );
+  switch (Snapshot.PkState) {
+    case AuditVariableStatePkA:
+      return ApplyPkUpdate (
+               gSecureBootKeyAuditRecoveryDeleteByA,
+               gSecureBootKeyAuditRecoveryDeleteByASize,
+               NULL,
+               0
+               );
+    case AuditVariableStatePkB:
+      return ApplyPkUpdate (
+               gSecureBootKeyAuditRecoveryDeleteByB,
+               gSecureBootKeyAuditRecoveryDeleteByBSize,
+               NULL,
+               0
+               );
+    case AuditVariableStatePkMldsa:
+      return ApplyPkUpdate (
+               gSecureBootKeyAuditRecoveryDeleteByMldsa,
+               gSecureBootKeyAuditRecoveryDeleteByMldsaSize,
+               NULL,
+               0
+               );
+    default:
+      return EFI_ACCESS_DENIED;
   }
-
-  if (PkMatches (
-        Pk,
-        PkSize,
-        gSecureBootKeyAuditPkB,
-        gSecureBootKeyAuditPkBSize
-        ))
-  {
-    FreePool (Pk);
-    return ApplyPkUpdate (
-             gSecureBootKeyAuditRecoveryDeleteByB,
-             gSecureBootKeyAuditRecoveryDeleteByBSize,
-             NULL,
-             0
-             );
-  }
-
-  if (PkMatches (
-        Pk,
-        PkSize,
-        gSecureBootKeyAuditPkMldsa,
-        gSecureBootKeyAuditPkMldsaSize
-        ))
-  {
-    FreePool (Pk);
-    return ApplyPkUpdate (
-             gSecureBootKeyAuditRecoveryDeleteByMldsa,
-             gSecureBootKeyAuditRecoveryDeleteByMldsaSize,
-             NULL,
-             0
-             );
-  }
-
-  FreePool (Pk);
-  UT_LOG_ERROR ("Refusing to modify an unknown existing PK\n");
-  return EFI_ACCESS_DENIED;
 }
 
 STATIC
@@ -1113,6 +1041,63 @@ RecoverSetupMode (
   Status = RecoverSetupModeInternal ();
   UT_LOG_INFO ("[AUDIT_RECOVERY] phase=end status=%r\n", Status);
   return Status;
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+RecoveryStateClassifierTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  STATIC CONST struct {
+    AUDIT_BASELINE_SNAPSHOT    Snapshot;
+    BOOLEAN                    Expected;
+  } Cases[] = {
+    {
+      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStateAbsent,  0,                          0, AuditVariableStateAbsent,  0,                          0 }, TRUE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,  0,                          0 }, TRUE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkB,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,  0,                          0 }, TRUE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,  0,                          0 }, TRUE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,    SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV2,    SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStateUnknown, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,    SECURE_BOOT_KEY_ATTRIBUTES, 1 }, FALSE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,    SECURE_BOOT_KEY_ATTRIBUTES, 1 }, FALSE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateUnknown, SECURE_BOOT_KEY_ATTRIBUTES, 1 }, FALSE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, 0,                          1, AuditVariableStateAbsent,  0,                          0 }, FALSE
+    },
+    {
+      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,  0,                          0 }, FALSE
+    }
+  };
+  UINTN  Index;
+
+  for (Index = 0; Index < ARRAY_SIZE (Cases); Index++) {
+    UT_ASSERT_EQUAL (
+      RecoveryStateIsRecognized (&Cases[Index].Snapshot),
+      Cases[Index].Expected
+      );
+  }
+
+  return UNIT_TEST_PASSED;
 }
 
 STATIC
@@ -2504,6 +2489,15 @@ SecureBootKeyAuditAppEntry (
     "Classify ECIT claim and observation results",
     "EcitCorrelationClassifier",
     EcitCorrelationClassifierTest,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Reject unsafe Secure Boot recovery states before mutation",
+    "RecoveryStateClassifier",
+    RecoveryStateClassifierTest,
     NULL,
     NULL,
     NULL

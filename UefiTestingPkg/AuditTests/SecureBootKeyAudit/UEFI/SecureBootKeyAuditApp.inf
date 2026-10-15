@@ -10,10 +10,11 @@
   BASE_NAME                      = SecureBootKeyAuditApp
   FILE_GUID                      = 7385D03A-AE30-47C7-B46C-B2724B50308B
   MODULE_TYPE                    = UEFI_APPLICATION
-  VERSION_STRING                 = 0.5
+  VERSION_STRING                 = 0.6
   ENTRY_POINT                    = SecureBootKeyAuditAppEntry
 
 [Sources]
+  AuditTypes.h
   SecureBootKeyAuditApp.c
   TestData.c
 

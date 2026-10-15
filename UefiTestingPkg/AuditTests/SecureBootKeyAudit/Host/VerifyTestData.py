@@ -18,7 +18,7 @@ from pathlib import Path
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.asymmetric import mldsa, padding, rsa
 from cryptography.hazmat.primitives.serialization import pkcs7
 from pyasn1.codec.der.decoder import decode as der_decode
 from pyasn1.codec.der.encoder import encode as der_encode
@@ -40,6 +40,7 @@ SHA256_OID = "2.16.840.1.101.3.4.2.1"
 SHA512_OID = "2.16.840.1.101.3.4.2.3"
 ML_DSA_87_OID = "2.16.840.1.101.3.4.3.19"
 RSA_ENCRYPTION_OID = "1.2.840.113549.1.1.1"
+SHA256_WITH_RSA_OID = "1.2.840.113549.1.1.11"
 CMS_DATA_OID = "1.2.840.113549.1.7.1"
 CMS_SIGNED_DATA_OID = "1.2.840.113549.1.7.2"
 CMS_CONTENT_TYPE_ATTRIBUTE_OID = "1.2.840.113549.1.9.3"
@@ -181,17 +182,40 @@ def verify_self_signed_certificate(certificate: x509.Certificate) -> None:
     )
     public_key = certificate.public_key()
     if isinstance(public_key, rsa.RSAPublicKey):
+        require(public_key.key_size == 2048, "fixture RSA key is not 2048 bits")
+        require(
+            certificate.public_key_algorithm_oid.dotted_string
+            == RSA_ENCRYPTION_OID,
+            "fixture certificate SPKI algorithm is not RSA",
+        )
+        require(
+            certificate.signature_algorithm_oid.dotted_string
+            == SHA256_WITH_RSA_OID,
+            "fixture RSA certificate signature is not SHA-256 with RSA",
+        )
         public_key.verify(
             certificate.signature,
             certificate.tbs_certificate_bytes,
             padding.PKCS1v15(),
             certificate.signature_hash_algorithm,
         )
-    else:
+    elif isinstance(public_key, mldsa.MLDSA87PublicKey):
+        require(
+            certificate.public_key_algorithm_oid.dotted_string
+            == ML_DSA_87_OID,
+            "fixture certificate SPKI algorithm is not ML-DSA-87",
+        )
+        require(
+            certificate.signature_algorithm_oid.dotted_string
+            == ML_DSA_87_OID,
+            "fixture ML-DSA certificate signature is not ML-DSA-87",
+        )
         public_key.verify(
             certificate.signature,
             certificate.tbs_certificate_bytes,
         )
+    else:
+        raise VerificationError("fixture certificate key profile is unsupported")
 
 
 def parse_x509_esl(data: bytes, owner: uuid.UUID) -> x509.Certificate:
@@ -359,6 +383,10 @@ def verify_rsa_signed_data(
 
     certificate = signed_data_certificate(signed_data_der)
     require(
+        isinstance(certificate.public_key(), rsa.RSAPublicKey),
+        "RSA SignedData signer does not use an RSA key",
+    )
+    require(
         certificate.public_bytes(serialization.Encoding.DER)
         == expected_certificate.public_bytes(serialization.Encoding.DER),
         "RSA SignedData contains the wrong signer certificate",
@@ -417,6 +445,10 @@ def verify_mldsa_signed_data(
     )
 
     certificate = signed_data_certificate(signed_data_der)
+    require(
+        isinstance(certificate.public_key(), mldsa.MLDSA87PublicKey),
+        "ML-DSA SignedData signer does not use an ML-DSA-87 key",
+    )
     require(
         certificate.public_bytes(serialization.Encoding.DER)
         == expected_certificate.public_bytes(serialization.Encoding.DER),
@@ -745,6 +777,10 @@ def verify_authenticode_image(
     require(len(certificates) == 1, "Authenticode does not contain one certificate")
     certificate = certificates[0]
     verify_self_signed_certificate(certificate)
+    require(
+        isinstance(certificate.public_key(), mldsa.MLDSA87PublicKey),
+        "Authenticode signer does not use an ML-DSA-87 key",
+    )
 
     signer = signed_data["signerInfos"][0]
     require(

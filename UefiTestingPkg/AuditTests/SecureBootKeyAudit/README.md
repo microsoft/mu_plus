@@ -3,6 +3,11 @@
 `SecureBootKeyAuditApp` performs an initial end-to-end check of the UEFI 2.12
 Crypto Indicator Table claims for Secure Boot database updates.
 
+This is a focused ECIT and Secure Boot cryptographic capability audit. A
+passing result does not establish whole-platform UEFI 2.12 compatibility;
+requirements outside the ECIT and Secure Boot operations listed below remain
+unevaluated by this application.
+
 The scenarios require a disposable or independently recoverable Setup Mode
 variable store. They:
 
@@ -48,6 +53,9 @@ profile is reported as an operationally successful candidate pair with
 The application refuses to mutate an existing PK or `db` unless it exactly
 matches generated test data. Baseline preflight is read-only and logs the mode,
 attributes, sizes, and recognized state before any explicit recovery mutation.
+A recovery attempt validates the complete mode/PK/`db` tuple before its first
+`SetVariable()` call; unknown or inconsistent state remains untouched for host
+evidence capture and baseline restoration.
 A failure can still leave test state installed if firmware accepts a mutation
 but becomes unable to authenticate the matching cleanup update. Run only with
 a disposable QEMU variable store or on a dedicated physical test device with
@@ -134,7 +142,7 @@ firmware:
 
 ```bash
 python3 Host/VerifyTestData.py
-python3 -m unittest -v Host/test_verify_test_data.py
+python3 -m unittest -v Host.test_inspect_journal Host.test_verify_test_data
 ```
 
 The verifier does not import the generator or use its construction helpers. It
