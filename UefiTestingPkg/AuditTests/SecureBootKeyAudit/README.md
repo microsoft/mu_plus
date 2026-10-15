@@ -14,7 +14,9 @@ The scenarios require a disposable Setup Mode variable store. They:
 5. enroll RSA-2048 PK A, rotate it to ML-DSA-87, use ML-DSA-87 to rotate back
    to RSA-2048, and restore Setup Mode;
 6. enroll an ML-DSA-87 PK and a V1 SHA-512 TBSCertificate hash in `db`, then
-   load and start an ML-DSA-87-signed UEFI application; and
+   prove Secure Boot enforcement is active, reject the image before `db`
+   enrollment, reject a body-tampered image after enrollment, then separately
+   load and start the authorized ML-DSA-87-signed UEFI application; and
 7. repeat the image authorization with the UEFI 2.12 V2 digest-only
    TBSCertificate-hash format.
 

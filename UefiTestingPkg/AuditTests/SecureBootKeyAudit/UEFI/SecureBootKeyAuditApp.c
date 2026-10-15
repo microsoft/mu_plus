@@ -17,6 +17,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PeCoffLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
@@ -26,7 +27,7 @@
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
-#define UNIT_TEST_APP_VERSION  "0.2"
+#define UNIT_TEST_APP_VERSION  "0.3"
 
 #define SHA256_WITH_RSA_OID  "1.2.840.113549.1.1.11"
 #define SHA256_OID           "2.16.840.1.101.3.4.2.1"
@@ -740,6 +741,117 @@ LogSecureBootMode (
 }
 
 STATIC
+EFI_STATUS
+RequireSecureBootEnforcement (
+  VOID
+  )
+{
+  UINT8       SecureBoot;
+  UINT8       SetupMode;
+  EFI_STATUS  Status;
+
+  Status = ReadModeVariable (EFI_SETUP_MODE_NAME, &SetupMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Status = ReadModeVariable (EFI_SECURE_BOOT_MODE_NAME, &SecureBoot);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  if ((SetupMode != USER_MODE) || (SecureBoot != SECURE_BOOT_MODE_ENABLE)) {
+    UT_LOG_ERROR (
+      "Secure Boot is not enforcing: SetupMode=%u SecureBoot=%u\n",
+      SetupMode,
+      SecureBoot
+      );
+    return EFI_SECURITY_VIOLATION;
+  }
+
+  UT_LOG_INFO ("Secure Boot enforcement confirmed: SetupMode=0 SecureBoot=1\n");
+  return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+LoadImageExpectDenied (
+  IN CONST CHAR8  *Phase,
+  IN CONST VOID   *Image,
+  IN UINTN        ImageSize
+  )
+{
+  EFI_HANDLE  LoadedImage;
+  EFI_STATUS  Status;
+  EFI_STATUS  UnloadStatus;
+
+  LoadedImage = NULL;
+  Status      = gBS->LoadImage (
+                       FALSE,
+                       gImageHandle,
+                       (EFI_DEVICE_PATH_PROTOCOL *)&mTestImageDevicePath,
+                       (VOID *)Image,
+                       ImageSize,
+                       &LoadedImage
+                       );
+
+  UnloadStatus = EFI_SUCCESS;
+  if (LoadedImage != NULL) {
+    UnloadStatus = gBS->UnloadImage (LoadedImage);
+  }
+
+  if ((Status != EFI_ACCESS_DENIED) && (Status != EFI_SECURITY_VIOLATION)) {
+    UT_LOG_ERROR ("%a: expected image denial, received %r\n", Phase, Status);
+    return EFI_SECURITY_VIOLATION;
+  }
+
+  if (EFI_ERROR (UnloadStatus)) {
+    UT_LOG_ERROR ("%a: failed to unload the denied image: %r\n", Phase, UnloadStatus);
+    return UnloadStatus;
+  }
+
+  UT_LOG_INFO ("%a: image denied as expected: %r\n", Phase, Status);
+  return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+BuildTamperedImage (
+  OUT UINT8  **TamperedImage
+  )
+{
+  PE_COFF_LOADER_IMAGE_CONTEXT  Context;
+  RETURN_STATUS                 ReturnStatus;
+
+  *TamperedImage = NULL;
+  ZeroMem (&Context, sizeof (Context));
+  Context.Handle    = (VOID *)gSecureBootKeyAuditHelloMldsa;
+  Context.ImageRead = PeCoffLoaderImageReadFromMemory;
+
+  ReturnStatus = PeCoffLoaderGetImageInfo (&Context);
+  if (RETURN_ERROR (ReturnStatus)) {
+    return EFI_LOAD_ERROR;
+  }
+
+  if ((Context.SizeOfHeaders == 0) ||
+      (Context.SizeOfHeaders >= gSecureBootKeyAuditHelloMldsaSize))
+  {
+    return EFI_COMPROMISED_DATA;
+  }
+
+  *TamperedImage = AllocateCopyPool (
+                     gSecureBootKeyAuditHelloMldsaSize,
+                     gSecureBootKeyAuditHelloMldsa
+                     );
+  if (*TamperedImage == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  (*TamperedImage)[Context.SizeOfHeaders] ^= 0xFF;
+  return EFI_SUCCESS;
+}
+
+STATIC
 UNIT_TEST_STATUS
 EFIAPI
 RsaPkRotationTest (
@@ -998,9 +1110,11 @@ RunMldsaImageTbsHashTest (
   EFI_STATUS        RecoveryStatus;
   UNIT_TEST_STATUS  Result;
   EFI_STATUS        Status;
+  UINT8             *TamperedImage;
 
-  LoadedImage = NULL;
-  Result      = UNIT_TEST_ERROR_TEST_FAILED;
+  LoadedImage   = NULL;
+  Result        = UNIT_TEST_ERROR_TEST_FAILED;
+  TamperedImage = NULL;
 
   Status = ValidateEcitClaims ();
   if (EFI_ERROR (Status)) {
@@ -1024,6 +1138,20 @@ RunMldsaImageTbsHashTest (
     goto Exit;
   }
 
+  Status = RequireSecureBootEnforcement ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "Before db enrollment",
+             gSecureBootKeyAuditHelloMldsa,
+             gSecureBootKeyAuditHelloMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
   Status = ApplyDbUpdate (
              EnrollDb,
              EnrollDbSize,
@@ -1034,6 +1162,24 @@ RunMldsaImageTbsHashTest (
     UT_LOG_ERROR ("ML-DSA-87 PK could not enroll the %a TBS hash in db: %r\n", Version, Status);
     goto Exit;
   }
+
+  Status = BuildTamperedImage (&TamperedImage);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Unable to construct the tampered image control: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "After tampering",
+             TamperedImage,
+             gSecureBootKeyAuditHelloMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  FreePool (TamperedImage);
+  TamperedImage = NULL;
 
   Status = gBS->LoadImage (
                   FALSE,
@@ -1048,6 +1194,8 @@ RunMldsaImageTbsHashTest (
     goto Exit;
   }
 
+  UT_LOG_INFO ("%a db TBS hash authorized the ML-DSA-87 image with LoadImage\n", Version);
+
   Status = gBS->StartImage (LoadedImage, NULL, NULL);
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("The authorized ML-DSA image did not start: %r\n", Status);
@@ -1055,7 +1203,7 @@ RunMldsaImageTbsHashTest (
   }
 
   LoadedImage = NULL;
-  UT_LOG_INFO ("%a db TBS hash authorized and started the ML-DSA-87 image\n", Version);
+  UT_LOG_INFO ("The authorized ML-DSA-87 image executed successfully with StartImage\n");
 
   Status = ApplyDbUpdate (
              gSecureBootKeyAuditDeleteDbByMldsa,
@@ -1082,6 +1230,10 @@ RunMldsaImageTbsHashTest (
   Result = UNIT_TEST_PASSED;
 
 Exit:
+  if (TamperedImage != NULL) {
+    FreePool (TamperedImage);
+  }
+
   if (LoadedImage != NULL) {
     gBS->UnloadImage (LoadedImage);
   }
