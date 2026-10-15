@@ -10,7 +10,7 @@
   BASE_NAME                      = SecureBootKeyAuditApp
   FILE_GUID                      = 7385D03A-AE30-47C7-B46C-B2724B50308B
   MODULE_TYPE                    = UEFI_APPLICATION
-  VERSION_STRING                 = 0.4
+  VERSION_STRING                 = 0.5
   ENTRY_POINT                    = SecureBootKeyAuditAppEntry
 
 [Sources]
@@ -18,17 +18,21 @@
   TestData.c
 
 [Packages]
+  CryptoPkg/CryptoPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SecurityPkg/SecurityPkg.dec
+  ShellPkg/ShellPkg.dec
   UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
 [LibraryClasses]
+  BaseCryptLib
   BaseLib
   BaseMemoryLib
   DebugLib
   MemoryAllocationLib
   PeCoffLib
+  ShellLib
   UefiApplicationEntryPoint
   UefiBootServicesTableLib
   UefiLib

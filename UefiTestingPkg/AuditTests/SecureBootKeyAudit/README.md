@@ -23,7 +23,10 @@ variable store. They:
    TBSCertificate-hash format; and
 8. simulate an interrupted run with a recognized test PK, preserve a read-only
    preflight snapshot, prove inspection does not mutate the PK, and then enter
-   an explicitly logged recovery phase.
+   an explicitly logged recovery phase; and
+9. write a versioned, CRC-protected journal to the test volume, request a cold
+   reboot, resume the active unit test, reread ECIT and Secure Boot state, and
+   prove both match the pre-reboot evidence.
 
 The ML-DSA authenticated updates use pure ML-DSA-87 CMS as specified by RFC
 9882. Because the detached CMS signatures omit signed attributes, their CMS
@@ -68,6 +71,40 @@ documented. Examples include a platform firmware recovery flow, an
 out-of-band management recovery mechanism, or direct flash restoration. Do
 not run the mutating scenarios on an end-user or production device.
 
+## Persistent reboot journal
+
+`SecureBootKeyAuditJournal.bin` is written to the current test volume before
+the reboot boundary. The journal contains no private key material. It records
+the fixture ID, SHA-256 of `Host/TestData.manifest.json`, SHA-256 of the parsed
+ECIT, boot count, prior result, phase, and the recognized Secure Boot baseline.
+The firmware flushes each fixed-size journal update before continuing and
+rejects an invalid signature, version, size, CRC, fixture identity, manifest
+hash, or phase.
+
+The reboot test advances through:
+
+```text
+PREPARED -> REBOOT_PENDING -> PERSISTENTLY_VERIFIED
+```
+
+A volatile marker distinguishes a real reset from relaunching the application
+in the same boot. Project Mu unit-test persistence resumes the active test and
+preserves its pre-reset log. After reboot, the audit reparses ECIT and rereads
+the Secure Boot baseline before recording `PERSISTENTLY_VERIFIED`.
+
+The completed journal intentionally remains on the test volume as evidence.
+Archive it with the JUnit and serial results, then remove it before starting a
+new run on the same volume. QEMU runs with `EMPTY_DRIVE=TRUE` begin with a
+fresh test volume. On physical hardware, relaunch the same application from
+the same removable test volume if platform boot policy does not automatically
+return to it after reset.
+
+Validate and decode the archived journal against its fixture manifest with:
+
+```bash
+python3 Host/InspectJournal.py SecureBootKeyAuditJournal.bin
+```
+
 ## Generate the public fixture
 
 Build `HelloUefiApp.efi`, then run the generator from the
@@ -80,7 +117,8 @@ python3 Host/GenerateTestData.py
 The generator writes:
 
 - `UEFI/TestData.c`, containing public certificates, signature lists,
-  authenticated updates, and the signed test image; and
+  authenticated updates, the signed test image, fixture ID, and manifest hash;
+  and
 - `Host/TestData.manifest.json`, containing hashes and ECIT prerequisites.
 
 RSA and ML-DSA private keys exist only in memory while the generator runs and

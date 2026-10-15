@@ -50,6 +50,7 @@ EFI_CERT_X509_SHA512_GUID = uuid.UUID("446dbf63-2502-4cda-bcfa-2465d2b0fe9d")
 EFI_CERT_V2_X509_SHA512_GUID = uuid.UUID("4d46147a-fa79-43a9-8836-00341c708a70")
 SIGNATURE_OWNER = uuid.UUID("d4f18610-2ce9-4d6c-a3c2-0bd4727db67b")
 VARIABLE_ATTRIBUTES = "NV,BS,RT,AT"
+FIXTURE_ID = "secure-boot-key-audit-v1"
 
 SHA256_WITH_RSA_OID = "1.2.840.113549.1.1.11"
 SHA256_OID = "2.16.840.1.101.3.4.2.1"
@@ -850,13 +851,9 @@ def generate(
         if extract_payload(artifacts[name]) != expected_payload:
             raise ValueError(f"{name} does not contain its expected payload")
 
-    c_source = C_HEADER
-    for name, data in artifacts.items():
-        c_source += emit_array(name, data, ARTIFACT_DESCRIPTIONS[name])
-    write_text(output_c, c_source, crlf=True)
-
     manifest = {
         "version": 1,
+        "fixture_id": FIXTURE_ID,
         "scenarios": [
             "rsa2048-pk-a-to-b-to-a",
             "setup-mode-to-mldsa87",
@@ -895,7 +892,31 @@ def generate(
             for name, data in artifacts.items()
         },
     }
-    write_text(output_manifest, json.dumps(manifest, indent=2) + "\n")
+    manifest_text = json.dumps(manifest, indent=2) + "\n"
+    manifest_sha256 = hashlib.sha256(manifest_text.encode("utf-8")).digest()
+
+    c_source = C_HEADER
+    for name, data in artifacts.items():
+        c_source += emit_array(name, data, ARTIFACT_DESCRIPTIONS[name])
+    c_source += emit_array(
+        "gSecureBootKeyAuditFixtureId",
+        FIXTURE_ID.encode("ascii"),
+        (
+            "Stable identifier for this fixture schema.",
+            "Recorded in the persistent audit journal across reboot boundaries.",
+        ),
+    )
+    c_source += emit_array(
+        "gSecureBootKeyAuditManifestSha256",
+        manifest_sha256,
+        (
+            "SHA-256 of Host/TestData.manifest.json.",
+            "Binds persistent journal records to the generated fixture manifest.",
+        ),
+    )
+
+    write_text(output_c, c_source, crlf=True)
+    write_text(output_manifest, manifest_text)
 
 
 def parse_args() -> argparse.Namespace:

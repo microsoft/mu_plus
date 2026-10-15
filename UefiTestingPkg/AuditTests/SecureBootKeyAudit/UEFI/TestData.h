@@ -54,5 +54,9 @@ extern CONST UINT8  gSecureBootKeyAuditDeleteDbByMldsa[];
 extern CONST UINTN  gSecureBootKeyAuditDeleteDbByMldsaSize;
 extern CONST UINT8  gSecureBootKeyAuditHelloMldsa[];
 extern CONST UINTN  gSecureBootKeyAuditHelloMldsaSize;
+extern CONST UINT8  gSecureBootKeyAuditFixtureId[];
+extern CONST UINTN  gSecureBootKeyAuditFixtureIdSize;
+extern CONST UINT8  gSecureBootKeyAuditManifestSha256[];
+extern CONST UINTN  gSecureBootKeyAuditManifestSha256Size;
 
 #endif

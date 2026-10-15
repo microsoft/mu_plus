@@ -15,9 +15,11 @@
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/BaseCryptLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PeCoffLib.h>
+#include <Library/ShellLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
@@ -27,7 +29,7 @@
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
-#define UNIT_TEST_APP_VERSION  "0.4"
+#define UNIT_TEST_APP_VERSION  "0.5"
 
 #define SHA256_WITH_RSA_OID  "1.2.840.113549.1.1.11"
 #define SHA256_OID           "2.16.840.1.101.3.4.2.1"
@@ -39,6 +41,14 @@
    EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
 
 #define MAX_ECIT_LENGTH  SIZE_1MB
+
+#define AUDIT_JOURNAL_FILE_NAME        L"SecureBootKeyAuditJournal.bin"
+#define AUDIT_JOURNAL_SIGNATURE        SIGNATURE_32 ('S', 'B', 'J', 'R')
+#define AUDIT_JOURNAL_VERSION          1
+#define AUDIT_JOURNAL_FIXTURE_ID_SIZE  32
+#define AUDIT_REBOOT_MARKER_NAME       L"SecureBootKeyAuditRebootPending"
+#define AUDIT_REBOOT_MARKER_ATTRIBUTES \
+  (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS)
 
 typedef struct {
   CONST UINT8    *Data;
@@ -113,11 +123,44 @@ typedef struct {
 } AUDIT_BASELINE_SNAPSHOT;
 
 #pragma pack (1)
+typedef enum {
+  AuditJournalPrepared = 1,
+  AuditJournalRebootPending,
+  AuditJournalPersistentlyVerified,
+  AuditJournalFailed
+} AUDIT_JOURNAL_PHASE;
+
+typedef struct {
+  UINT32    Signature;
+  UINT16    Version;
+  UINT16    Size;
+  UINT32    Crc32;
+  UINT32    Phase;
+  UINT32    BootCount;
+  UINT64    PriorResult;
+  CHAR8     FixtureId[AUDIT_JOURNAL_FIXTURE_ID_SIZE];
+  UINT8     ManifestSha256[SHA256_DIGEST_SIZE];
+  UINT8     EcitSha256[SHA256_DIGEST_SIZE];
+  UINT8     SetupMode;
+  UINT8     SecureBoot;
+  UINT16    Reserved;
+  UINT32    PkState;
+  UINT32    PkAttributes;
+  UINT64    PkSize;
+  UINT32    DbState;
+  UINT32    DbAttributes;
+  UINT64    DbSize;
+} AUDIT_JOURNAL;
+
 typedef struct {
   MEMMAP_DEVICE_PATH          MemMap;
   EFI_DEVICE_PATH_PROTOCOL    End;
 } TEST_IMAGE_DEVICE_PATH;
 #pragma pack ()
+
+STATIC EFI_GUID  mAuditJournalGuid = {
+  0x7ec54fb2, 0xef9f, 0x4e03, { 0x81, 0xf0, 0x56, 0xbb, 0xe1, 0x2d, 0xa6, 0xe9 }
+};
 
 STATIC TEST_IMAGE_DEVICE_PATH  mTestImageDevicePath = {
   {
@@ -138,6 +181,7 @@ STATIC TEST_IMAGE_DEVICE_PATH  mTestImageDevicePath = {
 };
 
 STATIC EFI_STATUS  mEcitParseStatus = EFI_NOT_READY;
+STATIC UINT8       mEcitSha256[SHA256_DIGEST_SIZE];
 
 STATIC ECIT_CLAIM_RESULT  mEcitClaimResults[EcitClaimCount] = {
   { "db-update-authorization:x509",                   EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
@@ -376,6 +420,11 @@ ParseEcitClaims (
     return EFI_COMPROMISED_DATA;
   }
 
+  if (!Sha256HashAll ((CONST UINT8 *)Table, Table->Length, mEcitSha256)) {
+    UT_LOG_ERROR ("Unable to hash the parsed ECIT\n");
+    return EFI_DEVICE_ERROR;
+  }
+
   mEcitClaimResults[EcitDbUpdateAuthorizationX509].Claim =
     GuidPayloadContains (&Authorization, &gEfiCertX509Guid) ? EcitClaimAdvertised : EcitClaimAbsent;
   mEcitClaimResults[EcitDbUpdateVerificationRsaSha256].Claim =
@@ -559,6 +608,7 @@ EcitSuiteSetup (
 {
   UINTN  Index;
 
+  ZeroMem (mEcitSha256, sizeof (mEcitSha256));
   for (Index = 0; Index < EcitClaimCount; Index++) {
     mEcitClaimResults[Index].Claim             = EcitClaimUnknown;
     mEcitClaimResults[Index].Observation       = EcitObservationNotTested;
@@ -1249,6 +1299,439 @@ RequireSetupModeBaseline (
   AUDIT_BASELINE_SNAPSHOT  Snapshot;
 
   return InspectSetupModeBaseline (&Snapshot);
+}
+
+STATIC
+CONST CHAR8 *
+AuditJournalPhaseName (
+  IN AUDIT_JOURNAL_PHASE  Phase
+  )
+{
+  switch (Phase) {
+    case AuditJournalPrepared:
+      return "PREPARED";
+    case AuditJournalRebootPending:
+      return "REBOOT_PENDING";
+    case AuditJournalPersistentlyVerified:
+      return "PERSISTENTLY_VERIFIED";
+    case AuditJournalFailed:
+      return "FAILED";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+STATIC
+EFI_STATUS
+CalculateAuditJournalCrc (
+  IN OUT AUDIT_JOURNAL  *Journal
+  )
+{
+  Journal->Crc32 = 0;
+  return gBS->CalculateCrc32 (Journal, sizeof (*Journal), &Journal->Crc32);
+}
+
+STATIC
+EFI_STATUS
+ValidateAuditJournal (
+  IN CONST AUDIT_JOURNAL  *Journal
+  )
+{
+  AUDIT_JOURNAL  JournalCopy;
+  UINT32         SavedCrc32;
+  EFI_STATUS     Status;
+
+  if ((Journal->Signature != AUDIT_JOURNAL_SIGNATURE) ||
+      (Journal->Version != AUDIT_JOURNAL_VERSION) ||
+      (Journal->Size != sizeof (*Journal)) ||
+      (Journal->Reserved != 0) ||
+      (Journal->Phase < AuditJournalPrepared) ||
+      (Journal->Phase > AuditJournalFailed))
+  {
+    return EFI_COMPROMISED_DATA;
+  }
+
+  if ((gSecureBootKeyAuditFixtureIdSize >= sizeof (Journal->FixtureId)) ||
+      (gSecureBootKeyAuditManifestSha256Size != sizeof (Journal->ManifestSha256)) ||
+      (CompareMem (
+         Journal->FixtureId,
+         gSecureBootKeyAuditFixtureId,
+         gSecureBootKeyAuditFixtureIdSize
+         ) != 0) ||
+      (Journal->FixtureId[gSecureBootKeyAuditFixtureIdSize] != '\0') ||
+      (CompareMem (
+         Journal->ManifestSha256,
+         gSecureBootKeyAuditManifestSha256,
+         sizeof (Journal->ManifestSha256)
+         ) != 0))
+  {
+    return EFI_INCOMPATIBLE_VERSION;
+  }
+
+  CopyMem (&JournalCopy, Journal, sizeof (JournalCopy));
+  SavedCrc32 = JournalCopy.Crc32;
+  Status     = CalculateAuditJournalCrc (&JournalCopy);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  return (SavedCrc32 == JournalCopy.Crc32) ? EFI_SUCCESS : EFI_CRC_ERROR;
+}
+
+STATIC
+EFI_STATUS
+ReadAuditJournal (
+  OUT AUDIT_JOURNAL  *Journal
+  )
+{
+  SHELL_FILE_HANDLE  FileHandle;
+  UINT64             FileSize;
+  UINTN              ReadSize;
+  EFI_STATUS         Status;
+
+  FileHandle = NULL;
+  ZeroMem (Journal, sizeof (*Journal));
+
+  Status = ShellOpenFileByName (
+             AUDIT_JOURNAL_FILE_NAME,
+             &FileHandle,
+             EFI_FILE_MODE_READ,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Status = ShellGetFileSize (FileHandle, &FileSize);
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  if (FileSize != sizeof (*Journal)) {
+    Status = EFI_BAD_BUFFER_SIZE;
+    goto Exit;
+  }
+
+  ReadSize = sizeof (*Journal);
+  Status   = ShellReadFile (FileHandle, &ReadSize, Journal);
+  if (!EFI_ERROR (Status) && (ReadSize != sizeof (*Journal))) {
+    Status = EFI_DEVICE_ERROR;
+  }
+
+  if (!EFI_ERROR (Status)) {
+    Status = ValidateAuditJournal (Journal);
+  }
+
+Exit:
+  ShellCloseFile (&FileHandle);
+  return Status;
+}
+
+STATIC
+EFI_STATUS
+WriteAuditJournal (
+  IN OUT AUDIT_JOURNAL  *Journal
+  )
+{
+  SHELL_FILE_HANDLE  FileHandle;
+  UINTN              WriteSize;
+  EFI_STATUS         Status;
+
+  FileHandle    = NULL;
+  Journal->Size = (UINT16)sizeof (*Journal);
+  Status        = CalculateAuditJournalCrc (Journal);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Status = ShellOpenFileByName (
+             AUDIT_JOURNAL_FILE_NAME,
+             &FileHandle,
+             EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+             0
+             );
+  if (Status == EFI_NOT_FOUND) {
+    Status = ShellOpenFileByName (
+               AUDIT_JOURNAL_FILE_NAME,
+               &FileHandle,
+               EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+               0
+               );
+  } else if (!EFI_ERROR (Status)) {
+    Status = ShellSetFilePosition (FileHandle, 0);
+  }
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  WriteSize = sizeof (*Journal);
+  Status    = ShellWriteFile (FileHandle, &WriteSize, Journal);
+  if (!EFI_ERROR (Status) && (WriteSize != sizeof (*Journal))) {
+    Status = EFI_DEVICE_ERROR;
+  }
+
+  if (!EFI_ERROR (Status)) {
+    Status = ShellFlushFile (FileHandle);
+  }
+
+  ShellCloseFile (&FileHandle);
+  return Status;
+}
+
+STATIC
+VOID
+InitializeAuditJournal (
+  OUT AUDIT_JOURNAL                  *Journal,
+  IN  CONST AUDIT_BASELINE_SNAPSHOT  *Snapshot
+  )
+{
+  ZeroMem (Journal, sizeof (*Journal));
+  Journal->Signature   = AUDIT_JOURNAL_SIGNATURE;
+  Journal->Version     = AUDIT_JOURNAL_VERSION;
+  Journal->Phase       = AuditJournalPrepared;
+  Journal->BootCount   = 1;
+  Journal->PriorResult = EFI_NOT_READY;
+  CopyMem (
+    Journal->FixtureId,
+    gSecureBootKeyAuditFixtureId,
+    gSecureBootKeyAuditFixtureIdSize
+    );
+  CopyMem (
+    Journal->ManifestSha256,
+    gSecureBootKeyAuditManifestSha256,
+    sizeof (Journal->ManifestSha256)
+    );
+  CopyMem (Journal->EcitSha256, mEcitSha256, sizeof (Journal->EcitSha256));
+  Journal->SetupMode    = Snapshot->SetupMode;
+  Journal->SecureBoot   = Snapshot->SecureBoot;
+  Journal->PkState      = Snapshot->PkState;
+  Journal->PkAttributes = Snapshot->PkAttributes;
+  Journal->PkSize       = Snapshot->PkSize;
+  Journal->DbState      = Snapshot->DbState;
+  Journal->DbAttributes = Snapshot->DbAttributes;
+  Journal->DbSize       = Snapshot->DbSize;
+}
+
+STATIC
+EFI_STATUS
+CompareJournalState (
+  IN CONST AUDIT_JOURNAL            *Journal,
+  IN CONST AUDIT_BASELINE_SNAPSHOT  *Snapshot
+  )
+{
+  if ((CompareMem (Journal->EcitSha256, mEcitSha256, sizeof (Journal->EcitSha256)) != 0) ||
+      (Journal->SetupMode != Snapshot->SetupMode) ||
+      (Journal->SecureBoot != Snapshot->SecureBoot) ||
+      (Journal->PkState != (UINT32)Snapshot->PkState) ||
+      (Journal->PkAttributes != Snapshot->PkAttributes) ||
+      (Journal->PkSize != Snapshot->PkSize) ||
+      (Journal->DbState != (UINT32)Snapshot->DbState) ||
+      (Journal->DbAttributes != Snapshot->DbAttributes) ||
+      (Journal->DbSize != Snapshot->DbSize))
+  {
+    return EFI_COMPROMISED_DATA;
+  }
+
+  return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+SetAuditRebootMarker (
+  VOID
+  )
+{
+  return gRT->SetVariable (
+                AUDIT_REBOOT_MARKER_NAME,
+                &mAuditJournalGuid,
+                AUDIT_REBOOT_MARKER_ATTRIBUTES,
+                gSecureBootKeyAuditManifestSha256Size,
+                (VOID *)gSecureBootKeyAuditManifestSha256
+                );
+}
+
+STATIC
+EFI_STATUS
+RequireClearedRebootMarker (
+  VOID
+  )
+{
+  UINT32  Attributes;
+  UINT8   Marker[SHA256_DIGEST_SIZE];
+  UINTN   MarkerSize;
+
+  MarkerSize = sizeof (Marker);
+  return gRT->GetVariable (
+                AUDIT_REBOOT_MARKER_NAME,
+                &mAuditJournalGuid,
+                &Attributes,
+                &MarkerSize,
+                Marker
+                );
+}
+
+STATIC
+VOID
+DeleteAuditRebootMarker (
+  VOID
+  )
+{
+  gRT->SetVariable (
+         AUDIT_REBOOT_MARKER_NAME,
+         &mAuditJournalGuid,
+         0,
+         0,
+         NULL
+         );
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+PersistentJournalRebootTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  AUDIT_BASELINE_SNAPSHOT  Snapshot;
+  AUDIT_JOURNAL            Journal;
+  EFI_STATUS               Status;
+
+  if (EFI_ERROR (mEcitParseStatus)) {
+    UT_LOG_ERROR ("ECIT must parse before the reboot journal test: %r\n", mEcitParseStatus);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = ReadAuditJournal (&Journal);
+  if (Status == EFI_NOT_FOUND) {
+    Status = InspectSetupModeBaseline (&Snapshot);
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR ("The reboot journal baseline is unsafe: %r\n", Status);
+      return UNIT_TEST_ERROR_TEST_FAILED;
+    }
+
+    InitializeAuditJournal (&Journal, &Snapshot);
+    Status = WriteAuditJournal (&Journal);
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR ("Unable to persist the PREPARED audit journal: %r\n", Status);
+      return UNIT_TEST_ERROR_TEST_FAILED;
+    }
+
+    UT_LOG_INFO (
+      "[AUDIT_JOURNAL] phase=%a boot=%u fixture=%a prior_status=%r\n",
+      AuditJournalPhaseName ((AUDIT_JOURNAL_PHASE)Journal.Phase),
+      Journal.BootCount,
+      Journal.FixtureId,
+      (EFI_STATUS)Journal.PriorResult
+      );
+
+    Status = SetAuditRebootMarker ();
+    if (EFI_ERROR (Status)) {
+      Journal.Phase       = AuditJournalFailed;
+      Journal.PriorResult = Status;
+      WriteAuditJournal (&Journal);
+      UT_LOG_ERROR ("Unable to create the volatile reboot marker: %r\n", Status);
+      return UNIT_TEST_ERROR_TEST_FAILED;
+    }
+
+    Journal.Phase       = AuditJournalRebootPending;
+    Journal.PriorResult = EFI_SUCCESS;
+    Status              = WriteAuditJournal (&Journal);
+    if (EFI_ERROR (Status)) {
+      DeleteAuditRebootMarker ();
+      UT_LOG_ERROR ("Unable to persist the REBOOT_PENDING audit journal: %r\n", Status);
+      return UNIT_TEST_ERROR_TEST_FAILED;
+    }
+
+    UT_LOG_INFO (
+      "[AUDIT_JOURNAL] phase=%a boot=%u boundary=before_cold_reset\n",
+      AuditJournalPhaseName ((AUDIT_JOURNAL_PHASE)Journal.Phase),
+      Journal.BootCount
+      );
+
+    Status = SaveFrameworkState (&Journal, sizeof (Journal));
+    if (EFI_ERROR (Status)) {
+      DeleteAuditRebootMarker ();
+      Journal.Phase       = AuditJournalFailed;
+      Journal.PriorResult = Status;
+      WriteAuditJournal (&Journal);
+      UT_LOG_ERROR ("Unable to persist the unit-test framework state: %r\n", Status);
+      return UNIT_TEST_ERROR_TEST_FAILED;
+    }
+
+    gRT->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);
+
+    DeleteAuditRebootMarker ();
+    Journal.Phase       = AuditJournalFailed;
+    Journal.PriorResult = EFI_ABORTED;
+    WriteAuditJournal (&Journal);
+    UT_LOG_ERROR ("ResetSystem returned unexpectedly\n");
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("The persistent audit journal is invalid: %r\n", Status);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  if ((Journal.Phase != AuditJournalRebootPending) ||
+      (Journal.BootCount != 1) ||
+      (Context == NULL))
+  {
+    UT_LOG_ERROR (
+      "The audit journal cannot resume: phase=%a boot=%u context=%p\n",
+      AuditJournalPhaseName ((AUDIT_JOURNAL_PHASE)Journal.Phase),
+      Journal.BootCount,
+      Context
+      );
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = ValidateAuditJournal ((CONST AUDIT_JOURNAL *)Context);
+  if (EFI_ERROR (Status) ||
+      (((CONST AUDIT_JOURNAL *)Context)->Phase != AuditJournalRebootPending))
+  {
+    UT_LOG_ERROR ("The resumed unit-test context is invalid: %r\n", Status);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = RequireClearedRebootMarker ();
+  if (Status != EFI_NOT_FOUND) {
+    UT_LOG_ERROR ("The volatile reboot marker proves no reset occurred: %r\n", Status);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = InspectSetupModeBaseline (&Snapshot);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("The post-reboot baseline is unsafe: %r\n", Status);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = CompareJournalState (&Journal, &Snapshot);
+  if (EFI_ERROR (Status)) {
+    Journal.Phase       = AuditJournalFailed;
+    Journal.PriorResult = Status;
+    WriteAuditJournal (&Journal);
+    UT_LOG_ERROR ("ECIT or Secure Boot state changed across reboot: %r\n", Status);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Journal.Phase       = AuditJournalPersistentlyVerified;
+  Journal.BootCount   = 2;
+  Journal.PriorResult = EFI_SUCCESS;
+  Status              = WriteAuditJournal (&Journal);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Unable to persist the verified reboot journal: %r\n", Status);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  UT_LOG_INFO (
+    "[AUDIT_JOURNAL] phase=%a boot=%u boundary=after_cold_reset "
+    "framework_context=RESTORED ecit_reread=MATCH state_reread=MATCH\n",
+    AuditJournalPhaseName ((AUDIT_JOURNAL_PHASE)Journal.Phase),
+    Journal.BootCount
+    );
+  return UNIT_TEST_PASSED;
 }
 
 STATIC
@@ -2021,6 +2504,15 @@ SecureBootKeyAuditAppEntry (
     "Classify ECIT claim and observation results",
     "EcitCorrelationClassifier",
     EcitCorrelationClassifierTest,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Persist audit identity and state across a cold reboot",
+    "PersistentJournalReboot",
+    PersistentJournalRebootTest,
     NULL,
     NULL,
     NULL

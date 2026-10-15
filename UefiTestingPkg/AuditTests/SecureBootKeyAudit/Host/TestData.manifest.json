@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "fixture_id": "secure-boot-key-audit-v1",
   "scenarios": [
     "rsa2048-pk-a-to-b-to-a",
     "setup-mode-to-mldsa87",
