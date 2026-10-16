@@ -64,10 +64,12 @@ RecoverDb (
   VOID
   )
 {
-  UINT32      Attributes;
-  UINT8       *Db;
-  UINTN       DbSize;
-  EFI_STATUS  Status;
+  UINT32       Attributes;
+  CONST UINT8  *DeleteDb;
+  UINTN        DeleteDbSize;
+  UINT8        *Db;
+  UINTN        DbSize;
+  EFI_STATUS   Status;
 
   Status = ReadVariable (
              EFI_IMAGE_SECURITY_DATABASE,
@@ -84,19 +86,25 @@ RecoverDb (
     return Status;
   }
 
-  if (!PkMatches (
-         Db,
-         DbSize,
-         gSecureBootKeyAuditDbTbsHashV1,
-         gSecureBootKeyAuditDbTbsHashV1Size
-         ) &&
-      !PkMatches (
-         Db,
-         DbSize,
-         gSecureBootKeyAuditDbTbsHashV2,
-         gSecureBootKeyAuditDbTbsHashV2Size
-         ))
+  if (PkMatches (
+        Db,
+        DbSize,
+        gSecureBootKeyAuditDbTbsHashV1,
+        gSecureBootKeyAuditDbTbsHashV1Size
+        ))
   {
+    DeleteDb     = gSecureBootKeyAuditDeleteDbV1ByMldsa;
+    DeleteDbSize = gSecureBootKeyAuditDeleteDbV1ByMldsaSize;
+  } else if (PkMatches (
+               Db,
+               DbSize,
+               gSecureBootKeyAuditDbTbsHashV2,
+               gSecureBootKeyAuditDbTbsHashV2Size
+               ))
+  {
+    DeleteDb     = gSecureBootKeyAuditDeleteDbV2ByMldsa;
+    DeleteDbSize = gSecureBootKeyAuditDeleteDbV2ByMldsaSize;
+  } else {
     FreePool (Db);
     UT_LOG_ERROR ("Refusing to modify an unknown existing db\n");
     return EFI_ACCESS_DENIED;
@@ -104,8 +112,8 @@ RecoverDb (
 
   FreePool (Db);
   return ApplyDbUpdate (
-           gSecureBootKeyAuditDeleteDbByMldsa,
-           gSecureBootKeyAuditDeleteDbByMldsaSize,
+           DeleteDb,
+           DeleteDbSize,
            NULL,
            0
            );

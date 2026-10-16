@@ -68,7 +68,9 @@ an independently proven recovery path.
 Authenticated-variable conformance steps use a data-driven executor that
 validates the required pre-state, exact returned status, expected post-state,
 and atomicity for rejected operations. It emits before/after variable
-SHA-256 evidence into the unit-test log.
+SHA-256 evidence into the unit-test log. Each scenario also declares the ECIT
+claims it covers. The executor records successful, failed, or inconclusive
+observations for those claims without test-specific reporting code.
 
 The final ECIT correlation test emits both machine-readable `ECIT_RESULT` /
 `ECIT_SUMMARY` records and a DumpEcit-style coverage table.
@@ -79,6 +81,23 @@ omitted from the denominator. The overall verdict distinguishes `PASS` from
 `PASS_WITH_LIMITATIONS`, so incomplete coverage or an operationally successful
 but independently unverifiable profile is not hidden by the passing unit-test
 count.
+
+## Add a claim test
+
+Modeled claim identity and ECIT matching metadata are centralized in
+`UEFI/EcitClaimRegistry.c`. To add operational coverage for a claim:
+
+1. add its stable ID to `ECIT_CLAIM_ID` in `UEFI/AuditTypes.h`;
+2. add the matching feature and OID or signature-list GUID descriptor to
+   `UEFI/EcitClaimRegistry.c`;
+3. add or reuse independently verified fixture data; and
+4. list the claim ID in the scenario's `CoveredClaims` array.
+
+`ExecuteAuthVariableScenario()` publishes the observation automatically.
+Bespoke scenarios use `RecordEcitClaimObservation()` or
+`RecordEcitClaimObservations()` after validating their complete operational
+oracle. The parser and coverage reporter both consume the registry, so they do
+not require a second claim mapping.
 
 ## Platform qualification requirement
 

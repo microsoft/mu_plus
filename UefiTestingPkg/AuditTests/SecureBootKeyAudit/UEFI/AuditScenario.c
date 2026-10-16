@@ -14,6 +14,7 @@
 #include <Library/UnitTestLib.h>
 
 #include "AuditScenario.h"
+#include "EcitClaimRegistry.h"
 #include "SecureBootState.h"
 
 typedef struct {
@@ -155,30 +156,36 @@ LogVariableValue (
 
 EFI_STATUS
 ExecuteAuthVariableScenario (
-  IN CONST AUDIT_AUTH_VARIABLE_SCENARIO  *Scenario
+  IN CONST AUDIT_AUTH_VARIABLE_SCENARIO  *Scenario,
+  IN OUT ECIT_CLAIM_RESULT               *ClaimResults,
+  IN UINTN                               ClaimResultCount
   )
 {
-  AUDIT_VARIABLE_VALUE  After;
-  AUDIT_VARIABLE_VALUE  Before;
-  EFI_STATUS            OperationStatus;
-  EFI_STATUS            Status;
+  AUDIT_VARIABLE_VALUE    After;
+  AUDIT_VARIABLE_VALUE    Before;
+  ECIT_OBSERVATION_STATE  Observation;
+  EFI_STATUS              OperationStatus;
+  EFI_STATUS              Status;
 
   if ((Scenario == NULL) ||
       (Scenario->ScenarioId == NULL) ||
       (Scenario->VariableName == NULL) ||
       (Scenario->VendorGuid == NULL) ||
-      (Scenario->AuthenticatedUpdate == NULL))
+      (Scenario->AuthenticatedUpdate == NULL) ||
+      ((Scenario->CoveredClaimCount != 0) &&
+       ((Scenario->CoveredClaims == NULL) || (ClaimResults == NULL))))
   {
     return EFI_INVALID_PARAMETER;
   }
 
   ZeroMem (&Before, sizeof (Before));
   ZeroMem (&After, sizeof (After));
-  Status = CaptureVariableValue (
-             Scenario->VariableName,
-             Scenario->VendorGuid,
-             &Before
-             );
+  Observation = EcitObservationInconclusive;
+  Status      = CaptureVariableValue (
+                  Scenario->VariableName,
+                  Scenario->VendorGuid,
+                  &Before
+                  );
   if (EFI_ERROR (Status)) {
     goto Exit;
   }
@@ -232,7 +239,8 @@ ExecuteAuthVariableScenario (
       Scenario->ExpectedStatus,
       OperationStatus
       );
-    Status = EFI_COMPROMISED_DATA;
+    Observation = EcitObservationFailure;
+    Status      = EFI_COMPROMISED_DATA;
     goto Exit;
   }
 
@@ -247,7 +255,8 @@ ExecuteAuthVariableScenario (
       "[AUDIT_CONFORMANCE] scenario=%a postcondition=FAILED\n",
       Scenario->ScenarioId
       );
-    Status = EFI_COMPROMISED_DATA;
+    Observation = EcitObservationFailure;
+    Status      = EFI_COMPROMISED_DATA;
     goto Exit;
   }
 
@@ -256,7 +265,8 @@ ExecuteAuthVariableScenario (
       "[AUDIT_CONFORMANCE] scenario=%a atomic_rejection=FAILED\n",
       Scenario->ScenarioId
       );
-    Status = EFI_COMPROMISED_DATA;
+    Observation = EcitObservationFailure;
+    Status      = EFI_COMPROMISED_DATA;
     goto Exit;
   }
 
@@ -268,9 +278,21 @@ ExecuteAuthVariableScenario (
     OperationStatus,
     Scenario->ExpectMutation ? "NOT_APPLICABLE" : "VERIFIED"
     );
-  Status = EFI_SUCCESS;
+  Observation = EcitObservationSuccess;
+  Status      = EFI_SUCCESS;
 
 Exit:
+  if (Scenario->CoveredClaimCount != 0) {
+    RecordEcitClaimObservations (
+      ClaimResults,
+      ClaimResultCount,
+      Scenario->CoveredClaims,
+      Scenario->CoveredClaimCount,
+      Observation,
+      Status
+      );
+  }
+
   FreeVariableValue (&After);
   FreeVariableValue (&Before);
   return Status;

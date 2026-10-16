@@ -29,17 +29,13 @@
 #include "AuditRecovery.h"
 #include "AuditScenario.h"
 #include "AuditTypes.h"
+#include "EcitClaimRegistry.h"
 #include "EcitCoverageReport.h"
 #include "SecureBootState.h"
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
 #define UNIT_TEST_APP_VERSION  "0.7"
-
-#define SHA256_WITH_RSA_OID  "1.2.840.113549.1.1.11"
-#define SHA256_OID           "2.16.840.1.101.3.4.2.1"
-#define SHA512_OID           "2.16.840.1.101.3.4.2.3"
-#define ML_DSA_87_OID        "2.16.840.1.101.3.4.3.19"
 
 #define MAX_ECIT_LENGTH  SIZE_1MB
 
@@ -83,18 +79,7 @@ STATIC EFI_STATUS                        mEcitParseStatus = EFI_NOT_READY;
 STATIC UINT8                             mEcitSha256[SHA256_DIGEST_SIZE];
 STATIC CONST EFI_CRYPTO_INDICATOR_TABLE  *mEcitTable;
 
-STATIC ECIT_CLAIM_RESULT  mEcitClaimResults[EcitClaimCount] = {
-  { "db-update-authorization:x509",                   EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "db-update-verification:rsa-sha256",              EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "db-update-verification:sha256",                  EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "db-update-verification:mldsa87",                 EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "db-update-verification:sha512",                  EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "image-authorization:tbs-v1-sha512",              EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "image-authorization:tbs-v2-sha512",              EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "image-verification:mldsa87",                     EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "image-verification:sha512",                      EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, FALSE },
-  { "image-verification-profile:sha512-with-mldsa87", EcitClaimUnknown, EcitObservationNotTested, EFI_NOT_READY, TRUE  }
-};
+STATIC ECIT_CLAIM_RESULT  mEcitClaimResults[EcitClaimCount];
 
 STATIC CONST ECIT_CLAIM_ID  mRsaUpdateClaims[] = {
   EcitDbUpdateAuthorizationX509,
@@ -130,62 +115,6 @@ BufferIsZero (
   }
 
   return TRUE;
-}
-
-STATIC
-BOOLEAN
-CsvContainsToken (
-  IN CONST UINT8  *Csv,
-  IN UINTN        CsvSize,
-  IN CONST CHAR8  *Token
-  )
-{
-  UINTN  End;
-  UINTN  Start;
-  UINTN  TokenSize;
-
-  TokenSize = AsciiStrLen (Token);
-  Start     = 0;
-  while ((Start < CsvSize) && (Csv[Start] != '\0')) {
-    End = Start;
-    while ((End < CsvSize) && (Csv[End] != '\0') && (Csv[End] != ',')) {
-      End++;
-    }
-
-    if (((End - Start) == TokenSize) && (CompareMem (&Csv[Start], Token, TokenSize) == 0)) {
-      return TRUE;
-    }
-
-    if ((End == CsvSize) || (Csv[End] == '\0')) {
-      break;
-    }
-
-    Start = End + 1;
-  }
-
-  return FALSE;
-}
-
-STATIC
-BOOLEAN
-GuidPayloadContains (
-  IN CONST ECIT_PAYLOAD_VIEW  *Payload,
-  IN CONST EFI_GUID           *Guid
-  )
-{
-  UINTN  Offset;
-
-  if ((Payload->Size == 0) || ((Payload->Size % sizeof (EFI_GUID)) != 0)) {
-    return FALSE;
-  }
-
-  for (Offset = 0; Offset < Payload->Size; Offset += sizeof (EFI_GUID)) {
-    if (CompareGuid ((CONST EFI_GUID *)&Payload->Data[Offset], Guid)) {
-      return TRUE;
-    }
-  }
-
-  return FALSE;
 }
 
 STATIC
@@ -325,26 +254,17 @@ ParseEcitClaims (
     return EFI_DEVICE_ERROR;
   }
 
-  mEcitClaimResults[EcitDbUpdateAuthorizationX509].Claim =
-    GuidPayloadContains (&Authorization, &gEfiCertX509Guid) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitDbUpdateVerificationRsaSha256].Claim =
-    CsvContainsToken (Verification.Data, Verification.Size, SHA256_WITH_RSA_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitDbUpdateVerificationSha256].Claim =
-    CsvContainsToken (Verification.Data, Verification.Size, SHA256_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitDbUpdateVerificationMldsa87].Claim =
-    CsvContainsToken (Verification.Data, Verification.Size, ML_DSA_87_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitDbUpdateVerificationSha512].Claim =
-    CsvContainsToken (Verification.Data, Verification.Size, SHA512_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitImageAuthorizationTbsV1Sha512].Claim =
-    GuidPayloadContains (&ImageAuthorization, &gEfiCertX509Sha512Guid) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitImageAuthorizationTbsV2Sha512].Claim =
-    GuidPayloadContains (&ImageAuthorization, &gEfiCertV2X509Sha512Guid) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitImageVerificationMldsa87].Claim =
-    CsvContainsToken (ImageVerification.Data, ImageVerification.Size, ML_DSA_87_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitImageVerificationSha512].Claim =
-    CsvContainsToken (ImageVerification.Data, ImageVerification.Size, SHA512_OID) ? EcitClaimAdvertised : EcitClaimAbsent;
-  mEcitClaimResults[EcitImageVerificationMldsa87Sha512Profile].Claim = EcitClaimUnknown;
-  mEcitTable                                                         = Table;
+  Status = PopulateEcitClaimStates (
+             Table,
+             mEcitClaimResults,
+             ARRAY_SIZE (mEcitClaimResults)
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Unable to populate ECIT claim states: %r\n", Status);
+    return Status;
+  }
+
+  mEcitTable = Table;
 
   UT_LOG_INFO ("ECIT claims parsed independently from operational tests\n");
   return EFI_SUCCESS;
@@ -358,14 +278,13 @@ RecordEcitObservation (
   IN EFI_STATUS              Status
   )
 {
-  if ((ClaimId >= EcitClaimCount) ||
-      (mEcitClaimResults[ClaimId].Observation == EcitObservationSuccess))
-  {
-    return;
-  }
-
-  mEcitClaimResults[ClaimId].Observation       = Observation;
-  mEcitClaimResults[ClaimId].ObservationStatus = Status;
+  RecordEcitClaimObservation (
+    mEcitClaimResults,
+    ARRAY_SIZE (mEcitClaimResults),
+    ClaimId,
+    Observation,
+    Status
+    );
 }
 
 STATIC
@@ -377,11 +296,14 @@ RecordEcitObservations (
   IN EFI_STATUS              Status
   )
 {
-  UINTN  Index;
-
-  for (Index = 0; Index < ClaimCount; Index++) {
-    RecordEcitObservation (ClaimIds[Index], Observation, Status);
-  }
+  RecordEcitClaimObservations (
+    mEcitClaimResults,
+    ARRAY_SIZE (mEcitClaimResults),
+    ClaimIds,
+    ClaimCount,
+    Observation,
+    Status
+    );
 }
 
 STATIC
@@ -507,15 +429,12 @@ EcitSuiteSetup (
   VOID
   )
 {
-  UINTN  Index;
-
   mEcitTable = NULL;
   ZeroMem (mEcitSha256, sizeof (mEcitSha256));
-  for (Index = 0; Index < EcitClaimCount; Index++) {
-    mEcitClaimResults[Index].Claim             = EcitClaimUnknown;
-    mEcitClaimResults[Index].Observation       = EcitObservationNotTested;
-    mEcitClaimResults[Index].ObservationStatus = EFI_NOT_READY;
-  }
+  InitializeEcitClaimResults (
+    mEcitClaimResults,
+    ARRAY_SIZE (mEcitClaimResults)
+    );
 
   mEcitParseStatus = ParseEcitClaims ();
 }
@@ -1383,24 +1302,17 @@ AuthenticatedVariableReplayTest (
   EnrollScenario.ExpectedAfterSize       = gSecureBootKeyAuditDbTbsHashV1Size;
   EnrollScenario.ExpectedAfterAttributes = SECURE_BOOT_KEY_ATTRIBUTES;
   EnrollScenario.ExpectMutation          = TRUE;
+  EnrollScenario.CoveredClaims           = mMldsaUpdateClaims;
+  EnrollScenario.CoveredClaimCount       = ARRAY_SIZE (mMldsaUpdateClaims);
 
-  Status = ExecuteAuthVariableScenario (&EnrollScenario);
+  Status = ExecuteAuthVariableScenario (
+             &EnrollScenario,
+             mEcitClaimResults,
+             ARRAY_SIZE (mEcitClaimResults)
+             );
   if (EFI_ERROR (Status)) {
-    RecordEcitObservations (
-      mMldsaUpdateClaims,
-      ARRAY_SIZE (mMldsaUpdateClaims),
-      EcitObservationFailure,
-      Status
-      );
     goto Exit;
   }
-
-  RecordEcitObservations (
-    mMldsaUpdateClaims,
-    ARRAY_SIZE (mMldsaUpdateClaims),
-    EcitObservationSuccess,
-    EFI_SUCCESS
-    );
 
   ZeroMem (&ReplayScenario, sizeof (ReplayScenario));
   ReplayScenario.ScenarioId               = "db-tbs-v1-replay-rejected";
@@ -1418,7 +1330,11 @@ AuthenticatedVariableReplayTest (
   ReplayScenario.ExpectedAfterAttributes  = SECURE_BOOT_KEY_ATTRIBUTES;
   ReplayScenario.ExpectMutation           = FALSE;
 
-  Status = ExecuteAuthVariableScenario (&ReplayScenario);
+  Status = ExecuteAuthVariableScenario (
+             &ReplayScenario,
+             mEcitClaimResults,
+             ARRAY_SIZE (mEcitClaimResults)
+             );
   if (EFI_ERROR (Status)) {
     goto Exit;
   }
@@ -1743,7 +1659,9 @@ RunMldsaImageTbsHashTest (
   IN CONST UINT8    *EnrollDb,
   IN UINTN          EnrollDbSize,
   IN CONST UINT8    *ExpectedDb,
-  IN UINTN          ExpectedDbSize
+  IN UINTN          ExpectedDbSize,
+  IN CONST UINT8    *DeleteDb,
+  IN UINTN          DeleteDbSize
   )
 {
   EFI_HANDLE        LoadedImage;
@@ -1795,6 +1713,7 @@ RunMldsaImageTbsHashTest (
              );
   if (EFI_ERROR (Status)) {
     UT_LOG_ERROR ("ML-DSA-87 PK could not enroll the %a TBS hash in db: %r\n", Version, Status);
+    RecordEcitObservation (ImageAuthorizationClaim, EcitObservationFailure, Status);
     RecordEcitObservations (
       mMldsaUpdateClaims,
       ARRAY_SIZE (mMldsaUpdateClaims),
@@ -1874,8 +1793,8 @@ RunMldsaImageTbsHashTest (
   UT_LOG_INFO ("The authorized ML-DSA-87 image executed successfully with StartImage\n");
 
   Status = ApplyDbUpdate (
-             gSecureBootKeyAuditDeleteDbByMldsa,
-             gSecureBootKeyAuditDeleteDbByMldsaSize,
+             DeleteDb,
+             DeleteDbSize,
              NULL,
              0
              );
@@ -1928,7 +1847,9 @@ MldsaImageTbsHashV1Test (
            gSecureBootKeyAuditEnrollDbTbsHashV1,
            gSecureBootKeyAuditEnrollDbTbsHashV1Size,
            gSecureBootKeyAuditDbTbsHashV1,
-           gSecureBootKeyAuditDbTbsHashV1Size
+           gSecureBootKeyAuditDbTbsHashV1Size,
+           gSecureBootKeyAuditDeleteDbV1ByMldsa,
+           gSecureBootKeyAuditDeleteDbV1ByMldsaSize
            );
 }
 
@@ -1945,7 +1866,9 @@ MldsaImageTbsHashV2Test (
            gSecureBootKeyAuditEnrollDbTbsHashV2,
            gSecureBootKeyAuditEnrollDbTbsHashV2Size,
            gSecureBootKeyAuditDbTbsHashV2,
-           gSecureBootKeyAuditDbTbsHashV2Size
+           gSecureBootKeyAuditDbTbsHashV2Size,
+           gSecureBootKeyAuditDeleteDbV2ByMldsa,
+           gSecureBootKeyAuditDeleteDbV2ByMldsaSize
            );
 }
 

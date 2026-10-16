@@ -10,26 +10,32 @@
 
 #include <Uefi.h>
 
+#include "AuditTypes.h"
+
 typedef struct {
-  CONST CHAR8       *ScenarioId;
-  CONST CHAR16      *VariableName;
-  CONST EFI_GUID    *VendorGuid;
-  UINT32            Attributes;
-  CONST UINT8       *AuthenticatedUpdate;
-  UINTN             AuthenticatedUpdateSize;
-  EFI_STATUS        ExpectedStatus;
-  CONST UINT8       *ExpectedBefore;
-  UINTN             ExpectedBeforeSize;
-  UINT32            ExpectedBeforeAttributes;
-  CONST UINT8       *ExpectedAfter;
-  UINTN             ExpectedAfterSize;
-  UINT32            ExpectedAfterAttributes;
-  BOOLEAN           ExpectMutation;
+  CONST CHAR8            *ScenarioId;
+  CONST CHAR16           *VariableName;
+  CONST EFI_GUID         *VendorGuid;
+  UINT32                 Attributes;
+  CONST UINT8            *AuthenticatedUpdate;
+  UINTN                  AuthenticatedUpdateSize;
+  EFI_STATUS             ExpectedStatus;
+  CONST UINT8            *ExpectedBefore;
+  UINTN                  ExpectedBeforeSize;
+  UINT32                 ExpectedBeforeAttributes;
+  CONST UINT8            *ExpectedAfter;
+  UINTN                  ExpectedAfterSize;
+  UINT32                 ExpectedAfterAttributes;
+  BOOLEAN                ExpectMutation;
+  CONST ECIT_CLAIM_ID    *CoveredClaims;
+  UINTN                  CoveredClaimCount;
 } AUDIT_AUTH_VARIABLE_SCENARIO;
 
 EFI_STATUS
 ExecuteAuthVariableScenario (
-  IN CONST AUDIT_AUTH_VARIABLE_SCENARIO  *Scenario
+  IN CONST AUDIT_AUTH_VARIABLE_SCENARIO  *Scenario,
+  IN OUT ECIT_CLAIM_RESULT               *ClaimResults,
+  IN UINTN                               ClaimResultCount
   );
 
 #endif

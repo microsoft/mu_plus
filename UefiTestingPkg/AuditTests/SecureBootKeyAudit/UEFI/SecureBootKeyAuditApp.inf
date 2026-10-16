@@ -19,6 +19,8 @@
   AuditScenario.c
   AuditScenario.h
   AuditTypes.h
+  EcitClaimRegistry.c
+  EcitClaimRegistry.h
   EcitCoverageReport.c
   EcitCoverageReport.h
   SecureBootState.c

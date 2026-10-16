@@ -15,6 +15,7 @@
 #include <Library/UnitTestLib.h>
 
 #include "AuditTypes.h"
+#include "EcitClaimRegistry.h"
 #include "EcitCoverageReport.h"
 
 #define ECIT_AUDIT_TABLE_RULE  "------------------------------------------------------------------------------------------------------------"
@@ -179,70 +180,6 @@ FindOidName (
 }
 
 STATIC
-ECIT_CLAIM_ID
-FindOidClaim (
-  IN CONST EFI_GUID  *Feature,
-  IN CONST CHAR8     *Oid
-  )
-{
-  if (CompareGuid (Feature, &gEfiEcitFeatureSbDatabaseUpdateVerificationGuid)) {
-    if (AsciiStrCmp (Oid, "1.2.840.113549.1.1.11") == 0) {
-      return EcitDbUpdateVerificationRsaSha256;
-    }
-
-    if (AsciiStrCmp (Oid, "2.16.840.1.101.3.4.2.1") == 0) {
-      return EcitDbUpdateVerificationSha256;
-    }
-
-    if (AsciiStrCmp (Oid, "2.16.840.1.101.3.4.3.19") == 0) {
-      return EcitDbUpdateVerificationMldsa87;
-    }
-
-    if (AsciiStrCmp (Oid, "2.16.840.1.101.3.4.2.3") == 0) {
-      return EcitDbUpdateVerificationSha512;
-    }
-  }
-
-  if (CompareGuid (Feature, &gEfiEcitFeatureSbImageVerificationGuid)) {
-    if (AsciiStrCmp (Oid, "2.16.840.1.101.3.4.3.19") == 0) {
-      return EcitImageVerificationMldsa87;
-    }
-
-    if (AsciiStrCmp (Oid, "2.16.840.1.101.3.4.2.3") == 0) {
-      return EcitImageVerificationSha512;
-    }
-  }
-
-  return EcitClaimCount;
-}
-
-STATIC
-ECIT_CLAIM_ID
-FindSignatureListClaim (
-  IN CONST EFI_GUID  *Feature,
-  IN CONST EFI_GUID  *SignatureListType
-  )
-{
-  if (CompareGuid (Feature, &gEfiEcitFeatureSbDatabaseUpdateAuthorizationGuid) &&
-      CompareGuid (SignatureListType, &gEfiCertX509Guid))
-  {
-    return EcitDbUpdateAuthorizationX509;
-  }
-
-  if (CompareGuid (Feature, &gEfiEcitFeatureSbImageAuthorizationGuid)) {
-    if (CompareGuid (SignatureListType, &gEfiCertX509Sha512Guid)) {
-      return EcitImageAuthorizationTbsV1Sha512;
-    }
-
-    if (CompareGuid (SignatureListType, &gEfiCertV2X509Sha512Guid)) {
-      return EcitImageAuthorizationTbsV2Sha512;
-    }
-  }
-
-  return EcitClaimCount;
-}
-
-STATIC
 CONST CHAR8 *
 ObservationName (
   IN ECIT_OBSERVATION_STATE  Observation
@@ -366,7 +303,7 @@ LogOidClaims (
     } else {
       CopyMem (Oid, &Payload[Start], TokenSize);
       Oid[TokenSize] = '\0';
-      ClaimId        = FindOidClaim (Feature, Oid);
+      ClaimId        = FindEcitOidClaim (Feature, Oid);
       if (ClaimId < EcitClaimCount) {
         Observation = ClaimResults[ClaimId].Observation;
         Coverage    = CoverageRows[ClaimId];
@@ -428,7 +365,7 @@ LogSignatureListClaims (
 
   for (Index = 0; Index < PayloadSize; Index += sizeof (EFI_GUID)) {
     Guid    = (CONST EFI_GUID *)&Payload[Index];
-    ClaimId = FindSignatureListClaim (Feature, Guid);
+    ClaimId = FindEcitSignatureListClaim (Feature, Guid);
     if (ClaimId < EcitClaimCount) {
       Observation = ClaimResults[ClaimId].Observation;
       Coverage    = CoverageRows[ClaimId];

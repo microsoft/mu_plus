@@ -543,7 +543,13 @@ def verify_authenticated_updates(
             "DbV2",
             "PkMldsa",
         ),
-        "gSecureBootKeyAuditDeleteDbByMldsa": (
+        "gSecureBootKeyAuditDeleteDbV1ByMldsa": (
+            "db",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+            None,
+            "PkMldsa",
+        ),
+        "gSecureBootKeyAuditDeleteDbV2ByMldsa": (
             "db",
             EFI_IMAGE_SECURITY_DATABASE_GUID,
             None,

@@ -214,8 +214,14 @@ ARTIFACT_DESCRIPTIONS = {
         "Authorization: RFC 9882 CMS signed by the active ML-DSA-87 PK.",
         "Update signature: pure ML-DSA-87 with SHA-512.",
     ),
-    "gSecureBootKeyAuditDeleteDbByMldsa": (
-        "Authenticated deletion of the test db.",
+    "gSecureBootKeyAuditDeleteDbV1ByMldsa": (
+        "Authenticated deletion of the V1 test db.",
+        "Structure: EFI_VARIABLE_AUTHENTICATION_2 with an empty payload.",
+        "Authorization: RFC 9882 CMS signed by the active ML-DSA-87 PK.",
+        "Update signature: pure ML-DSA-87 with SHA-512.",
+    ),
+    "gSecureBootKeyAuditDeleteDbV2ByMldsa": (
+        "Authenticated deletion of the V2 test db.",
         "Structure: EFI_VARIABLE_AUTHENTICATION_2 with an empty payload.",
         "Authorization: RFC 9882 CMS signed by the active ML-DSA-87 PK.",
         "Update signature: pure ML-DSA-87 with SHA-512.",
@@ -813,17 +819,25 @@ def generate(
             "db",
             EFI_IMAGE_SECURITY_DATABASE_GUID,
         ),
-        "gSecureBootKeyAuditEnrollDbTbsHashV2": mldsa_authenticated_update(
-            db_tbs_hash_v2,
+        "gSecureBootKeyAuditDeleteDbV1ByMldsa": mldsa_authenticated_update(
+            b"",
             BASE_TIME + datetime.timedelta(seconds=31),
             certificate_mldsa,
             key_mldsa,
             "db",
             EFI_IMAGE_SECURITY_DATABASE_GUID,
         ),
-        "gSecureBootKeyAuditDeleteDbByMldsa": mldsa_authenticated_update(
-            b"",
+        "gSecureBootKeyAuditEnrollDbTbsHashV2": mldsa_authenticated_update(
+            db_tbs_hash_v2,
             BASE_TIME + datetime.timedelta(seconds=32),
+            certificate_mldsa,
+            key_mldsa,
+            "db",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+        ),
+        "gSecureBootKeyAuditDeleteDbV2ByMldsa": mldsa_authenticated_update(
+            b"",
+            BASE_TIME + datetime.timedelta(seconds=33),
             certificate_mldsa,
             key_mldsa,
             "db",
@@ -848,7 +862,8 @@ def generate(
         "gSecureBootKeyAuditRecoveryDeleteByMldsa": b"",
         "gSecureBootKeyAuditEnrollDbTbsHashV1": db_tbs_hash_v1,
         "gSecureBootKeyAuditEnrollDbTbsHashV2": db_tbs_hash_v2,
-        "gSecureBootKeyAuditDeleteDbByMldsa": b"",
+        "gSecureBootKeyAuditDeleteDbV1ByMldsa": b"",
+        "gSecureBootKeyAuditDeleteDbV2ByMldsa": b"",
     }
     for name, expected_payload in expected_payloads.items():
         if extract_payload(artifacts[name]) != expected_payload:
