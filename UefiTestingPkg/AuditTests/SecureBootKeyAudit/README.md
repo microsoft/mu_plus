@@ -119,6 +119,124 @@ documented. Examples include a platform firmware recovery flow, an
 out-of-band management recovery mechanism, or direct flash restoration. Do
 not run the mutating scenarios on an end-user or production device.
 
+## Run from USB on a physical machine
+
+`SecureBootKeyAuditApp` is an X64 UEFI application. The QemuQ35 build can be
+copied to a FAT32 USB drive and launched from an X64 UEFI Shell, but the
+physical run does not have QEMU's host-authoritative variable-store snapshot
+and restoration. The application performs recognized-state cleanup; it cannot
+guarantee recovery if firmware accepts a mutation and later rejects its
+matching cleanup update.
+
+Do not run this procedure until every physical-device qualification
+requirement above is satisfied. In particular:
+
+- use a dedicated lab device, not a production or end-user system;
+- export or otherwise back up PK, KEK, `db`, and `dbx`;
+- account for BitLocker, device-encryption recovery, measured boot, and
+  attestation effects;
+- connect external power;
+- exercise the independent firmware or flash recovery path before the audit;
+  and
+- configure the device with `SetupMode=1`, `SecureBoot=0`, PK absent, and
+  `db` absent.
+
+The audit refuses to recover or overwrite an unknown PK/`db` tuple, but that
+guard is not a substitute for an independent recovery path.
+
+### Build the application
+
+From the `mu_tiano_platforms` root:
+
+```bash
+stuart_setup \
+  -c Platforms/QemuQ35Pkg/PlatformBuild.py \
+  TOOL_CHAIN_TAG=GCC5
+
+stuart_build \
+  -c Platforms/QemuQ35Pkg/PlatformBuild.py \
+  TOOL_CHAIN_TAG=GCC5
+```
+
+The resulting application is:
+
+```text
+Build/QemuQ35PkgX64/DEBUG_GCC5/X64/SecureBootKeyAuditApp.efi
+```
+
+The public certificates, authenticated updates, signed test image, fixture
+identity, and manifest hash are compiled into the application. No private key
+material is present, and no separate fixture files are required on the target.
+The QemuQ35 output is X64-only; an AARCH64 target requires a corresponding
+AARCH64 platform build.
+
+### Prepare the USB drive
+
+Format the drive as FAT32 and use this layout:
+
+```text
+USB:\
+  EFI\
+    BOOT\
+      BOOTX64.EFI
+  SecureBootKeyAuditApp.efi
+  startup.nsh
+```
+
+`BOOTX64.EFI` must be a trusted X64 UEFI Shell compatible with the target.
+The application uses `ShellLib` for its journal, so launching it from a shell
+is preferred over renaming the audit application itself to `BOOTX64.EFI`.
+
+Copy the application from Windows PowerShell, replacing `E:` with the USB
+drive:
+
+```powershell
+$UsbDrive = "E:"
+$AuditApp = "\\wsl.localhost\Ubuntu-24.04\home\doug\git\pqc" +
+            "\mu_tiano_platforms\Build\QemuQ35PkgX64\DEBUG_GCC5" +
+            "\X64\SecureBootKeyAuditApp.efi"
+
+Copy-Item $AuditApp "$UsbDrive\SecureBootKeyAuditApp.efi"
+```
+
+Create `startup.nsh` in the USB root:
+
+```nsh
+@echo -off
+echo Starting the ECIT Secure Boot audit...
+SecureBootKeyAuditApp.efi
+echo Audit application returned.
+```
+
+Keeping the script and application together avoids depending on whether the
+shell maps the USB drive as `fs0:`, `fs1:`, or another alias.
+
+### Execute and resume
+
+1. Confirm the device identity, external power, backed-up Secure Boot
+   configuration, and tested independent recovery path.
+2. Enter firmware setup and place the device in Setup Mode with PK and `db`
+   absent.
+3. Put the USB UEFI Shell first in the boot order.
+4. Boot the USB and allow `startup.nsh` to launch the audit.
+5. The persistent-journal scenario requests one cold reboot.
+6. Ensure the same USB boots again. The shell must rerun `startup.nsh` from
+   the same removable volume so the framework and journal resume on boot 2.
+7. After the application returns, archive the console or serial log and
+   `SecureBootKeyAuditJournal.bin`.
+8. Restore the machine's known-good Secure Boot configuration through the
+   independently validated recovery path, then verify its PK, KEK, `db`,
+   `dbx`, Secure Boot mode, disk-unlock behavior, and normal boot.
+
+The QEMU host runner automatically harvests JUnit results and restores a
+copied variable store. Those protections are not present on a physical
+machine. Capture a serial console when possible; otherwise preserve all
+operator-visible output before restoring the device.
+
+If the audit stops after changing Secure Boot state, do not repeatedly
+relaunch it or improvise cleanup. Preserve the USB journal and logs, record
+the observed PK/`db` state, and use the independent recovery mechanism.
+
 ## Persistent reboot journal
 
 `SecureBootKeyAuditJournal.bin` is written to the current test volume before
