@@ -52,6 +52,12 @@ VerifyDb (
   );
 
 EFI_STATUS
+VerifyDbx (
+  IN CONST UINT8  *Expected,
+  IN UINTN        ExpectedSize
+  );
+
+EFI_STATUS
 ApplyPkUpdate (
   IN CONST UINT8  *AuthenticatedUpdate,
   IN UINTN        AuthenticatedUpdateSize,
@@ -65,6 +71,14 @@ ApplyDbUpdate (
   IN UINTN        AuthenticatedUpdateSize,
   IN CONST UINT8  *ExpectedDb,
   IN UINTN        ExpectedDbSize
+  );
+
+EFI_STATUS
+ApplyDbxUpdate (
+  IN CONST UINT8  *AuthenticatedUpdate,
+  IN UINTN        AuthenticatedUpdateSize,
+  IN CONST UINT8  *ExpectedDbx,
+  IN UINTN        ExpectedDbxSize
   );
 
 CONST CHAR8 *

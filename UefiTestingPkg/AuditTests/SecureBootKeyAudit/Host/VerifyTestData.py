@@ -55,8 +55,8 @@ SPC_PE_IMAGE_DATA = bytes.fromhex(
 )
 
 ARRAY_PATTERN = re.compile(
-    r"CONST UINT8\s+(?P<name>\w+)\[\]\s*=\s*\{(?P<body>.*?)\};",
-    re.DOTALL,
+    r"^CONST UINT8\s+(?P<name>\w+)\[\]\s*=\s*\{(?P<body>.*?)^\};",
+    re.DOTALL | re.MULTILINE,
 )
 SIZE_PATTERN = re.compile(r"CONST UINTN\s+(?P<name>\w+)Size\s*=\s*(?P<size>\d+);")
 
@@ -113,7 +113,7 @@ def verify_manifest_artifacts(
     manifest_data: bytes,
 ) -> None:
     """Verify every manifest artifact and embedded fixture identity."""
-    require(manifest["version"] == 2, "unsupported fixture manifest version")
+    require(manifest["version"] == 3, "unsupported fixture manifest version")
     require(manifest["private_keys_emitted"] is False, "manifest emits private keys")
     require(
         manifest["roles"]["mldsa_pk_update_authority"]["public_key_sha256"]
@@ -131,6 +131,11 @@ def verify_manifest_artifacts(
         manifest["roles"]["mldsa_image_signer"]["certificate_location"]
         == "gSecureBootKeyAuditHelloMldsa:authenticode",
         "manifest identifies the wrong image-signer location",
+    )
+    require(
+        manifest["roles"]["rsa_image_signer"]["certificate_location"]
+        == "gSecureBootKeyAuditHelloRsaMldsa:authenticode[0]",
+        "manifest identifies the wrong RSA image-signer location",
     )
 
     for name, record in manifest["artifacts"].items():
@@ -162,16 +167,35 @@ def verify_manifest_artifacts(
     )
 
 
-def parse_esl(data: bytes, expected_type: uuid.UUID) -> tuple[int, bytes]:
-    """Parse one single-entry EFI_SIGNATURE_LIST."""
+def parse_esl_entries(
+    data: bytes,
+    expected_type: uuid.UUID,
+) -> tuple[int, list[bytes]]:
+    """Parse all entries from one EFI_SIGNATURE_LIST."""
     require(len(data) >= 28, "EFI_SIGNATURE_LIST is truncated")
     signature_type = uuid.UUID(bytes_le=data[:16])
     list_size, header_size, signature_size = struct.unpack_from("<III", data, 16)
     require(signature_type == expected_type, "EFI_SIGNATURE_LIST type is wrong")
     require(list_size == len(data), "EFI_SIGNATURE_LIST size is wrong")
     require(header_size == 0, "EFI_SIGNATURE_LIST header is not empty")
-    require(signature_size == len(data) - 28, "EFI_SIGNATURE_DATA size is wrong")
-    return signature_size, data[28:]
+    require(signature_size > 0, "EFI_SIGNATURE_DATA size is zero")
+    require(
+        (len(data) - 28) % signature_size == 0,
+        "EFI_SIGNATURE_LIST entries do not match signature size",
+    )
+    entries = [
+        data[offset : offset + signature_size]
+        for offset in range(28, len(data), signature_size)
+    ]
+    require(entries, "EFI_SIGNATURE_LIST has no entries")
+    return signature_size, entries
+
+
+def parse_esl(data: bytes, expected_type: uuid.UUID) -> tuple[int, bytes]:
+    """Parse one single-entry EFI_SIGNATURE_LIST."""
+    signature_size, entries = parse_esl_entries(data, expected_type)
+    require(len(entries) == 1, "EFI_SIGNATURE_LIST does not contain one entry")
+    return signature_size, entries[0]
 
 
 def verify_self_signed_certificate(certificate: x509.Certificate) -> None:
@@ -555,6 +579,42 @@ def verify_authenticated_updates(
             None,
             "PkMldsa",
         ),
+        "gSecureBootKeyAuditEnrollDbMultiSigner": (
+            "db",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+            "DbMultiSigner",
+            "PkMldsa",
+        ),
+        "gSecureBootKeyAuditEnrollDbxRsaSigner": (
+            "dbx",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+            "DbxRsaSigner",
+            "PkMldsa",
+        ),
+        "gSecureBootKeyAuditEnrollDbxMldsaSigner": (
+            "dbx",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+            "DbxMldsaSigner",
+            "PkMldsa",
+        ),
+        "gSecureBootKeyAuditEnrollDbxBothSigners": (
+            "dbx",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+            "DbxBothSigners",
+            "PkMldsa",
+        ),
+        "gSecureBootKeyAuditDeleteDbxByMldsa": (
+            "dbx",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+            None,
+            "PkMldsa",
+        ),
+        "gSecureBootKeyAuditDeleteDbMultiSignerByMldsa": (
+            "db",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+            None,
+            "PkMldsa",
+        ),
     }
     payloads = {
         "PkA": arrays["gSecureBootKeyAuditPkA"],
@@ -562,6 +622,10 @@ def verify_authenticated_updates(
         "PkMldsa": arrays["gSecureBootKeyAuditPkMldsa"],
         "DbV1": arrays["gSecureBootKeyAuditDbTbsHashV1"],
         "DbV2": arrays["gSecureBootKeyAuditDbTbsHashV2"],
+        "DbMultiSigner": arrays["gSecureBootKeyAuditDbMultiSigner"],
+        "DbxRsaSigner": arrays["gSecureBootKeyAuditDbxRsaSigner"],
+        "DbxMldsaSigner": arrays["gSecureBootKeyAuditDbxMldsaSigner"],
+        "DbxBothSigners": arrays["gSecureBootKeyAuditDbxBothSigners"],
     }
 
     for artifact_name, (variable_name, variable_guid, payload_name, signer_name) in (
@@ -660,8 +724,8 @@ def pe_layout(image: bytes) -> tuple[int, int, int, int]:
     )
 
 
-def authenticode_sha512(image: bytes) -> bytes:
-    """Calculate the Authenticode SHA-512 digest of a PE image."""
+def authenticode_digest(image: bytes, hash_constructor) -> bytes:
+    """Calculate an Authenticode digest of a PE image."""
     (
         checksum_offset,
         security_directory,
@@ -674,7 +738,7 @@ def authenticode_sha512(image: bytes) -> bytes:
             certificate_offset + certificate_size == len(image),
             "certificate table does not end at end of image",
         )
-    digest = hashlib.sha512()
+    digest = hash_constructor()
     digest.update(image[:checksum_offset])
     digest.update(image[checksum_offset + 4 : security_directory])
     digest.update(
@@ -684,6 +748,11 @@ def authenticode_sha512(image: bytes) -> bytes:
         ]
     )
     return digest.digest()
+
+
+def authenticode_sha512(image: bytes) -> bytes:
+    """Calculate the Authenticode SHA-512 digest of a PE image."""
+    return authenticode_digest(image, hashlib.sha512)
 
 
 def verify_tbs_esl(
@@ -710,6 +779,16 @@ def verify_tbs_esl(
         )
         require(signature_size == 64, "V2 TBS-hash signature size is wrong")
         require(signature_data == tbs_digest, "V2 TBS hash is wrong")
+
+
+def verify_v2_tbs_esl_entries(data: bytes, expected_digests: list[bytes]) -> None:
+    """Verify all hashes in one V2 SHA-512 TBSCertificate-hash ESL."""
+    signature_size, entries = parse_esl_entries(
+        data,
+        EFI_CERT_V2_X509_SHA512_GUID,
+    )
+    require(signature_size == 64, "V2 TBS-hash signature size is wrong")
+    require(entries == expected_digests, "V2 TBS-hash entries are wrong")
 
 
 def verify_authenticode_image(
@@ -854,6 +933,234 @@ def verify_authenticode_image(
     return certificate
 
 
+def win_certificate_contents(image: bytes) -> list[bytes]:
+    """Extract and validate every independent WIN_CERTIFICATE entry."""
+    _checksum, _security, certificate_offset, certificate_size = pe_layout(image)
+    require(certificate_offset % 8 == 0, "certificate table is not aligned")
+    require(
+        certificate_offset + certificate_size == len(image),
+        "certificate table bounds are wrong",
+    )
+
+    contents = []
+    offset = certificate_offset
+    end = certificate_offset + certificate_size
+    while offset < end:
+        require(end - offset >= 8, "WIN_CERTIFICATE header is truncated")
+        length, revision, certificate_type = struct.unpack_from(
+            "<IHH",
+            image,
+            offset,
+        )
+        require(8 <= length <= end - offset, "WIN_CERTIFICATE length is wrong")
+        require(revision == 0x0200, "WIN_CERTIFICATE revision is wrong")
+        require(
+            certificate_type == 0x0002,
+            "WIN_CERTIFICATE is not PKCS signed data",
+        )
+        padded_length = (length + 7) & ~7
+        require(
+            padded_length <= end - offset,
+            "WIN_CERTIFICATE padding exceeds table",
+        )
+        require(
+            image[offset + length : offset + padded_length]
+            == bytes(padded_length - length),
+            "WIN_CERTIFICATE padding is nonzero",
+        )
+        contents.append(image[offset + 8 : offset + length])
+        offset += padded_length
+
+    require(contents, "certificate table has no WIN_CERTIFICATE entries")
+    return contents
+
+
+def verify_authenticode_entry(
+    image: bytes,
+    content_info_der: bytes,
+    expected_digest_oid: str,
+    expected_signature_oid: str,
+) -> x509.Certificate:
+    """Independently verify one Authenticode WIN_CERTIFICATE entry."""
+    content_info = decode_exact(content_info_der, rfc2315.ContentInfo())
+    require(
+        str(content_info["contentType"]) == CMS_SIGNED_DATA_OID,
+        "Authenticode ContentInfo is not SignedData",
+    )
+    signed_data = decode_exact(
+        bytes(content_info["content"]),
+        rfc2315.SignedData(),
+    )
+    require(len(signed_data["signerInfos"]) == 1, "Authenticode signer count is wrong")
+    require(
+        str(signed_data["contentInfo"]["contentType"]) == SPC_INDIRECT_DATA_OID,
+        "Authenticode content type is not SpcIndirectDataContent",
+    )
+    signer = signed_data["signerInfos"][0]
+    require(
+        str(signer["digestAlgorithm"]["algorithm"]) == expected_digest_oid,
+        "Authenticode digest algorithm is wrong",
+    )
+    require(
+        str(signer["digestEncryptionAlgorithm"]["algorithm"])
+        == expected_signature_oid,
+        "Authenticode signature algorithm is wrong",
+    )
+
+    if expected_digest_oid == SHA256_OID:
+        hash_constructor = hashlib.sha256
+        digest_algorithm = hashes.SHA256()
+        algorithm_identifier = bytes.fromhex(
+            "300d06096086480165030402010500"
+        )
+    elif expected_digest_oid == SHA512_OID:
+        hash_constructor = hashlib.sha512
+        digest_algorithm = None
+        algorithm_identifier = bytes.fromhex(
+            "300d06096086480165030402030500"
+        )
+    else:
+        raise VerificationError("unsupported Authenticode digest algorithm")
+
+    image_digest = authenticode_digest(image, hash_constructor)
+    spc_indirect_data = bytes(signed_data["contentInfo"]["content"])
+    expected_spc = der_sequence(
+        SPC_PE_IMAGE_DATA
+        + der_sequence(
+            algorithm_identifier
+            + b"\x04"
+            + bytes([len(image_digest)])
+            + image_digest
+        )
+    )
+    require(
+        spc_indirect_data == expected_spc,
+        "SpcIndirectDataContent does not contain the image digest",
+    )
+
+    certificates = pkcs7.load_der_pkcs7_certificates(content_info_der)
+    require(len(certificates) == 1, "Authenticode does not contain one certificate")
+    certificate = certificates[0]
+    verify_self_signed_certificate(certificate)
+    require(
+        int(signer["issuerAndSerialNumber"]["serialNumber"])
+        == certificate.serial_number,
+        "Authenticode signer serial number is wrong",
+    )
+    require(
+        der_encode(signer["issuerAndSerialNumber"]["issuer"])
+        == certificate.issuer.public_bytes(),
+        "Authenticode signer issuer is wrong",
+    )
+
+    attributes = rfc2315.Attributes()
+    attribute_values = {}
+    for index, attribute in enumerate(signer["authenticatedAttributes"]):
+        attributes[index] = attribute
+        attribute_values[str(attribute["type"])] = bytes(attribute["values"][0])
+    require(
+        set(attribute_values)
+        == {CMS_CONTENT_TYPE_ATTRIBUTE_OID, CMS_MESSAGE_DIGEST_ATTRIBUTE_OID},
+        "Authenticode signed attributes are incomplete",
+    )
+    content_type = decode_exact(
+        attribute_values[CMS_CONTENT_TYPE_ATTRIBUTE_OID],
+        univ.ObjectIdentifier(),
+    )
+    require(
+        str(content_type) == SPC_INDIRECT_DATA_OID,
+        "Authenticode contentType attribute is wrong",
+    )
+    message_digest = decode_exact(
+        attribute_values[CMS_MESSAGE_DIGEST_ATTRIBUTE_OID],
+        univ.OctetString(),
+    )
+    require(
+        bytes(message_digest)
+        == hash_constructor(sequence_contents(spc_indirect_data)).digest(),
+        "Authenticode messageDigest attribute is wrong",
+    )
+
+    public_key = certificate.public_key()
+    if expected_signature_oid == SHA256_WITH_RSA_OID:
+        require(
+            isinstance(public_key, rsa.RSAPublicKey),
+            "Authenticode RSA signer does not use an RSA key",
+        )
+        public_key.verify(
+            bytes(signer["encryptedDigest"]),
+            der_encode(attributes),
+            padding.PKCS1v15(),
+            digest_algorithm,
+        )
+    elif expected_signature_oid == ML_DSA_87_OID:
+        require(
+            isinstance(public_key, mldsa.MLDSA87PublicKey),
+            "Authenticode ML-DSA signer does not use an ML-DSA-87 key",
+        )
+        public_key.verify(
+            bytes(signer["encryptedDigest"]),
+            der_encode(attributes),
+        )
+    else:
+        raise VerificationError("unsupported Authenticode signature algorithm")
+
+    return certificate
+
+
+def verify_multisigned_images(
+    arrays: dict[str, bytes],
+    manifest: dict[str, object],
+) -> tuple[x509.Certificate, x509.Certificate]:
+    """Verify both multi-signature orderings and their independent entries."""
+    rsa_first = win_certificate_contents(
+        arrays["gSecureBootKeyAuditHelloRsaMldsa"]
+    )
+    mldsa_first = win_certificate_contents(
+        arrays["gSecureBootKeyAuditHelloMldsaRsa"]
+    )
+    require(len(rsa_first) == 2, "RSA-first image does not have two signatures")
+    require(len(mldsa_first) == 2, "ML-DSA-first image does not have two signatures")
+    require(
+        rsa_first == list(reversed(mldsa_first)),
+        "multi-signature images do not contain reversed signature order",
+    )
+
+    rsa_certificate = verify_authenticode_entry(
+        arrays["gSecureBootKeyAuditHelloRsaMldsa"],
+        rsa_first[0],
+        SHA256_OID,
+        SHA256_WITH_RSA_OID,
+    )
+    mldsa_certificate = verify_authenticode_entry(
+        arrays["gSecureBootKeyAuditHelloRsaMldsa"],
+        rsa_first[1],
+        SHA512_OID,
+        ML_DSA_87_OID,
+    )
+    verify_authenticode_entry(
+        arrays["gSecureBootKeyAuditHelloMldsaRsa"],
+        mldsa_first[0],
+        SHA512_OID,
+        ML_DSA_87_OID,
+    )
+    verify_authenticode_entry(
+        arrays["gSecureBootKeyAuditHelloMldsaRsa"],
+        mldsa_first[1],
+        SHA256_OID,
+        SHA256_WITH_RSA_OID,
+    )
+    require(
+        authenticode_digest(
+            arrays["gSecureBootKeyAuditHelloRsaMldsa"],
+            hashlib.sha256,
+        ).hex()
+        == manifest["image_authenticode_sha256"],
+        "multi-signature SHA-256 digest does not match manifest",
+    )
+    return rsa_certificate, mldsa_certificate
+
+
 def verify_fixture(
     arrays: dict[str, bytes],
     manifest: dict[str, object],
@@ -889,9 +1196,30 @@ def verify_fixture(
         != certificate_identity(image_certificate)["public_key_sha256"],
         "ML-DSA PK authority and image signer reuse the same key",
     )
+    rsa_image_certificate, multisign_mldsa_certificate = (
+        verify_multisigned_images(arrays, manifest)
+    )
+    verify_role(
+        rsa_image_certificate,
+        manifest["roles"]["rsa_image_signer"],
+        "RSA image signer",
+    )
+    verify_role(
+        multisign_mldsa_certificate,
+        manifest["roles"]["mldsa_image_signer"],
+        "multi-signature ML-DSA image signer",
+    )
+    require(
+        certificate_identity(multisign_mldsa_certificate)
+        == certificate_identity(image_certificate),
+        "single- and multi-signature images use different ML-DSA signers",
+    )
 
     tbs_digest = hashlib.sha512(
         image_certificate.tbs_certificate_bytes
+    ).digest()
+    rsa_tbs_digest = hashlib.sha512(
+        rsa_image_certificate.tbs_certificate_bytes
     ).digest()
     require(
         tbs_digest.hex()
@@ -910,12 +1238,28 @@ def verify_fixture(
         owner,
         tbs_digest,
     )
+    verify_v2_tbs_esl_entries(
+        arrays["gSecureBootKeyAuditDbMultiSigner"],
+        [rsa_tbs_digest, tbs_digest],
+    )
+    verify_v2_tbs_esl_entries(
+        arrays["gSecureBootKeyAuditDbxRsaSigner"],
+        [rsa_tbs_digest],
+    )
+    verify_v2_tbs_esl_entries(
+        arrays["gSecureBootKeyAuditDbxMldsaSigner"],
+        [tbs_digest],
+    )
+    verify_v2_tbs_esl_entries(
+        arrays["gSecureBootKeyAuditDbxBothSigners"],
+        [rsa_tbs_digest, tbs_digest],
+    )
     verify_authenticated_updates(arrays, certificates)
 
     return {
         "fixture_id": manifest["fixture_id"],
         "artifacts_verified": len(manifest["artifacts"]),
-        "authenticated_updates_verified": 16,
+        "authenticated_updates_verified": 22,
         "pk_authority_certificate_sha256": certificate_identity(
             certificates["PkMldsa"]
         )["certificate_sha256"],
@@ -923,7 +1267,10 @@ def verify_fixture(
             image_certificate
         )["certificate_sha256"],
         "image_authenticode_sha512": manifest["image_authenticode_sha512"],
+        "image_authenticode_sha256": manifest["image_authenticode_sha256"],
         "image_signer_tbs_sha512": tbs_digest.hex(),
+        "rsa_image_signer_tbs_sha512": rsa_tbs_digest.hex(),
+        "multisigned_images_verified": 2,
         "role_keys_distinct": True,
     }
 

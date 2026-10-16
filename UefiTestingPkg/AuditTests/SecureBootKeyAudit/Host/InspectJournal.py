@@ -13,9 +13,9 @@ import struct
 import zlib
 from pathlib import Path
 
-JOURNAL_FORMAT = "<IHHIIIQ32s32s32sBBHIIQIIQ"
+JOURNAL_FORMAT = "<IHHIIIQ32s32s32sBBHIIQIIQIIQ"
 JOURNAL_SIGNATURE = int.from_bytes(b"SBJR", "little")
-JOURNAL_VERSION = 1
+JOURNAL_VERSION = 2
 PHASE_NAMES = {
     1: "PREPARED",
     2: "REBOOT_PENDING",
@@ -54,6 +54,9 @@ def inspect_journal(journal_path: Path, manifest_path: Path) -> dict[str, object
         db_state,
         db_attributes,
         db_size,
+        dbx_state,
+        dbx_attributes,
+        dbx_size,
     ) = fields
 
     if signature != JOURNAL_SIGNATURE:
@@ -110,6 +113,11 @@ def inspect_journal(journal_path: Path, manifest_path: Path) -> dict[str, object
             "state": db_state,
             "attributes": f"0x{db_attributes:08x}",
             "size": db_size,
+        },
+        "dbx": {
+            "state": dbx_state,
+            "attributes": f"0x{dbx_attributes:08x}",
+            "size": dbx_size,
         },
         "crc32": f"0x{stored_crc32:08x}",
     }

@@ -34,17 +34,23 @@ variable store. They:
    prove both match the pre-reboot evidence; and
 10. enroll a `db` entry with an ML-DSA-87 authenticated update, replay the
     identical envelope, require `EFI_SECURITY_VIOLATION`, and prove the `db`
-    attributes, size, bytes, and SHA-256 remain unchanged.
+    attributes, size, bytes, and SHA-256 remain unchanged; and
+11. authorize RSA-2048/SHA-256 and ML-DSA-87/SHA-512 signers, execute images
+    containing both independent `WIN_CERTIFICATE` entries in both orders,
+    prove either remaining signer authorizes the image after the other signer
+    is revoked, and deny both images after both signers are revoked.
 
 The ML-DSA authenticated updates use pure ML-DSA-87 CMS as specified by RFC
 9882. Because the detached CMS signatures omit signed attributes, their CMS
 digest algorithm is SHA-512.
 
-The image tests use SHA-512 Authenticode and pure ML-DSA-87. The generator
-uses separate ML-DSA-87 keys for the PK/update authority and image signer. It
-embeds the image-signer certificate in the signed image, stores only that
-certificate's TBSCertificate hash in `db`, and uses the PK authority to
-authenticate the `db` update.
+The image tests use RSA-2048/SHA-256 and pure ML-DSA-87/SHA-512
+Authenticode. The generator uses separate keys for the PK/update authority,
+RSA image signer, and ML-DSA image signer. It embeds each image-signer
+certificate in its signature, stores only the certificate's TBSCertificate
+hash in `db`, and uses the PK authority to authenticate the `db` and `dbx`
+updates. The multi-signature fixtures contain the same signatures over the
+same unsigned image in opposite certificate-table orders.
 
 The final correlation test reports each ECIT claim independently from the
 observed operation as verified, over-reported, under-reported, verified absent,
@@ -53,12 +59,13 @@ ECIT verification payload is a flat OID set, the SHA-512 plus ML-DSA-87 image
 profile is reported as an operationally successful candidate pair with
 `FLAT_PROFILE_AMBIGUITY`, not as an exact profile advertised by ECIT.
 
-The application refuses to mutate an existing PK or `db` unless it exactly
-matches generated test data. Baseline preflight is read-only and logs the mode,
-attributes, sizes, and recognized state before any explicit recovery mutation.
-A recovery attempt validates the complete mode/PK/`db` tuple before its first
-`SetVariable()` call; unknown or inconsistent state remains untouched for host
-evidence capture and baseline restoration.
+The application refuses to mutate an existing PK, `db`, or `dbx` unless it
+exactly matches generated test data. Baseline preflight is read-only and logs
+the mode, attributes, sizes, and recognized state before any explicit
+recovery mutation. A recovery attempt validates the complete
+mode/PK/`db`/`dbx` tuple before its first `SetVariable()` call; unknown or
+inconsistent state remains untouched for host evidence capture and baseline
+restoration.
 
 A failure can still leave test state installed if firmware accepts a mutation
 but becomes unable to authenticate the matching cleanup update. Run only with
@@ -139,10 +146,10 @@ requirement above is satisfied. In particular:
 - exercise the independent firmware or flash recovery path before the audit;
   and
 - configure the device with `SetupMode=1`, `SecureBoot=0`, PK absent, and
-  `db` absent.
+  both `db` and `dbx` absent.
 
-The audit refuses to recover or overwrite an unknown PK/`db` tuple, but that
-guard is not a substitute for an independent recovery path.
+The audit refuses to recover or overwrite an unknown PK/`db`/`dbx` tuple, but
+that guard is not a substitute for an independent recovery path.
 
 ### Build the application
 
@@ -164,7 +171,7 @@ The resulting application is:
 Build/QemuQ35PkgX64/DEBUG_GCC5/X64/SecureBootKeyAuditApp.efi
 ```
 
-The public certificates, authenticated updates, signed test image, fixture
+The public certificates, authenticated updates, signed test images, fixture
 identity, and manifest hash are compiled into the application. No private key
 material is present, and no separate fixture files are required on the target.
 The QemuQ35 output is X64-only; an AARCH64 target requires a corresponding
@@ -215,8 +222,8 @@ shell maps the USB drive as `fs0:`, `fs1:`, or another alias.
 
 1. Confirm the device identity, external power, backed-up Secure Boot
    configuration, and tested independent recovery path.
-2. Enter firmware setup and place the device in Setup Mode with PK and `db`
-   absent.
+2. Enter firmware setup and place the device in Setup Mode with PK, `db`, and
+   `dbx` absent.
 3. Put the USB UEFI Shell first in the boot order.
 4. Boot the USB and allow `startup.nsh` to launch the audit.
 5. The persistent-journal scenario requests one cold reboot.
@@ -243,9 +250,10 @@ the observed PK/`db` state, and use the independent recovery mechanism.
 the reboot boundary. The journal contains no private key material. It records
 the fixture ID, SHA-256 of `Host/TestData.manifest.json`, SHA-256 of the parsed
 ECIT, boot count, prior result, phase, and the recognized Secure Boot baseline.
-The firmware flushes each fixed-size journal update before continuing and
-rejects an invalid signature, version, size, CRC, fixture identity, manifest
-hash, or phase.
+Journal format version 2 records PK, `db`, and `dbx` baseline state. The
+firmware flushes each fixed-size journal update before continuing and rejects
+an invalid signature, version, size, CRC, fixture identity, manifest hash, or
+phase.
 
 The reboot test advances through:
 
@@ -283,10 +291,11 @@ python3 Host/GenerateTestData.py
 The generator writes:
 
 - `UEFI/TestData.c`, containing public certificates, signature lists,
-  authenticated updates, the signed test image, fixture ID, and manifest hash;
+  authenticated updates, signed test images, fixture ID, and manifest hash;
   and
 - `Host/TestData.manifest.json`, containing artifact hashes, explicit
-  certificate roles, unsigned-image identity, and ECIT prerequisites.
+  certificate roles, unsigned-image identity, and ECIT prerequisites. The
+  current fixture schema is `secure-boot-key-audit-v3`.
 
 RSA and ML-DSA private keys exist only in memory while the generator runs and
 are never written to disk or emitted into the application.
@@ -308,13 +317,14 @@ parses `UEFI/TestData.c` and independently checks:
 - X.509 ESL layout and generated self-signed certificate signatures;
 - every authenticated-variable envelope, payload, signer role, detached CMS
   signature, algorithm, issuer, and serial number;
-- PE Certificate Table bounds and alignment, the Authenticode SHA-512 digest,
-  `SpcIndirectDataContent`, signed attributes, embedded certificate, and
-  ML-DSA-87 signature;
-- V1 and V2 SHA-512 TBSCertificate-hash ESLs against the embedded image-signer
-  certificate; and
-- distinct certificate and public-key fingerprints for the ML-DSA PK/update
-  authority and image-signer roles.
+- every independent PE `WIN_CERTIFICATE` boundary and alignment, the
+  Authenticode SHA-256 and SHA-512 digests, `SpcIndirectDataContent`, embedded
+  certificates, RSA-2048 and ML-DSA-87 signatures, and reversed signature
+  order over the same unsigned image;
+- single- and multi-entry V1 and V2 SHA-512 TBSCertificate-hash ESLs against
+  the embedded image-signer certificates; and
+- distinct certificate and public-key fingerprints for the PK/update
+  authority, RSA image-signer, and ML-DSA image-signer roles.
 
 The command also corrupts the final Authenticode object after rebinding its
 manifest artifact hash and requires independent signature verification to

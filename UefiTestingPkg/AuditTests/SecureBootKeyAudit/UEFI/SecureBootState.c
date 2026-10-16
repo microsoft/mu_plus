@@ -145,10 +145,12 @@ VerifyPk (
   return Status;
 }
 
+STATIC
 EFI_STATUS
-VerifyDb (
-  IN CONST UINT8  *Expected,
-  IN UINTN        ExpectedSize
+VerifySignatureDatabase (
+  IN CONST CHAR16  *Name,
+  IN CONST UINT8   *Expected,
+  IN UINTN         ExpectedSize
   )
 {
   UINT32      Attributes;
@@ -157,7 +159,7 @@ VerifyDb (
   EFI_STATUS  Status;
 
   Status = ReadVariable (
-             EFI_IMAGE_SECURITY_DATABASE,
+             Name,
              &gEfiImageSecurityDatabaseGuid,
              &Attributes,
              &Db,
@@ -190,6 +192,32 @@ VerifyDb (
 }
 
 EFI_STATUS
+VerifyDb (
+  IN CONST UINT8  *Expected,
+  IN UINTN        ExpectedSize
+  )
+{
+  return VerifySignatureDatabase (
+           EFI_IMAGE_SECURITY_DATABASE,
+           Expected,
+           ExpectedSize
+           );
+}
+
+EFI_STATUS
+VerifyDbx (
+  IN CONST UINT8  *Expected,
+  IN UINTN        ExpectedSize
+  )
+{
+  return VerifySignatureDatabase (
+           EFI_IMAGE_SECURITY_DATABASE1,
+           Expected,
+           ExpectedSize
+           );
+}
+
+EFI_STATUS
 ApplyPkUpdate (
   IN CONST UINT8  *AuthenticatedUpdate,
   IN UINTN        AuthenticatedUpdateSize,
@@ -211,6 +239,30 @@ ApplyPkUpdate (
   }
 
   return VerifyPk (ExpectedPk, ExpectedPkSize);
+}
+
+EFI_STATUS
+ApplyDbxUpdate (
+  IN CONST UINT8  *AuthenticatedUpdate,
+  IN UINTN        AuthenticatedUpdateSize,
+  IN CONST UINT8  *ExpectedDbx,
+  IN UINTN        ExpectedDbxSize
+  )
+{
+  EFI_STATUS  Status;
+
+  Status = gRT->SetVariable (
+                  EFI_IMAGE_SECURITY_DATABASE1,
+                  &gEfiImageSecurityDatabaseGuid,
+                  SECURE_BOOT_KEY_ATTRIBUTES,
+                  AuthenticatedUpdateSize,
+                  (VOID *)AuthenticatedUpdate
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  return VerifyDbx (ExpectedDbx, ExpectedDbxSize);
 }
 
 EFI_STATUS
@@ -255,6 +307,14 @@ AuditVariableStateName (
       return "DB_TBS_V1";
     case AuditVariableStateDbV2:
       return "DB_TBS_V2";
+    case AuditVariableStateDbMultiSigner:
+      return "DB_MULTI_SIGNER";
+    case AuditVariableStateDbxRsaSigner:
+      return "DBX_RSA_SIGNER";
+    case AuditVariableStateDbxMldsaSigner:
+      return "DBX_MLDSA_SIGNER";
+    case AuditVariableStateDbxBothSigners:
+      return "DBX_BOTH_SIGNERS";
     case AuditVariableStateUnknown:
       return "UNKNOWN";
     default:
@@ -277,6 +337,7 @@ CaptureBaselineSnapshot (
   Snapshot->SecureBoot = 0xFF;
   Snapshot->PkState    = AuditVariableStateUnread;
   Snapshot->DbState    = AuditVariableStateUnread;
+  Snapshot->DbxState   = AuditVariableStateUnread;
 
   Status = ReadModeVariable (EFI_SETUP_MODE_NAME, &Snapshot->SetupMode);
   if (EFI_ERROR (Status)) {
@@ -351,8 +412,61 @@ CaptureBaselineSnapshot (
                  ))
     {
       Snapshot->DbState = AuditVariableStateDbV2;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbMultiSigner,
+                 gSecureBootKeyAuditDbMultiSignerSize
+                 ))
+    {
+      Snapshot->DbState = AuditVariableStateDbMultiSigner;
     } else {
       Snapshot->DbState = AuditVariableStateUnknown;
+    }
+
+    FreePool (Data);
+  }
+
+  Status = ReadVariable (
+             EFI_IMAGE_SECURITY_DATABASE1,
+             &gEfiImageSecurityDatabaseGuid,
+             &Attributes,
+             &Data,
+             &DataSize
+             );
+  if (Status == EFI_NOT_FOUND) {
+    Snapshot->DbxState = AuditVariableStateAbsent;
+  } else if (EFI_ERROR (Status)) {
+    return Status;
+  } else {
+    Snapshot->DbxAttributes = Attributes;
+    Snapshot->DbxSize       = DataSize;
+    if (PkMatches (
+          Data,
+          DataSize,
+          gSecureBootKeyAuditDbxRsaSigner,
+          gSecureBootKeyAuditDbxRsaSignerSize
+          ))
+    {
+      Snapshot->DbxState = AuditVariableStateDbxRsaSigner;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbxMldsaSigner,
+                 gSecureBootKeyAuditDbxMldsaSignerSize
+                 ))
+    {
+      Snapshot->DbxState = AuditVariableStateDbxMldsaSigner;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbxBothSigners,
+                 gSecureBootKeyAuditDbxBothSignersSize
+                 ))
+    {
+      Snapshot->DbxState = AuditVariableStateDbxBothSigners;
+    } else {
+      Snapshot->DbxState = AuditVariableStateUnknown;
     }
 
     FreePool (Data);
@@ -377,7 +491,8 @@ InspectSetupModeBaseline (
   UT_LOG_INFO (
     "[AUDIT_EVIDENCE] stage=preflight setup_mode=%u secure_boot=%u "
     "pk_state=%a pk_attributes=0x%08x pk_size=%u "
-    "db_state=%a db_attributes=0x%08x db_size=%u\n",
+    "db_state=%a db_attributes=0x%08x db_size=%u "
+    "dbx_state=%a dbx_attributes=0x%08x dbx_size=%u\n",
     Snapshot->SetupMode,
     Snapshot->SecureBoot,
     AuditVariableStateName (Snapshot->PkState),
@@ -385,13 +500,17 @@ InspectSetupModeBaseline (
     Snapshot->PkSize,
     AuditVariableStateName (Snapshot->DbState),
     Snapshot->DbAttributes,
-    Snapshot->DbSize
+    Snapshot->DbSize,
+    AuditVariableStateName (Snapshot->DbxState),
+    Snapshot->DbxAttributes,
+    Snapshot->DbxSize
     );
 
   if ((Snapshot->SetupMode == SETUP_MODE) &&
       (Snapshot->SecureBoot == SECURE_BOOT_MODE_DISABLE) &&
       (Snapshot->PkState == AuditVariableStateAbsent) &&
-      (Snapshot->DbState == AuditVariableStateAbsent))
+      (Snapshot->DbState == AuditVariableStateAbsent) &&
+      (Snapshot->DbxState == AuditVariableStateAbsent))
   {
     return EFI_SUCCESS;
   }
@@ -399,7 +518,9 @@ InspectSetupModeBaseline (
   if ((Snapshot->PkState == AuditVariableStateUnknown) ||
       (Snapshot->PkState == AuditVariableStateUnread) ||
       (Snapshot->DbState == AuditVariableStateUnknown) ||
-      (Snapshot->DbState == AuditVariableStateUnread))
+      (Snapshot->DbState == AuditVariableStateUnread) ||
+      (Snapshot->DbxState == AuditVariableStateUnknown) ||
+      (Snapshot->DbxState == AuditVariableStateUnread))
   {
     UT_LOG_ERROR ("Refusing to recover an unknown Secure Boot state\n");
     return EFI_ACCESS_DENIED;

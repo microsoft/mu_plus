@@ -30,7 +30,7 @@ from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import mldsa, rsa
+from cryptography.hazmat.primitives.asymmetric import mldsa, padding, rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.x509.oid import NameOID
 from edk2toollib.uefi.authenticated_variables_structure_support import (
@@ -50,7 +50,7 @@ EFI_CERT_X509_SHA512_GUID = uuid.UUID("446dbf63-2502-4cda-bcfa-2465d2b0fe9d")
 EFI_CERT_V2_X509_SHA512_GUID = uuid.UUID("4d46147a-fa79-43a9-8836-00341c708a70")
 SIGNATURE_OWNER = uuid.UUID("d4f18610-2ce9-4d6c-a3c2-0bd4727db67b")
 VARIABLE_ATTRIBUTES = "NV,BS,RT,AT"
-FIXTURE_ID = "secure-boot-key-audit-v2"
+FIXTURE_ID = "secure-boot-key-audit-v3"
 
 SHA256_WITH_RSA_OID = "1.2.840.113549.1.1.11"
 SHA256_OID = "2.16.840.1.101.3.4.2.1"
@@ -233,6 +233,43 @@ ARTIFACT_DESCRIPTIONS = {
         "Signer authorization: SHA-512 TBSCertificate hash stored in db.",
         "The image contains the public signer certificate but no private key.",
     ),
+    "gSecureBootKeyAuditDbMultiSigner": (
+        "V2 EFI signature list containing both image-signer TBS hashes.",
+        "Signers: RSA-2048/SHA-256 and ML-DSA-87/SHA-512.",
+    ),
+    "gSecureBootKeyAuditDbxRsaSigner": (
+        "V2 EFI signature list revoking the RSA image signer TBS hash.",
+    ),
+    "gSecureBootKeyAuditDbxMldsaSigner": (
+        "V2 EFI signature list revoking the ML-DSA image signer TBS hash.",
+    ),
+    "gSecureBootKeyAuditDbxBothSigners": (
+        "V2 EFI signature list revoking both image-signer TBS hashes.",
+    ),
+    "gSecureBootKeyAuditEnrollDbMultiSigner": (
+        "Authenticated enrollment of both image-signer TBS hashes in db.",
+    ),
+    "gSecureBootKeyAuditEnrollDbxRsaSigner": (
+        "Authenticated replacement of dbx with the RSA signer TBS hash.",
+    ),
+    "gSecureBootKeyAuditEnrollDbxMldsaSigner": (
+        "Authenticated replacement of dbx with the ML-DSA signer TBS hash.",
+    ),
+    "gSecureBootKeyAuditEnrollDbxBothSigners": (
+        "Authenticated replacement of dbx with both signer TBS hashes.",
+    ),
+    "gSecureBootKeyAuditDeleteDbxByMldsa": (
+        "Authenticated deletion of the multi-signature test dbx.",
+    ),
+    "gSecureBootKeyAuditDeleteDbMultiSignerByMldsa": (
+        "Authenticated deletion of the multi-signature test db.",
+    ),
+    "gSecureBootKeyAuditHelloRsaMldsa": (
+        "HelloUefiApp with independent RSA then ML-DSA WIN_CERTIFICATE entries.",
+    ),
+    "gSecureBootKeyAuditHelloMldsaRsa": (
+        "HelloUefiApp with independent ML-DSA then RSA WIN_CERTIFICATE entries.",
+    ),
 }
 
 
@@ -315,28 +352,45 @@ def certificate_to_esl(certificate: x509.Certificate) -> bytes:
     return signature_list.encode()
 
 
+def certificate_tbs_hashes_to_esl(
+    certificates: list[x509.Certificate],
+    version: int,
+) -> bytes:
+    """Encode SHA-512 TBSCertificate hashes in one V1 or V2 signature list."""
+    signature_entries = []
+    for certificate in certificates:
+        digest = hashlib.sha512(certificate.tbs_certificate_bytes).digest()
+        if version == 1:
+            signature_type = EFI_CERT_X509_SHA512_GUID
+            signature_entries.append(
+                SIGNATURE_OWNER.bytes_le + digest + bytes(16)
+            )
+        elif version == 2:
+            signature_type = EFI_CERT_V2_X509_SHA512_GUID
+            signature_entries.append(digest)
+        else:
+            raise ValueError(
+                f"Unsupported TBS hash signature-list version: {version}"
+            )
+
+    if not signature_entries:
+        raise ValueError("At least one certificate is required")
+
+    signature_size = len(signature_entries[0])
+    signature_list_size = 16 + 12 + signature_size * len(signature_entries)
+    return (
+        signature_type.bytes_le
+        + struct.pack("<III", signature_list_size, 0, signature_size)
+        + b"".join(signature_entries)
+    )
+
+
 def certificate_tbs_hash_to_esl(
     certificate: x509.Certificate,
     version: int,
 ) -> bytes:
-    """Encode a SHA-512 TBSCertificate hash as a V1 or V2 signature list."""
-    digest = hashlib.sha512(certificate.tbs_certificate_bytes).digest()
-    if version == 1:
-        signature_type = EFI_CERT_X509_SHA512_GUID
-        signature_data = SIGNATURE_OWNER.bytes_le + digest + bytes(16)
-    elif version == 2:
-        signature_type = EFI_CERT_V2_X509_SHA512_GUID
-        signature_data = digest
-    else:
-        raise ValueError(f"Unsupported TBS hash signature-list version: {version}")
-
-    signature_size = len(signature_data)
-    signature_list_size = 16 + 12 + signature_size
-    return (
-        signature_type.bytes_le
-        + struct.pack("<III", signature_list_size, 0, signature_size)
-        + signature_data
-    )
+    """Encode one SHA-512 TBSCertificate hash as a signature list."""
+    return certificate_tbs_hashes_to_esl([certificate], version)
 
 
 def empty_authenticated_update(payload: bytes, timestamp: datetime.datetime) -> bytes:
@@ -544,11 +598,20 @@ def authenticode_digest(image: bytes, hash_constructor) -> bytes:
     return digest.digest()
 
 
-def build_spc_indirect_data(image_digest: bytes) -> bytes:
-    """Build a SHA-512 SpcIndirectDataContent value."""
-    sha512_algorithm = bytes.fromhex("300d06096086480165030402030500")
+def build_spc_indirect_data(image_digest: bytes, digest_oid: str) -> bytes:
+    """Build a SpcIndirectDataContent value for a supported image digest."""
+    digest_algorithms = {
+        SHA256_OID: bytes.fromhex("300d06096086480165030402010500"),
+        SHA512_OID: bytes.fromhex("300d06096086480165030402030500"),
+    }
+    if digest_oid not in digest_algorithms:
+        raise ValueError(f"Unsupported Authenticode digest OID: {digest_oid}")
+
     digest_info = der_sequence(
-        sha512_algorithm + b"\x04" + der_length(len(image_digest)) + image_digest
+        digest_algorithms[digest_oid]
+        + b"\x04"
+        + der_length(len(image_digest))
+        + image_digest
     )
     return der_sequence(SPC_PE_IMAGE_DATA + digest_info)
 
@@ -567,7 +630,7 @@ def mldsa_authenticode_signature(
     image_digest: bytes,
 ) -> tuple[bytes, bytes]:
     """Build an ML-DSA-87 Authenticode PKCS #7 signature."""
-    spc_indirect_data = build_spc_indirect_data(image_digest)
+    spc_indirect_data = build_spc_indirect_data(image_digest, SHA512_OID)
     signed_attributes = rfc2315.Attributes()
     signed_attributes[0] = pkcs7_attribute(
         CMS_CONTENT_TYPE_ATTRIBUTE_OID,
@@ -633,17 +696,111 @@ def mldsa_authenticode_signature(
     return der_encode(content_info), encoded_signed_attributes
 
 
-def apply_authenticode_signature(image: bytes, signature: bytes) -> bytes:
-    """Append a PKCS #7 WIN_CERTIFICATE and update the PE data directory."""
-    if len(image) % 8 != 0:
-        raise ValueError("PE image must be aligned before Authenticode signing")
+def rsa_authenticode_signature(
+    private_key: rsa.RSAPrivateKey,
+    certificate: x509.Certificate,
+    image_digest: bytes,
+) -> tuple[bytes, bytes]:
+    """Build an RSA-2048/SHA-256 Authenticode PKCS #7 signature."""
+    spc_indirect_data = build_spc_indirect_data(image_digest, SHA256_OID)
+    signed_attributes = rfc2315.Attributes()
+    signed_attributes[0] = pkcs7_attribute(
+        CMS_CONTENT_TYPE_ATTRIBUTE_OID,
+        der_encode(univ.ObjectIdentifier(SPC_INDIRECT_DATA_OID)),
+    )
+    signed_attributes[1] = pkcs7_attribute(
+        CMS_MESSAGE_DIGEST_ATTRIBUTE_OID,
+        der_encode(
+            univ.OctetString(
+                hashlib.sha256(
+                    der_sequence_contents(spc_indirect_data)
+                ).digest()
+            )
+        ),
+    )
+    encoded_signed_attributes = der_encode(signed_attributes)
+    signature = private_key.sign(
+        encoded_signed_attributes,
+        padding.PKCS1v15(),
+        hashes.SHA256(),
+    )
+    private_key.public_key().verify(
+        signature,
+        encoded_signed_attributes,
+        padding.PKCS1v15(),
+        hashes.SHA256(),
+    )
 
+    certificate_der = certificate.public_bytes(Encoding.DER)
+    certificate_asn1, trailing = der_decode(
+        certificate_der,
+        asn1Spec=rfc2459.Certificate(),
+    )
+    if trailing:
+        raise ValueError("Unexpected trailing data in RSA certificate")
+
+    signed_data = rfc2315.SignedData()
+    signed_data["version"] = 1
+    signed_data["digestAlgorithms"][0]["algorithm"] = univ.ObjectIdentifier(
+        SHA256_OID
+    )
+    signed_data["digestAlgorithms"][0]["parameters"] = univ.Null("")
+    signed_data["contentInfo"]["contentType"] = univ.ObjectIdentifier(
+        SPC_INDIRECT_DATA_OID
+    )
+    signed_data["contentInfo"]["content"] = univ.Any(spc_indirect_data)
+    signed_data["certificates"][0]["certificate"] = certificate_asn1
+
+    signer_info = rfc2315.SignerInfo()
+    signer_info["version"] = 1
+    signer_info["issuerAndSerialNumber"]["issuer"] = certificate_asn1[
+        "tbsCertificate"
+    ]["issuer"]
+    signer_info["issuerAndSerialNumber"]["serialNumber"] = certificate_asn1[
+        "tbsCertificate"
+    ]["serialNumber"]
+    signer_info["digestAlgorithm"]["algorithm"] = univ.ObjectIdentifier(
+        SHA256_OID
+    )
+    signer_info["digestAlgorithm"]["parameters"] = univ.Null("")
+    for index, attribute in enumerate(signed_attributes):
+        signer_info["authenticatedAttributes"][index] = attribute
+    signer_info["digestEncryptionAlgorithm"]["algorithm"] = univ.ObjectIdentifier(
+        SHA256_WITH_RSA_OID
+    )
+    signer_info["digestEncryptionAlgorithm"]["parameters"] = univ.Null("")
+    signer_info["encryptedDigest"] = signature
+    signed_data["signerInfos"][0] = signer_info
+
+    content_info = rfc2315.ContentInfo()
+    content_info["contentType"] = univ.ObjectIdentifier(CMS_SIGNED_DATA_OID)
+    content_info["content"] = univ.Any(der_encode(signed_data))
+    return der_encode(content_info), encoded_signed_attributes
+
+
+def win_certificate(signature: bytes) -> bytes:
+    """Wrap one PKCS #7 signature in an aligned WIN_CERTIFICATE."""
     certificate_length = 8 + len(signature)
     padded_certificate_length = (certificate_length + 7) & ~7
-    win_certificate = (
+    return (
         struct.pack("<IHH", certificate_length, 0x0200, 0x0002)
         + signature
         + bytes(padded_certificate_length - certificate_length)
+    )
+
+
+def apply_authenticode_signatures(
+    image: bytes,
+    signatures: list[bytes],
+) -> bytes:
+    """Append independent WIN_CERTIFICATE entries to one PE image."""
+    if len(image) % 8 != 0:
+        raise ValueError("PE image must be aligned before Authenticode signing")
+    if not signatures:
+        raise ValueError("At least one Authenticode signature is required")
+
+    certificate_table = b"".join(
+        win_certificate(signature) for signature in signatures
     )
     signed_image = bytearray(image)
     struct.pack_into(
@@ -651,10 +808,15 @@ def apply_authenticode_signature(image: bytes, signature: bytes) -> bytes:
         signed_image,
         pe_security_directory_offset(signed_image),
         len(signed_image),
-        len(win_certificate),
+        len(certificate_table),
     )
-    signed_image.extend(win_certificate)
+    signed_image.extend(certificate_table)
     return bytes(signed_image)
+
+
+def apply_authenticode_signature(image: bytes, signature: bytes) -> bytes:
+    """Append one PKCS #7 WIN_CERTIFICATE to a PE image."""
+    return apply_authenticode_signatures(image, [signature])
 
 
 def extract_payload(authenticated_update: bytes) -> bytes:
@@ -715,26 +877,60 @@ def generate(
     key_image_mldsa, certificate_image_mldsa = generate_mldsa_certificate(
         "UEFI 2.12 Audit ML-DSA-87 Image Signer"
     )
+    key_image_rsa, certificate_image_rsa = generate_rsa_certificate(
+        "UEFI 2.12 Audit RSA-2048 Image Signer"
+    )
 
     pk_a = certificate_to_esl(certificate_a)
     pk_b = certificate_to_esl(certificate_b)
     pk_mldsa = certificate_to_esl(certificate_mldsa)
     db_tbs_hash_v1 = certificate_tbs_hash_to_esl(certificate_image_mldsa, 1)
     db_tbs_hash_v2 = certificate_tbs_hash_to_esl(certificate_image_mldsa, 2)
+    db_multi_signer = certificate_tbs_hashes_to_esl(
+        [certificate_image_rsa, certificate_image_mldsa],
+        2,
+    )
+    dbx_rsa_signer = certificate_tbs_hash_to_esl(certificate_image_rsa, 2)
+    dbx_mldsa_signer = certificate_tbs_hash_to_esl(
+        certificate_image_mldsa,
+        2,
+    )
+    dbx_both_signers = certificate_tbs_hashes_to_esl(
+        [certificate_image_rsa, certificate_image_mldsa],
+        2,
+    )
 
     unsigned_image = prepare_unsigned_pe_image(unsigned_image_path.read_bytes())
-    image_digest = authenticode_digest(unsigned_image, hashlib.sha512)
-    authenticode_signature, _ = mldsa_authenticode_signature(
+    image_digest_sha256 = authenticode_digest(unsigned_image, hashlib.sha256)
+    image_digest_sha512 = authenticode_digest(unsigned_image, hashlib.sha512)
+    mldsa_signature, _ = mldsa_authenticode_signature(
         key_image_mldsa,
         certificate_image_mldsa,
-        image_digest,
+        image_digest_sha512,
+    )
+    rsa_signature, _ = rsa_authenticode_signature(
+        key_image_rsa,
+        certificate_image_rsa,
+        image_digest_sha256,
     )
     signed_image = apply_authenticode_signature(
         unsigned_image,
-        authenticode_signature,
+        mldsa_signature,
     )
-    if authenticode_digest(signed_image, hashlib.sha512) != image_digest:
-        raise ValueError("Signed image Authenticode digest does not match")
+    rsa_mldsa_image = apply_authenticode_signatures(
+        unsigned_image,
+        [rsa_signature, mldsa_signature],
+    )
+    mldsa_rsa_image = apply_authenticode_signatures(
+        unsigned_image,
+        [mldsa_signature, rsa_signature],
+    )
+    for image in (signed_image, rsa_mldsa_image, mldsa_rsa_image):
+        if (
+            authenticode_digest(image, hashlib.sha256) != image_digest_sha256
+            or authenticode_digest(image, hashlib.sha512) != image_digest_sha512
+        ):
+            raise ValueError("Signed image Authenticode digest does not match")
 
     artifacts = {
         "gSecureBootKeyAuditPkA": pk_a,
@@ -844,6 +1040,62 @@ def generate(
             EFI_IMAGE_SECURITY_DATABASE_GUID,
         ),
         "gSecureBootKeyAuditHelloMldsa": signed_image,
+        "gSecureBootKeyAuditDbMultiSigner": db_multi_signer,
+        "gSecureBootKeyAuditDbxRsaSigner": dbx_rsa_signer,
+        "gSecureBootKeyAuditDbxMldsaSigner": dbx_mldsa_signer,
+        "gSecureBootKeyAuditDbxBothSigners": dbx_both_signers,
+        "gSecureBootKeyAuditEnrollDbMultiSigner": mldsa_authenticated_update(
+            db_multi_signer,
+            BASE_TIME + datetime.timedelta(seconds=40),
+            certificate_mldsa,
+            key_mldsa,
+            "db",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+        ),
+        "gSecureBootKeyAuditEnrollDbxRsaSigner": mldsa_authenticated_update(
+            dbx_rsa_signer,
+            BASE_TIME + datetime.timedelta(seconds=41),
+            certificate_mldsa,
+            key_mldsa,
+            "dbx",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+        ),
+        "gSecureBootKeyAuditEnrollDbxMldsaSigner": mldsa_authenticated_update(
+            dbx_mldsa_signer,
+            BASE_TIME + datetime.timedelta(seconds=42),
+            certificate_mldsa,
+            key_mldsa,
+            "dbx",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+        ),
+        "gSecureBootKeyAuditEnrollDbxBothSigners": mldsa_authenticated_update(
+            dbx_both_signers,
+            BASE_TIME + datetime.timedelta(seconds=43),
+            certificate_mldsa,
+            key_mldsa,
+            "dbx",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+        ),
+        "gSecureBootKeyAuditDeleteDbxByMldsa": mldsa_authenticated_update(
+            b"",
+            BASE_TIME + datetime.timedelta(seconds=44),
+            certificate_mldsa,
+            key_mldsa,
+            "dbx",
+            EFI_IMAGE_SECURITY_DATABASE_GUID,
+        ),
+        "gSecureBootKeyAuditDeleteDbMultiSignerByMldsa": (
+            mldsa_authenticated_update(
+                b"",
+                BASE_TIME + datetime.timedelta(seconds=45),
+                certificate_mldsa,
+                key_mldsa,
+                "db",
+                EFI_IMAGE_SECURITY_DATABASE_GUID,
+            )
+        ),
+        "gSecureBootKeyAuditHelloRsaMldsa": rsa_mldsa_image,
+        "gSecureBootKeyAuditHelloMldsaRsa": mldsa_rsa_image,
     }
 
     expected_payloads = {
@@ -864,13 +1116,19 @@ def generate(
         "gSecureBootKeyAuditEnrollDbTbsHashV2": db_tbs_hash_v2,
         "gSecureBootKeyAuditDeleteDbV1ByMldsa": b"",
         "gSecureBootKeyAuditDeleteDbV2ByMldsa": b"",
+        "gSecureBootKeyAuditEnrollDbMultiSigner": db_multi_signer,
+        "gSecureBootKeyAuditEnrollDbxRsaSigner": dbx_rsa_signer,
+        "gSecureBootKeyAuditEnrollDbxMldsaSigner": dbx_mldsa_signer,
+        "gSecureBootKeyAuditEnrollDbxBothSigners": dbx_both_signers,
+        "gSecureBootKeyAuditDeleteDbxByMldsa": b"",
+        "gSecureBootKeyAuditDeleteDbMultiSignerByMldsa": b"",
     }
     for name, expected_payload in expected_payloads.items():
         if extract_payload(artifacts[name]) != expected_payload:
             raise ValueError(f"{name} does not contain its expected payload")
 
     manifest = {
-        "version": 2,
+        "version": 3,
         "fixture_id": FIXTURE_ID,
         "scenarios": [
             "rsa2048-pk-a-to-b-to-a",
@@ -878,6 +1136,7 @@ def generate(
             "rsa2048-to-mldsa87-to-rsa2048",
             "mldsa87-authenticated-update-replay",
             "mldsa87-authenticode-tbs-hash",
+            "rsa2048-mldsa87-authenticode-multisign-revocation",
         ],
         "private_keys_emitted": False,
         "signature_owner": str(SIGNATURE_OWNER),
@@ -886,7 +1145,8 @@ def generate(
             "size": len(unsigned_image),
             "sha256": hashlib.sha256(unsigned_image).hexdigest(),
         },
-        "image_authenticode_sha512": image_digest.hex(),
+        "image_authenticode_sha256": image_digest_sha256.hex(),
+        "image_authenticode_sha512": image_digest_sha512.hex(),
         "roles": {
             "mldsa_pk_update_authority": {
                 "certificate_artifact": "gSecureBootKeyAuditPkMldsa",
@@ -919,6 +1179,24 @@ def generate(
                     certificate_image_mldsa.tbs_certificate_bytes
                 ).hexdigest(),
             },
+            "rsa_image_signer": {
+                "certificate_location": (
+                    "gSecureBootKeyAuditHelloRsaMldsa:authenticode[0]"
+                ),
+                "subject": certificate_image_rsa.subject.rfc4514_string(),
+                "certificate_sha256": hashlib.sha256(
+                    certificate_image_rsa.public_bytes(Encoding.DER)
+                ).hexdigest(),
+                "public_key_sha256": hashlib.sha256(
+                    certificate_image_rsa.public_key().public_bytes(
+                        Encoding.DER,
+                        PublicFormat.SubjectPublicKeyInfo,
+                    )
+                ).hexdigest(),
+                "tbs_sha512": hashlib.sha512(
+                    certificate_image_rsa.tbs_certificate_bytes
+                ).hexdigest(),
+            },
         },
         "required_ecit": {
             "database_update_authorization": ["EFI_CERT_X509_GUID"],
@@ -933,8 +1211,13 @@ def generate(
                 "EFI_CERT_V2_X509_SHA512_GUID",
             ],
             "image_verification": [
+                SHA256_WITH_RSA_OID,
+                SHA256_OID,
                 ML_DSA_87_OID,
                 SHA512_OID,
+            ],
+            "image_revocation": [
+                "EFI_CERT_V2_X509_SHA512_GUID",
             ],
         },
         "artifacts": {

@@ -98,6 +98,33 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     FALSE
   },
   {
+    EcitImageRevocationTbsV2Sha512,
+    "image-revocation:tbs-v2-sha512",
+    &gEfiEcitFeatureSbImageRevocationGuid,
+    EcitClaimIdentifierGuid,
+    NULL,
+    &gEfiCertV2X509Sha512Guid,
+    FALSE
+  },
+  {
+    EcitImageVerificationRsaSha256,
+    "image-verification:rsa-sha256",
+    &gEfiEcitFeatureSbImageVerificationGuid,
+    EcitClaimIdentifierOid,
+    "1.2.840.113549.1.1.11",
+    NULL,
+    FALSE
+  },
+  {
+    EcitImageVerificationSha256,
+    "image-verification:sha256",
+    &gEfiEcitFeatureSbImageVerificationGuid,
+    EcitClaimIdentifierOid,
+    "2.16.840.1.101.3.4.2.1",
+    NULL,
+    FALSE
+  },
+  {
     EcitImageVerificationMldsa87,
     "image-verification:mldsa87",
     &gEfiEcitFeatureSbImageVerificationGuid,

@@ -35,13 +35,13 @@
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
-#define UNIT_TEST_APP_VERSION  "0.7"
+#define UNIT_TEST_APP_VERSION  "0.8"
 
 #define MAX_ECIT_LENGTH  SIZE_1MB
 
 #define AUDIT_JOURNAL_FILE_NAME   L"SecureBootKeyAuditJournal.bin"
 #define AUDIT_JOURNAL_SIGNATURE   SIGNATURE_32 ('S', 'B', 'J', 'R')
-#define AUDIT_JOURNAL_VERSION     1
+#define AUDIT_JOURNAL_VERSION     2
 #define AUDIT_REBOOT_MARKER_NAME  L"SecureBootKeyAuditRebootPending"
 #define AUDIT_REBOOT_MARKER_ATTRIBUTES \
   (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS)
@@ -97,6 +97,11 @@ STATIC CONST ECIT_CLAIM_ID  mMldsaImageVerificationClaims[] = {
   EcitImageVerificationMldsa87,
   EcitImageVerificationSha512,
   EcitImageVerificationMldsa87Sha512Profile
+};
+
+STATIC CONST ECIT_CLAIM_ID  mRsaImageVerificationClaims[] = {
+  EcitImageVerificationRsaSha256,
+  EcitImageVerificationSha256
 };
 
 STATIC
@@ -575,37 +580,40 @@ RecoveryStateClassifierTest (
     BOOLEAN                    Expected;
   } Cases[] = {
     {
-      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStateAbsent,  0,                          0, AuditVariableStateAbsent,  0,                          0 }, TRUE
+      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStateAbsent,  0,                          0, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,  0,                          0 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkB,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,  0,                          0 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkB,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,  0,                          0 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,    SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,          SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV2,    SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV2,          SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStateUnknown, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,    SECURE_BOOT_KEY_ATTRIBUTES, 1 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbMultiSigner, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbxRsaSigner, SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,    SECURE_BOOT_KEY_ATTRIBUTES, 1 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStateUnknown, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,          SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, FALSE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateUnknown, SECURE_BOOT_KEY_ATTRIBUTES, 1 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,          SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, FALSE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, 0,                          1, AuditVariableStateAbsent,  0,                          0 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateUnknown,       SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, FALSE
     },
     {
-      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,  0,                          0 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, 0,                          1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, FALSE
+    },
+    {
+      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, FALSE
     }
   };
   UINTN  Index;
@@ -822,14 +830,17 @@ InitializeAuditJournal (
     sizeof (Journal->ManifestSha256)
     );
   CopyMem (Journal->EcitSha256, mEcitSha256, sizeof (Journal->EcitSha256));
-  Journal->SetupMode    = Snapshot->SetupMode;
-  Journal->SecureBoot   = Snapshot->SecureBoot;
-  Journal->PkState      = Snapshot->PkState;
-  Journal->PkAttributes = Snapshot->PkAttributes;
-  Journal->PkSize       = Snapshot->PkSize;
-  Journal->DbState      = Snapshot->DbState;
-  Journal->DbAttributes = Snapshot->DbAttributes;
-  Journal->DbSize       = Snapshot->DbSize;
+  Journal->SetupMode     = Snapshot->SetupMode;
+  Journal->SecureBoot    = Snapshot->SecureBoot;
+  Journal->PkState       = Snapshot->PkState;
+  Journal->PkAttributes  = Snapshot->PkAttributes;
+  Journal->PkSize        = Snapshot->PkSize;
+  Journal->DbState       = Snapshot->DbState;
+  Journal->DbAttributes  = Snapshot->DbAttributes;
+  Journal->DbSize        = Snapshot->DbSize;
+  Journal->DbxState      = Snapshot->DbxState;
+  Journal->DbxAttributes = Snapshot->DbxAttributes;
+  Journal->DbxSize       = Snapshot->DbxSize;
 }
 
 STATIC
@@ -847,7 +858,10 @@ CompareJournalState (
       (Journal->PkSize != Snapshot->PkSize) ||
       (Journal->DbState != (UINT32)Snapshot->DbState) ||
       (Journal->DbAttributes != Snapshot->DbAttributes) ||
-      (Journal->DbSize != Snapshot->DbSize))
+      (Journal->DbSize != Snapshot->DbSize) ||
+      (Journal->DbxState != (UINT32)Snapshot->DbxState) ||
+      (Journal->DbxAttributes != Snapshot->DbxAttributes) ||
+      (Journal->DbxSize != Snapshot->DbxSize))
   {
     return EFI_COMPROMISED_DATA;
   }
@@ -1218,6 +1232,42 @@ LoadImageExpectDenied (
   }
 
   UT_LOG_INFO ("%a: image denied as expected: %r\n", Phase, Status);
+  return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+LoadAndStartImage (
+  IN CONST CHAR8  *Phase,
+  IN CONST VOID   *Image,
+  IN UINTN        ImageSize
+  )
+{
+  EFI_HANDLE  LoadedImage;
+  EFI_STATUS  Status;
+
+  LoadedImage = NULL;
+  Status      = gBS->LoadImage (
+                       FALSE,
+                       gImageHandle,
+                       (EFI_DEVICE_PATH_PROTOCOL *)&mTestImageDevicePath,
+                       (VOID *)Image,
+                       ImageSize,
+                       &LoadedImage
+                       );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("%a: image load failed: %r\n", Phase, Status);
+    return Status;
+  }
+
+  Status = gBS->StartImage (LoadedImage, NULL, NULL);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("%a: image start failed: %r\n", Phase, Status);
+    gBS->UnloadImage (LoadedImage);
+    return Status;
+  }
+
+  UT_LOG_INFO ("%a: image loaded and executed\n", Phase);
   return EFI_SUCCESS;
 }
 
@@ -1872,6 +1922,278 @@ MldsaImageTbsHashV2Test (
            );
 }
 
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+MultiSignatureRevocationTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  BOOLEAN           ImageEvidenceAttempted;
+  EFI_STATUS        RecoveryStatus;
+  UNIT_TEST_STATUS  Result;
+  EFI_STATUS        Status;
+
+  ImageEvidenceAttempted = FALSE;
+  Result                 = UNIT_TEST_ERROR_TEST_FAILED;
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("The Secure Boot baseline is unsafe: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             gSecureBootKeyAuditSetupPkMldsa,
+             gSecureBootKeyAuditSetupPkMldsaSize,
+             gSecureBootKeyAuditPkMldsa,
+             gSecureBootKeyAuditPkMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Setup Mode enrollment of the ML-DSA-87 PK failed: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = RequireSecureBootEnforcement ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "RSA-first multi-signed image before db enrollment",
+             gSecureBootKeyAuditHelloRsaMldsa,
+             gSecureBootKeyAuditHelloRsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "ML-DSA-first multi-signed image before db enrollment",
+             gSecureBootKeyAuditHelloMldsaRsa,
+             gSecureBootKeyAuditHelloMldsaRsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbUpdate (
+             gSecureBootKeyAuditEnrollDbMultiSigner,
+             gSecureBootKeyAuditEnrollDbMultiSignerSize,
+             gSecureBootKeyAuditDbMultiSigner,
+             gSecureBootKeyAuditDbMultiSignerSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not enroll both image signers in db: %r\n", Status);
+    goto Exit;
+  }
+
+  RecordEcitObservations (
+    mMldsaUpdateClaims,
+    ARRAY_SIZE (mMldsaUpdateClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  ImageEvidenceAttempted = TRUE;
+
+  Status = LoadAndStartImage (
+             "RSA-first multi-signed image with both signers authorized",
+             gSecureBootKeyAuditHelloRsaMldsa,
+             gSecureBootKeyAuditHelloRsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "ML-DSA-first multi-signed image with both signers authorized",
+             gSecureBootKeyAuditHelloMldsaRsa,
+             gSecureBootKeyAuditHelloMldsaRsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbxUpdate (
+             gSecureBootKeyAuditEnrollDbxRsaSigner,
+             gSecureBootKeyAuditEnrollDbxRsaSignerSize,
+             gSecureBootKeyAuditDbxRsaSigner,
+             gSecureBootKeyAuditDbxRsaSignerSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not revoke the RSA image signer: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "ML-DSA-first control after RSA signer revocation",
+             gSecureBootKeyAuditHelloMldsaRsa,
+             gSecureBootKeyAuditHelloMldsaRsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "RSA-first image after RSA signer revocation",
+             gSecureBootKeyAuditHelloRsaMldsa,
+             gSecureBootKeyAuditHelloRsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbxUpdate (
+             gSecureBootKeyAuditEnrollDbxMldsaSigner,
+             gSecureBootKeyAuditEnrollDbxMldsaSignerSize,
+             gSecureBootKeyAuditDbxMldsaSigner,
+             gSecureBootKeyAuditDbxMldsaSignerSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not revoke the ML-DSA image signer: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "RSA-first control after ML-DSA signer revocation",
+             gSecureBootKeyAuditHelloRsaMldsa,
+             gSecureBootKeyAuditHelloRsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "ML-DSA-first image after ML-DSA signer revocation",
+             gSecureBootKeyAuditHelloMldsaRsa,
+             gSecureBootKeyAuditHelloMldsaRsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbxUpdate (
+             gSecureBootKeyAuditEnrollDbxBothSigners,
+             gSecureBootKeyAuditEnrollDbxBothSignersSize,
+             gSecureBootKeyAuditDbxBothSigners,
+             gSecureBootKeyAuditDbxBothSignersSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not revoke both image signers: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "RSA-first image after both signer revocations",
+             gSecureBootKeyAuditHelloRsaMldsa,
+             gSecureBootKeyAuditHelloRsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "ML-DSA-first image after both signer revocations",
+             gSecureBootKeyAuditHelloMldsaRsa,
+             gSecureBootKeyAuditHelloMldsaRsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  RecordEcitObservation (
+    EcitImageAuthorizationTbsV2Sha512,
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  RecordEcitObservation (
+    EcitImageRevocationTbsV2Sha512,
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  RecordEcitObservations (
+    mRsaImageVerificationClaims,
+    ARRAY_SIZE (mRsaImageVerificationClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  RecordEcitObservations (
+    mMldsaImageVerificationClaims,
+    ARRAY_SIZE (mMldsaImageVerificationClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+
+  Status = ApplyDbxUpdate (
+             gSecureBootKeyAuditDeleteDbxByMldsa,
+             gSecureBootKeyAuditDeleteDbxByMldsaSize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not delete the multi-signature test dbx: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyDbUpdate (
+             gSecureBootKeyAuditDeleteDbMultiSignerByMldsa,
+             gSecureBootKeyAuditDeleteDbMultiSignerByMldsaSize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not delete the multi-signature test db: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             gSecureBootKeyAuditDeleteByMldsa,
+             gSecureBootKeyAuditDeleteByMldsaSize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("The ML-DSA-87 PK could not authenticate cleanup: %r\n", Status);
+    goto Exit;
+  }
+
+  Result = UNIT_TEST_PASSED;
+
+Exit:
+  if ((Result != UNIT_TEST_PASSED) && ImageEvidenceAttempted) {
+    RecordEcitObservation (
+      EcitImageAuthorizationTbsV2Sha512,
+      EcitObservationFailure,
+      Status
+      );
+    RecordEcitObservation (
+      EcitImageRevocationTbsV2Sha512,
+      EcitObservationFailure,
+      Status
+      );
+    RecordEcitObservations (
+      mRsaImageVerificationClaims,
+      ARRAY_SIZE (mRsaImageVerificationClaims),
+      EcitObservationFailure,
+      Status
+      );
+    RecordEcitObservations (
+      mMldsaImageVerificationClaims,
+      ARRAY_SIZE (mMldsaImageVerificationClaims),
+      EcitObservationFailure,
+      Status
+      );
+  }
+
+  RecoveryStatus = RecoverSetupMode ();
+  if (EFI_ERROR (RecoveryStatus)) {
+    UT_LOG_ERROR ("Unable to recover the multi-signature test state: %r\n", RecoveryStatus);
+    Result = UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return Result;
+}
+
 EFI_STATUS
 EFIAPI
 SecureBootKeyAuditAppEntry (
@@ -2004,6 +2326,15 @@ SecureBootKeyAuditAppEntry (
     "Authorize an ML-DSA-87 image with a V2 db TBS hash",
     "MldsaImageTbsHashV2",
     MldsaImageTbsHashV2Test,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Continue multi-signature verification after individual signer revocation",
+    "MultiSignatureRevocation",
+    MultiSignatureRevocationTest,
     NULL,
     NULL,
     NULL

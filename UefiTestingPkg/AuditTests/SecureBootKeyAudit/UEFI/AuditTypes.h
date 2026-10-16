@@ -50,6 +50,9 @@ typedef enum {
   EcitDbUpdateVerificationSha512,
   EcitImageAuthorizationTbsV1Sha512,
   EcitImageAuthorizationTbsV2Sha512,
+  EcitImageRevocationTbsV2Sha512,
+  EcitImageVerificationRsaSha256,
+  EcitImageVerificationSha256,
   EcitImageVerificationMldsa87,
   EcitImageVerificationSha512,
   EcitImageVerificationMldsa87Sha512Profile,
@@ -72,6 +75,10 @@ typedef enum {
   AuditVariableStatePkMldsa,
   AuditVariableStateDbV1,
   AuditVariableStateDbV2,
+  AuditVariableStateDbMultiSigner,
+  AuditVariableStateDbxRsaSigner,
+  AuditVariableStateDbxMldsaSigner,
+  AuditVariableStateDbxBothSigners,
   AuditVariableStateUnknown
 } AUDIT_VARIABLE_STATE;
 
@@ -84,6 +91,9 @@ typedef struct {
   AUDIT_VARIABLE_STATE    DbState;
   UINT32                  DbAttributes;
   UINTN                   DbSize;
+  AUDIT_VARIABLE_STATE    DbxState;
+  UINT32                  DbxAttributes;
+  UINTN                   DbxSize;
 } AUDIT_BASELINE_SNAPSHOT;
 
 #pragma pack (1)
@@ -114,6 +124,9 @@ typedef struct {
   UINT32    DbState;
   UINT32    DbAttributes;
   UINT64    DbSize;
+  UINT32    DbxState;
+  UINT32    DbxAttributes;
+  UINT64    DbxSize;
 } AUDIT_JOURNAL;
 #pragma pack ()
 

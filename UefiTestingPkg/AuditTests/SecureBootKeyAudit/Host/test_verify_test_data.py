@@ -74,7 +74,8 @@ class VerifyTestDataTests(unittest.TestCase):
             self.manifest_data,
         )
         self.assertTrue(evidence["role_keys_distinct"])
-        self.assertEqual(evidence["authenticated_updates_verified"], 16)
+        self.assertEqual(evidence["authenticated_updates_verified"], 22)
+        self.assertEqual(evidence["multisigned_images_verified"], 2)
 
     def test_corrupted_authenticode_signature_is_rejected(self) -> None:
         self.assertEqual(
