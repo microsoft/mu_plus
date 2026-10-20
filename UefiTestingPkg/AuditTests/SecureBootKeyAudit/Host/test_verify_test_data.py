@@ -17,7 +17,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 from cryptography.x509.oid import NameOID
-
 from Host.VerifyTestData import (
     VerificationError,
     parse_c_arrays,
@@ -35,9 +34,7 @@ class VerifyTestDataTests(unittest.TestCase):
         cls.host_dir = Path(__file__).resolve().parent
         cls.manifest_data = (cls.host_dir / "TestData.manifest.json").read_bytes()
         cls.manifest = json.loads(cls.manifest_data)
-        cls.arrays = parse_c_arrays(
-            cls.host_dir.parent / "UEFI" / "TestData.c"
-        )
+        cls.arrays = parse_c_arrays(cls.host_dir.parent / "UEFI" / "TestData.c")
 
     @staticmethod
     def bind_manifest(arrays, manifest):
@@ -74,8 +71,11 @@ class VerifyTestDataTests(unittest.TestCase):
             self.manifest_data,
         )
         self.assertTrue(evidence["role_keys_distinct"])
-        self.assertEqual(evidence["authenticated_updates_verified"], 22)
-        self.assertEqual(evidence["multisigned_images_verified"], 2)
+        self.assertEqual(
+            evidence["authenticated_updates_verified"],
+            47 + len(self.manifest["format_sweep"]) * 4 + 2,
+        )
+        self.assertEqual(evidence["multisigned_images_verified"], 5)
 
     def test_corrupted_authenticode_signature_is_rejected(self) -> None:
         self.assertEqual(

@@ -38,12 +38,61 @@ RecoveryStateIsRecognized (
     return FALSE;
   }
 
-  if ((Snapshot->PkState == AuditVariableStatePkA) ||
-      (Snapshot->PkState == AuditVariableStatePkB))
-  {
+  if (Snapshot->PkState == AuditVariableStatePkB) {
     return (BOOLEAN)(
                      (Snapshot->DbState == AuditVariableStateAbsent) &&
                      (Snapshot->DbxState == AuditVariableStateAbsent)
+                     );
+  }
+
+  if (Snapshot->PkState == AuditVariableStatePkA) {
+    if (Snapshot->DbState == AuditVariableStateAbsent) {
+      return (BOOLEAN)(Snapshot->DbxState == AuditVariableStateAbsent);
+    }
+
+    if ((Snapshot->DbState != AuditVariableStateDbCaMigration) &&
+        (Snapshot->DbState != AuditVariableStateDbCaCapability) &&
+        (Snapshot->DbState != AuditVariableStateDbMultiSigner))
+    {
+      return FALSE;
+    }
+
+    if (Snapshot->DbAttributes != SECURE_BOOT_KEY_ATTRIBUTES) {
+      return FALSE;
+    }
+
+    if (Snapshot->DbxState == AuditVariableStateAbsent) {
+      return TRUE;
+    }
+
+    return (BOOLEAN)(
+                     ((Snapshot->DbxState == AuditVariableStateDbxRsaSigner) ||
+                      (Snapshot->DbxState == AuditVariableStateDbxBothSigners) ||
+                      (Snapshot->DbxState == AuditVariableStateDbxMigrationRsa) ||
+                      (Snapshot->DbxState == AuditVariableStateDbxMigrationRsaEcdsa) ||
+                      (Snapshot->DbxState == AuditVariableStateDbxMigrationAll)) &&
+                     (Snapshot->DbxAttributes == SECURE_BOOT_KEY_ATTRIBUTES)
+                     );
+  }
+
+  if (Snapshot->PkState == AuditVariableStatePkEcdsa) {
+    if (Snapshot->DbState == AuditVariableStateAbsent) {
+      return (BOOLEAN)(Snapshot->DbxState == AuditVariableStateAbsent);
+    }
+
+    if ((Snapshot->DbState != AuditVariableStateDbCaCapability) ||
+        (Snapshot->DbAttributes != SECURE_BOOT_KEY_ATTRIBUTES))
+    {
+      return FALSE;
+    }
+
+    if (Snapshot->DbxState == AuditVariableStateAbsent) {
+      return TRUE;
+    }
+
+    return (BOOLEAN)(
+                     (Snapshot->DbxState == AuditVariableStateDbxCaCapability) &&
+                     (Snapshot->DbxAttributes == SECURE_BOOT_KEY_ATTRIBUTES)
                      );
   }
 
@@ -85,7 +134,7 @@ RecoveryStateIsRecognized (
 STATIC
 EFI_STATUS
 RecoverDb (
-  VOID
+  IN AUDIT_VARIABLE_STATE  PkState
   )
 {
   UINT32       Attributes;
@@ -135,8 +184,52 @@ RecoverDb (
                gSecureBootKeyAuditDbMultiSignerSize
                ))
   {
-    DeleteDb     = gSecureBootKeyAuditDeleteDbMultiSignerByMldsa;
-    DeleteDbSize = gSecureBootKeyAuditDeleteDbMultiSignerByMldsaSize;
+    if (PkState == AuditVariableStatePkA) {
+      DeleteDb     = gSecureBootKeyAuditDeleteDbCaMigrationByA;
+      DeleteDbSize = gSecureBootKeyAuditDeleteDbCaMigrationByASize;
+    } else {
+      DeleteDb     = gSecureBootKeyAuditDeleteDbMultiSignerByMldsa;
+      DeleteDbSize = gSecureBootKeyAuditDeleteDbMultiSignerByMldsaSize;
+    }
+  } else if (PkMatches (
+               Db,
+               DbSize,
+               gSecureBootKeyAuditDbCaMigration,
+               gSecureBootKeyAuditDbCaMigrationSize
+               ))
+  {
+    DeleteDb     = gSecureBootKeyAuditDeleteDbCaMigrationByA;
+    DeleteDbSize = gSecureBootKeyAuditDeleteDbCaMigrationByASize;
+  } else if (PkMatches (
+               Db,
+               DbSize,
+               gSecureBootKeyAuditDbCaRsa,
+               gSecureBootKeyAuditDbCaRsaSize
+               ) ||
+             PkMatches (
+               Db,
+               DbSize,
+               gSecureBootKeyAuditDbCaRsaEcdsa,
+               gSecureBootKeyAuditDbCaRsaEcdsaSize
+               ))
+  {
+    DeleteDb     = gSecureBootKeyAuditDeleteDbCaMigrationByA;
+    DeleteDbSize = gSecureBootKeyAuditDeleteDbCaMigrationByASize;
+  } else if (PkMatches (
+               Db,
+               DbSize,
+               gSecureBootKeyAuditDbCaEcdsa,
+               gSecureBootKeyAuditDbCaEcdsaSize
+               ) ||
+             PkMatches (
+               Db,
+               DbSize,
+               gSecureBootKeyAuditDbCaEcdsaMldsa,
+               gSecureBootKeyAuditDbCaEcdsaMldsaSize
+               ))
+  {
+    DeleteDb     = gSecureBootKeyAuditDeleteDbCaMigrationByEcdsa;
+    DeleteDbSize = gSecureBootKeyAuditDeleteDbCaMigrationByEcdsaSize;
   } else {
     FreePool (Db);
     UT_LOG_ERROR ("Refusing to modify an unknown existing db\n");
@@ -155,13 +248,15 @@ RecoverDb (
 STATIC
 EFI_STATUS
 RecoverDbx (
-  VOID
+  IN AUDIT_VARIABLE_STATE  PkState
   )
 {
-  UINT32      Attributes;
-  UINT8       *Dbx;
-  UINTN       DbxSize;
-  EFI_STATUS  Status;
+  UINT32       Attributes;
+  CONST UINT8  *DeleteDbx;
+  UINTN        DeleteDbxSize;
+  UINT8        *Dbx;
+  UINTN        DbxSize;
+  EFI_STATUS   Status;
 
   Status = ReadVariable (
              EFI_IMAGE_SECURITY_DATABASE1,
@@ -178,25 +273,69 @@ RecoverDbx (
     return Status;
   }
 
-  if (!PkMatches (
-         Dbx,
-         DbxSize,
-         gSecureBootKeyAuditDbxRsaSigner,
-         gSecureBootKeyAuditDbxRsaSignerSize
-         ) &&
-      !PkMatches (
-         Dbx,
-         DbxSize,
-         gSecureBootKeyAuditDbxMldsaSigner,
-         gSecureBootKeyAuditDbxMldsaSignerSize
-         ) &&
-      !PkMatches (
-         Dbx,
-         DbxSize,
-         gSecureBootKeyAuditDbxBothSigners,
-         gSecureBootKeyAuditDbxBothSignersSize
-         ))
+  if (PkMatches (
+        Dbx,
+        DbxSize,
+        gSecureBootKeyAuditDbxRsaSigner,
+        gSecureBootKeyAuditDbxRsaSignerSize
+        ) ||
+      PkMatches (
+        Dbx,
+        DbxSize,
+        gSecureBootKeyAuditDbxMldsaSigner,
+        gSecureBootKeyAuditDbxMldsaSignerSize
+        ) ||
+      PkMatches (
+        Dbx,
+        DbxSize,
+        gSecureBootKeyAuditDbxBothSigners,
+        gSecureBootKeyAuditDbxBothSignersSize
+        ))
   {
+    if (PkState == AuditVariableStatePkA) {
+      DeleteDbx     = gSecureBootKeyAuditDeleteDbxCaMigrationByA;
+      DeleteDbxSize = gSecureBootKeyAuditDeleteDbxCaMigrationByASize;
+    } else {
+      DeleteDbx     = gSecureBootKeyAuditDeleteDbxByMldsa;
+      DeleteDbxSize = gSecureBootKeyAuditDeleteDbxByMldsaSize;
+    }
+  } else if (PkMatches (
+               Dbx,
+               DbxSize,
+               gSecureBootKeyAuditDbxMigrationRsa,
+               gSecureBootKeyAuditDbxMigrationRsaSize
+               ) ||
+             PkMatches (
+               Dbx,
+               DbxSize,
+               gSecureBootKeyAuditDbxMigrationRsaEcdsa,
+               gSecureBootKeyAuditDbxMigrationRsaEcdsaSize
+               ) ||
+             PkMatches (
+               Dbx,
+               DbxSize,
+               gSecureBootKeyAuditDbxMigrationAll,
+               gSecureBootKeyAuditDbxMigrationAllSize
+               ))
+  {
+    DeleteDbx     = gSecureBootKeyAuditDeleteDbxCaMigrationByA;
+    DeleteDbxSize = gSecureBootKeyAuditDeleteDbxCaMigrationByASize;
+  } else if (PkMatches (
+               Dbx,
+               DbxSize,
+               gSecureBootKeyAuditDbCaEcdsa,
+               gSecureBootKeyAuditDbCaEcdsaSize
+               ) ||
+             PkMatches (
+               Dbx,
+               DbxSize,
+               gSecureBootKeyAuditDbCaEcdsaMldsa,
+               gSecureBootKeyAuditDbCaEcdsaMldsaSize
+               ))
+  {
+    DeleteDbx     = gSecureBootKeyAuditDeleteDbxCaMigrationByEcdsa;
+    DeleteDbxSize = gSecureBootKeyAuditDeleteDbxCaMigrationByEcdsaSize;
+  } else {
     FreePool (Dbx);
     UT_LOG_ERROR ("Refusing to modify an unknown existing dbx\n");
     return EFI_ACCESS_DENIED;
@@ -204,8 +343,8 @@ RecoverDbx (
 
   FreePool (Dbx);
   return ApplyDbxUpdate (
-           gSecureBootKeyAuditDeleteDbxByMldsa,
-           gSecureBootKeyAuditDeleteDbxByMldsaSize,
+           DeleteDbx,
+           DeleteDbxSize,
            NULL,
            0
            );
@@ -243,14 +382,14 @@ RecoverSetupModeInternal (
   }
 
   if (Snapshot.DbxState != AuditVariableStateAbsent) {
-    Status = RecoverDbx ();
+    Status = RecoverDbx (Snapshot.PkState);
     if (EFI_ERROR (Status)) {
       return Status;
     }
   }
 
   if (Snapshot.DbState != AuditVariableStateAbsent) {
-    Status = RecoverDb ();
+    Status = RecoverDb (Snapshot.PkState);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -275,6 +414,13 @@ RecoverSetupModeInternal (
       return ApplyPkUpdate (
                gSecureBootKeyAuditRecoveryDeleteByMldsa,
                gSecureBootKeyAuditRecoveryDeleteByMldsaSize,
+               NULL,
+               0
+               );
+    case AuditVariableStatePkEcdsa:
+      return ApplyPkUpdate (
+               gSecureBootKeyAuditRecoveryDeleteByEcdsa,
+               gSecureBootKeyAuditRecoveryDeleteByEcdsaSize,
                NULL,
                0
                );

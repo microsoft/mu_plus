@@ -20,6 +20,7 @@
 typedef enum {
   EcitClaimIdentifierNone,
   EcitClaimIdentifierOid,
+  EcitClaimIdentifierOidPair,
   EcitClaimIdentifierGuid
 } ECIT_CLAIM_IDENTIFIER_KIND;
 
@@ -30,8 +31,11 @@ typedef struct {
   ECIT_CLAIM_IDENTIFIER_KIND    IdentifierKind;
   CONST CHAR8                   *Oid;
   CONST EFI_GUID                *SignatureListType;
-  BOOLEAN                       CandidateProfile;
+  CONST CHAR8                   *PairedOid;
 } ECIT_CLAIM_DESCRIPTOR;
+
+#define ECIT_GUID_CLAIM(ClaimId, ClaimName, FeatureGuid, SignatureGuid) \
+  { ClaimId, ClaimName, FeatureGuid, EcitClaimIdentifierGuid, NULL, SignatureGuid, NULL }
 
 STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
   {
@@ -41,7 +45,7 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierGuid,
     NULL,
     &gEfiCertX509Guid,
-    FALSE
+    NULL
   },
   {
     EcitDbUpdateVerificationRsaSha256,
@@ -50,7 +54,16 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierOid,
     "1.2.840.113549.1.1.11",
     NULL,
-    FALSE
+    NULL
+  },
+  {
+    EcitDbUpdateVerificationEcdsaSha256,
+    "db-update-verification:ecdsa-sha256",
+    &gEfiEcitFeatureSbDatabaseUpdateVerificationGuid,
+    EcitClaimIdentifierOid,
+    "1.2.840.10045.4.3.2",
+    NULL,
+    NULL
   },
   {
     EcitDbUpdateVerificationSha256,
@@ -59,7 +72,7 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierOid,
     "2.16.840.1.101.3.4.2.1",
     NULL,
-    FALSE
+    NULL
   },
   {
     EcitDbUpdateVerificationMldsa87,
@@ -68,7 +81,7 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierOid,
     "2.16.840.1.101.3.4.3.19",
     NULL,
-    FALSE
+    NULL
   },
   {
     EcitDbUpdateVerificationSha512,
@@ -77,35 +90,65 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierOid,
     "2.16.840.1.101.3.4.2.3",
     NULL,
-    FALSE
+    NULL
   },
   {
-    EcitImageAuthorizationTbsV1Sha512,
-    "image-authorization:tbs-v1-sha512",
-    &gEfiEcitFeatureSbImageAuthorizationGuid,
-    EcitClaimIdentifierGuid,
+    EcitDbUpdateVerificationRsaSha256Profile,
+    "db-update-verification-profile:sha256-with-rsa",
+    &gEfiEcitFeatureSbDatabaseUpdateVerificationGuid,
+    EcitClaimIdentifierOidPair,
+    "1.2.840.113549.1.1.11",
     NULL,
-    &gEfiCertX509Sha512Guid,
-    FALSE
+    "2.16.840.1.101.3.4.2.1"
   },
   {
-    EcitImageAuthorizationTbsV2Sha512,
-    "image-authorization:tbs-v2-sha512",
-    &gEfiEcitFeatureSbImageAuthorizationGuid,
-    EcitClaimIdentifierGuid,
+    EcitDbUpdateVerificationEcdsaSha256Profile,
+    "db-update-verification-profile:sha256-with-ecdsa",
+    &gEfiEcitFeatureSbDatabaseUpdateVerificationGuid,
+    EcitClaimIdentifierOidPair,
+    "1.2.840.10045.4.3.2",
     NULL,
-    &gEfiCertV2X509Sha512Guid,
-    FALSE
+    "2.16.840.1.101.3.4.2.1"
   },
   {
-    EcitImageRevocationTbsV2Sha512,
-    "image-revocation:tbs-v2-sha512",
-    &gEfiEcitFeatureSbImageRevocationGuid,
-    EcitClaimIdentifierGuid,
+    EcitDbUpdateVerificationMldsa87Sha512Profile,
+    "db-update-verification-profile:sha512-with-mldsa87",
+    &gEfiEcitFeatureSbDatabaseUpdateVerificationGuid,
+    EcitClaimIdentifierOidPair,
+    "2.16.840.1.101.3.4.3.19",
     NULL,
-    &gEfiCertV2X509Sha512Guid,
-    FALSE
+    "2.16.840.1.101.3.4.2.3"
   },
+  ECIT_GUID_CLAIM (EcitImageAuthorizationX509V1, "image-authorization:x509-v1", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertX509Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationX509V2, "image-authorization:x509-v2", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertV2X509Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationHashV1Sha1, "image-authorization:hash-v1-sha1", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertSha1Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationHashV1Sha256, "image-authorization:hash-v1-sha256", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertSha256Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationHashV2Sha256, "image-authorization:hash-v2-sha256", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertV2Sha256Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationHashV1Sha384, "image-authorization:hash-v1-sha384", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertSha384Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationHashV2Sha384, "image-authorization:hash-v2-sha384", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertV2Sha384Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationHashV1Sha512, "image-authorization:hash-v1-sha512", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertSha512Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationHashV2Sha512, "image-authorization:hash-v2-sha512", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertV2Sha512Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationTbsV1Sha256, "image-authorization:tbs-v1-sha256", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertX509Sha256Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationTbsV2Sha256, "image-authorization:tbs-v2-sha256", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertV2X509Sha256Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationTbsV1Sha384, "image-authorization:tbs-v1-sha384", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertX509Sha384Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationTbsV2Sha384, "image-authorization:tbs-v2-sha384", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertV2X509Sha384Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationTbsV1Sha512, "image-authorization:tbs-v1-sha512", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertX509Sha512Guid),
+  ECIT_GUID_CLAIM (EcitImageAuthorizationTbsV2Sha512, "image-authorization:tbs-v2-sha512", &gEfiEcitFeatureSbImageAuthorizationGuid, &gEfiCertV2X509Sha512Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationX509V1, "image-revocation:x509-v1", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertX509Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationX509V2, "image-revocation:x509-v2", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertV2X509Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationHashV1Sha1, "image-revocation:hash-v1-sha1", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertSha1Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationHashV1Sha256, "image-revocation:hash-v1-sha256", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertSha256Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationHashV2Sha256, "image-revocation:hash-v2-sha256", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertV2Sha256Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationHashV1Sha384, "image-revocation:hash-v1-sha384", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertSha384Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationHashV2Sha384, "image-revocation:hash-v2-sha384", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertV2Sha384Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationHashV1Sha512, "image-revocation:hash-v1-sha512", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertSha512Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationHashV2Sha512, "image-revocation:hash-v2-sha512", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertV2Sha512Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationTbsV1Sha256, "image-revocation:tbs-v1-sha256", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertX509Sha256Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationTbsV2Sha256, "image-revocation:tbs-v2-sha256", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertV2X509Sha256Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationTbsV1Sha384, "image-revocation:tbs-v1-sha384", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertX509Sha384Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationTbsV2Sha384, "image-revocation:tbs-v2-sha384", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertV2X509Sha384Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationTbsV1Sha512, "image-revocation:tbs-v1-sha512", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertX509Sha512Guid),
+  ECIT_GUID_CLAIM (EcitImageRevocationTbsV2Sha512, "image-revocation:tbs-v2-sha512", &gEfiEcitFeatureSbImageRevocationGuid, &gEfiCertV2X509Sha512Guid),
   {
     EcitImageVerificationRsaSha256,
     "image-verification:rsa-sha256",
@@ -113,7 +156,16 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierOid,
     "1.2.840.113549.1.1.11",
     NULL,
-    FALSE
+    NULL
+  },
+  {
+    EcitImageVerificationEcdsaSha256,
+    "image-verification:ecdsa-sha256",
+    &gEfiEcitFeatureSbImageVerificationGuid,
+    EcitClaimIdentifierOid,
+    "1.2.840.10045.4.3.2",
+    NULL,
+    NULL
   },
   {
     EcitImageVerificationSha256,
@@ -122,7 +174,7 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierOid,
     "2.16.840.1.101.3.4.2.1",
     NULL,
-    FALSE
+    NULL
   },
   {
     EcitImageVerificationMldsa87,
@@ -131,7 +183,7 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierOid,
     "2.16.840.1.101.3.4.3.19",
     NULL,
-    FALSE
+    NULL
   },
   {
     EcitImageVerificationSha512,
@@ -140,16 +192,34 @@ STATIC CONST ECIT_CLAIM_DESCRIPTOR  mClaimDescriptors[] = {
     EcitClaimIdentifierOid,
     "2.16.840.1.101.3.4.2.3",
     NULL,
-    FALSE
+    NULL
+  },
+  {
+    EcitImageVerificationRsaSha256Profile,
+    "image-verification-profile:sha256-with-rsa",
+    &gEfiEcitFeatureSbImageVerificationGuid,
+    EcitClaimIdentifierOidPair,
+    "1.2.840.113549.1.1.11",
+    NULL,
+    "2.16.840.1.101.3.4.2.1"
+  },
+  {
+    EcitImageVerificationEcdsaSha256Profile,
+    "image-verification-profile:sha256-with-ecdsa",
+    &gEfiEcitFeatureSbImageVerificationGuid,
+    EcitClaimIdentifierOidPair,
+    "1.2.840.10045.4.3.2",
+    NULL,
+    "2.16.840.1.101.3.4.2.1"
   },
   {
     EcitImageVerificationMldsa87Sha512Profile,
     "image-verification-profile:sha512-with-mldsa87",
     &gEfiEcitFeatureSbImageVerificationGuid,
-    EcitClaimIdentifierNone,
+    EcitClaimIdentifierOidPair,
+    "2.16.840.1.101.3.4.3.19",
     NULL,
-    NULL,
-    TRUE
+    "2.16.840.1.101.3.4.2.3"
   }
 };
 
@@ -248,7 +318,6 @@ InitializeEcitClaimResults (
     ClaimResults[Index].Claim             = EcitClaimUnknown;
     ClaimResults[Index].Observation       = EcitObservationNotTested;
     ClaimResults[Index].ObservationStatus = EFI_NOT_READY;
-    ClaimResults[Index].CandidateProfile  = Descriptor->CandidateProfile;
   }
 }
 
@@ -274,13 +343,8 @@ PopulateEcitClaimStates (
 
   for (Index = 0; Index < ClaimResultCount; Index++) {
     Descriptor = GetClaimDescriptor ((ECIT_CLAIM_ID)Index);
-    if (Descriptor->CandidateProfile) {
-      ClaimResults[Index].Claim = EcitClaimUnknown;
-      continue;
-    }
-
-    Found  = FALSE;
-    Offset = sizeof (*Table);
+    Found      = FALSE;
+    Offset     = sizeof (*Table);
     for (EntryIndex = 0; EntryIndex < Table->NumberOfEntries; EntryIndex++) {
       Entry = (CONST EFI_CRYPTO_INDICATOR_ENTRY *)((CONST UINT8 *)Table + Offset);
       if (CompareGuid (&Entry->FeatureIdentifier, Descriptor->Feature)) {
@@ -288,6 +352,9 @@ PopulateEcitClaimStates (
         PayloadSize = Entry->EntryLength - sizeof (*Entry);
         if (Descriptor->IdentifierKind == EcitClaimIdentifierOid) {
           Found = CsvContainsToken (Payload, PayloadSize, Descriptor->Oid);
+        } else if (Descriptor->IdentifierKind == EcitClaimIdentifierOidPair) {
+          Found = CsvContainsToken (Payload, PayloadSize, Descriptor->Oid) &&
+                  CsvContainsToken (Payload, PayloadSize, Descriptor->PairedOid);
         } else {
           Found = GuidPayloadContains (
                     Payload,
@@ -328,6 +395,34 @@ FindEcitOidClaim (
     if ((Descriptor->IdentifierKind == EcitClaimIdentifierOid) &&
         CompareGuid (Feature, Descriptor->Feature) &&
         (AsciiStrCmp (Oid, Descriptor->Oid) == 0))
+    {
+      return Descriptor->ClaimId;
+    }
+  }
+
+  return EcitClaimCount;
+}
+
+ECIT_CLAIM_ID
+FindEcitOidPairClaim (
+  IN CONST EFI_GUID  *Feature,
+  IN CONST CHAR8     *SignatureOid,
+  IN CONST CHAR8     *DigestOid
+  )
+{
+  CONST ECIT_CLAIM_DESCRIPTOR  *Descriptor;
+  UINTN                        Index;
+
+  if ((Feature == NULL) || (SignatureOid == NULL) || (DigestOid == NULL)) {
+    return EcitClaimCount;
+  }
+
+  for (Index = 0; Index < ARRAY_SIZE (mClaimDescriptors); Index++) {
+    Descriptor = &mClaimDescriptors[Index];
+    if ((Descriptor->IdentifierKind == EcitClaimIdentifierOidPair) &&
+        CompareGuid (Feature, Descriptor->Feature) &&
+        (AsciiStrCmp (SignatureOid, Descriptor->Oid) == 0) &&
+        (AsciiStrCmp (DigestOid, Descriptor->PairedOid) == 0))
     {
       return Descriptor->ClaimId;
     }

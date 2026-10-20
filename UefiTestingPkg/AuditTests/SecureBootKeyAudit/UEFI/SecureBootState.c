@@ -303,18 +303,32 @@ AuditVariableStateName (
       return "PK_B";
     case AuditVariableStatePkMldsa:
       return "PK_MLDSA87";
+    case AuditVariableStatePkEcdsa:
+      return "PK_ECDSA_P256";
     case AuditVariableStateDbV1:
       return "DB_TBS_V1";
     case AuditVariableStateDbV2:
       return "DB_TBS_V2";
     case AuditVariableStateDbMultiSigner:
       return "DB_MULTI_SIGNER";
+    case AuditVariableStateDbCaMigration:
+      return "DB_CA_MIGRATION";
+    case AuditVariableStateDbCaCapability:
+      return "DB_CA_CAPABILITY";
     case AuditVariableStateDbxRsaSigner:
       return "DBX_RSA_SIGNER";
     case AuditVariableStateDbxMldsaSigner:
       return "DBX_MLDSA_SIGNER";
     case AuditVariableStateDbxBothSigners:
       return "DBX_BOTH_SIGNERS";
+    case AuditVariableStateDbxMigrationRsa:
+      return "DBX_MIGRATION_RSA";
+    case AuditVariableStateDbxMigrationRsaEcdsa:
+      return "DBX_MIGRATION_RSA_ECDSA";
+    case AuditVariableStateDbxMigrationAll:
+      return "DBX_MIGRATION_ALL";
+    case AuditVariableStateDbxCaCapability:
+      return "DBX_CA_CAPABILITY";
     case AuditVariableStateUnknown:
       return "UNKNOWN";
     default:
@@ -375,6 +389,14 @@ CaptureBaselineSnapshot (
                  ))
     {
       Snapshot->PkState = AuditVariableStatePkMldsa;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditPkEcdsa,
+                 gSecureBootKeyAuditPkEcdsaSize
+                 ))
+    {
+      Snapshot->PkState = AuditVariableStatePkEcdsa;
     } else {
       Snapshot->PkState = AuditVariableStateUnknown;
     }
@@ -420,6 +442,40 @@ CaptureBaselineSnapshot (
                  ))
     {
       Snapshot->DbState = AuditVariableStateDbMultiSigner;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbCaMigration,
+                 gSecureBootKeyAuditDbCaMigrationSize
+                 ))
+    {
+      Snapshot->DbState = AuditVariableStateDbCaMigration;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbCaRsa,
+                 gSecureBootKeyAuditDbCaRsaSize
+                 ) ||
+               PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbCaEcdsa,
+                 gSecureBootKeyAuditDbCaEcdsaSize
+                 ) ||
+               PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbCaRsaEcdsa,
+                 gSecureBootKeyAuditDbCaRsaEcdsaSize
+                 ) ||
+               PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbCaEcdsaMldsa,
+                 gSecureBootKeyAuditDbCaEcdsaMldsaSize
+                 ))
+    {
+      Snapshot->DbState = AuditVariableStateDbCaCapability;
     } else {
       Snapshot->DbState = AuditVariableStateUnknown;
     }
@@ -465,6 +521,44 @@ CaptureBaselineSnapshot (
                  ))
     {
       Snapshot->DbxState = AuditVariableStateDbxBothSigners;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbxMigrationRsa,
+                 gSecureBootKeyAuditDbxMigrationRsaSize
+                 ))
+    {
+      Snapshot->DbxState = AuditVariableStateDbxMigrationRsa;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbxMigrationRsaEcdsa,
+                 gSecureBootKeyAuditDbxMigrationRsaEcdsaSize
+                 ))
+    {
+      Snapshot->DbxState = AuditVariableStateDbxMigrationRsaEcdsa;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbxMigrationAll,
+                 gSecureBootKeyAuditDbxMigrationAllSize
+                 ))
+    {
+      Snapshot->DbxState = AuditVariableStateDbxMigrationAll;
+    } else if (PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbCaEcdsa,
+                 gSecureBootKeyAuditDbCaEcdsaSize
+                 ) ||
+               PkMatches (
+                 Data,
+                 DataSize,
+                 gSecureBootKeyAuditDbCaEcdsaMldsa,
+                 gSecureBootKeyAuditDbCaEcdsaMldsaSize
+                 ))
+    {
+      Snapshot->DbxState = AuditVariableStateDbxCaCapability;
     } else {
       Snapshot->DbxState = AuditVariableStateUnknown;
     }

@@ -19,17 +19,18 @@
   AuditScenario.c
   AuditScenario.h
   AuditTypes.h
+  CapabilityPath.c
+  CapabilityPath.h
   EcitClaimRegistry.c
   EcitClaimRegistry.h
-  EcitCoverageReport.c
-  EcitCoverageReport.h
+  EcitEvidence.c
+  EcitEvidence.h
   SecureBootState.c
   SecureBootState.h
   SecureBootKeyAuditApp.c
   TestData.c
 
 [Packages]
-  CryptoPkg/CryptoPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SecurityPkg/SecurityPkg.dec
@@ -37,7 +38,6 @@
   UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
 [LibraryClasses]
-  BaseCryptLib
   BaseLib
   BaseMemoryLib
   DebugLib
@@ -51,8 +51,20 @@
   UnitTestLib
 
 [Guids]
+  gEfiCertSha1Guid
+  gEfiCertSha256Guid
+  gEfiCertSha384Guid
+  gEfiCertSha512Guid
   gEfiCertX509Guid
+  gEfiCertX509Sha256Guid
+  gEfiCertX509Sha384Guid
   gEfiCertX509Sha512Guid
+  gEfiCertV2Sha256Guid
+  gEfiCertV2Sha384Guid
+  gEfiCertV2Sha512Guid
+  gEfiCertV2X509Guid
+  gEfiCertV2X509Sha256Guid
+  gEfiCertV2X509Sha384Guid
   gEfiCertV2X509Sha512Guid
   gEfiCryptoIndicatorTableGuid
   gEfiEcitFeatureSbDatabaseUpdateAuthorizationGuid

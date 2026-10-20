@@ -10,9 +10,8 @@
 
 #include <Uefi.h>
 
-#include <Library/BaseCryptLib.h>
-
 #define AUDIT_JOURNAL_FIXTURE_ID_SIZE  32
+#define AUDIT_MANIFEST_SHA256_SIZE     32
 
 typedef struct {
   CONST UINT8    *Data;
@@ -35,8 +34,9 @@ typedef enum {
 typedef enum {
   EcitCoverageVerified,
   EcitCoverageOverReported,
-  EcitCoverageUnderReported,
+  EcitCoverageUnadvertisedSuccess,
   EcitCoverageVerifiedAbsent,
+  EcitCoverageNotAdvertised,
   EcitCoverageNotIndependentlyVerifiable,
   EcitCoverageNotTested,
   EcitCoverageInconclusive
@@ -45,16 +45,50 @@ typedef enum {
 typedef enum {
   EcitDbUpdateAuthorizationX509,
   EcitDbUpdateVerificationRsaSha256,
+  EcitDbUpdateVerificationEcdsaSha256,
   EcitDbUpdateVerificationSha256,
   EcitDbUpdateVerificationMldsa87,
   EcitDbUpdateVerificationSha512,
+  EcitDbUpdateVerificationRsaSha256Profile,
+  EcitDbUpdateVerificationEcdsaSha256Profile,
+  EcitDbUpdateVerificationMldsa87Sha512Profile,
+  EcitImageAuthorizationX509V1,
+  EcitImageAuthorizationX509V2,
+  EcitImageAuthorizationHashV1Sha1,
+  EcitImageAuthorizationHashV1Sha256,
+  EcitImageAuthorizationHashV2Sha256,
+  EcitImageAuthorizationHashV1Sha384,
+  EcitImageAuthorizationHashV2Sha384,
+  EcitImageAuthorizationHashV1Sha512,
+  EcitImageAuthorizationHashV2Sha512,
+  EcitImageAuthorizationTbsV1Sha256,
+  EcitImageAuthorizationTbsV2Sha256,
+  EcitImageAuthorizationTbsV1Sha384,
+  EcitImageAuthorizationTbsV2Sha384,
   EcitImageAuthorizationTbsV1Sha512,
   EcitImageAuthorizationTbsV2Sha512,
+  EcitImageRevocationX509V1,
+  EcitImageRevocationX509V2,
+  EcitImageRevocationHashV1Sha1,
+  EcitImageRevocationHashV1Sha256,
+  EcitImageRevocationHashV2Sha256,
+  EcitImageRevocationHashV1Sha384,
+  EcitImageRevocationHashV2Sha384,
+  EcitImageRevocationHashV1Sha512,
+  EcitImageRevocationHashV2Sha512,
+  EcitImageRevocationTbsV1Sha256,
+  EcitImageRevocationTbsV2Sha256,
+  EcitImageRevocationTbsV1Sha384,
+  EcitImageRevocationTbsV2Sha384,
+  EcitImageRevocationTbsV1Sha512,
   EcitImageRevocationTbsV2Sha512,
   EcitImageVerificationRsaSha256,
+  EcitImageVerificationEcdsaSha256,
   EcitImageVerificationSha256,
   EcitImageVerificationMldsa87,
   EcitImageVerificationSha512,
+  EcitImageVerificationRsaSha256Profile,
+  EcitImageVerificationEcdsaSha256Profile,
   EcitImageVerificationMldsa87Sha512Profile,
   EcitClaimCount
 } ECIT_CLAIM_ID;
@@ -64,7 +98,6 @@ typedef struct {
   ECIT_CLAIM_STATE          Claim;
   ECIT_OBSERVATION_STATE    Observation;
   EFI_STATUS                ObservationStatus;
-  BOOLEAN                   CandidateProfile;
 } ECIT_CLAIM_RESULT;
 
 typedef enum {
@@ -73,12 +106,19 @@ typedef enum {
   AuditVariableStatePkA,
   AuditVariableStatePkB,
   AuditVariableStatePkMldsa,
+  AuditVariableStatePkEcdsa,
   AuditVariableStateDbV1,
   AuditVariableStateDbV2,
   AuditVariableStateDbMultiSigner,
+  AuditVariableStateDbCaMigration,
+  AuditVariableStateDbCaCapability,
   AuditVariableStateDbxRsaSigner,
   AuditVariableStateDbxMldsaSigner,
   AuditVariableStateDbxBothSigners,
+  AuditVariableStateDbxMigrationRsa,
+  AuditVariableStateDbxMigrationRsaEcdsa,
+  AuditVariableStateDbxMigrationAll,
+  AuditVariableStateDbxCaCapability,
   AuditVariableStateUnknown
 } AUDIT_VARIABLE_STATE;
 
@@ -113,8 +153,7 @@ typedef struct {
   UINT32    BootCount;
   UINT64    PriorResult;
   CHAR8     FixtureId[AUDIT_JOURNAL_FIXTURE_ID_SIZE];
-  UINT8     ManifestSha256[SHA256_DIGEST_SIZE];
-  UINT8     EcitSha256[SHA256_DIGEST_SIZE];
+  UINT8     ManifestSha256[AUDIT_MANIFEST_SHA256_SIZE];
   UINT8     SetupMode;
   UINT8     SecureBoot;
   UINT16    Reserved;

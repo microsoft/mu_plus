@@ -15,7 +15,6 @@
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/BaseCryptLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PeCoffLib.h>
@@ -29,19 +28,20 @@
 #include "AuditRecovery.h"
 #include "AuditScenario.h"
 #include "AuditTypes.h"
+#include "CapabilityPath.h"
 #include "EcitClaimRegistry.h"
-#include "EcitCoverageReport.h"
+#include "EcitEvidence.h"
 #include "SecureBootState.h"
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
-#define UNIT_TEST_APP_VERSION  "0.8"
+#define UNIT_TEST_APP_VERSION  "0.9"
 
 #define MAX_ECIT_LENGTH  SIZE_1MB
 
 #define AUDIT_JOURNAL_FILE_NAME   L"SecureBootKeyAuditJournal.bin"
 #define AUDIT_JOURNAL_SIGNATURE   SIGNATURE_32 ('S', 'B', 'J', 'R')
-#define AUDIT_JOURNAL_VERSION     2
+#define AUDIT_JOURNAL_VERSION     3
 #define AUDIT_REBOOT_MARKER_NAME  L"SecureBootKeyAuditRebootPending"
 #define AUDIT_REBOOT_MARKER_ATTRIBUTES \
   (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS)
@@ -76,7 +76,6 @@ STATIC TEST_IMAGE_DEVICE_PATH  mTestImageDevicePath = {
 };
 
 STATIC EFI_STATUS                        mEcitParseStatus = EFI_NOT_READY;
-STATIC UINT8                             mEcitSha256[SHA256_DIGEST_SIZE];
 STATIC CONST EFI_CRYPTO_INDICATOR_TABLE  *mEcitTable;
 
 STATIC ECIT_CLAIM_RESULT  mEcitClaimResults[EcitClaimCount];
@@ -84,13 +83,22 @@ STATIC ECIT_CLAIM_RESULT  mEcitClaimResults[EcitClaimCount];
 STATIC CONST ECIT_CLAIM_ID  mRsaUpdateClaims[] = {
   EcitDbUpdateAuthorizationX509,
   EcitDbUpdateVerificationRsaSha256,
-  EcitDbUpdateVerificationSha256
+  EcitDbUpdateVerificationSha256,
+  EcitDbUpdateVerificationRsaSha256Profile
 };
 
 STATIC CONST ECIT_CLAIM_ID  mMldsaUpdateClaims[] = {
   EcitDbUpdateAuthorizationX509,
   EcitDbUpdateVerificationMldsa87,
-  EcitDbUpdateVerificationSha512
+  EcitDbUpdateVerificationSha512,
+  EcitDbUpdateVerificationMldsa87Sha512Profile
+};
+
+STATIC CONST ECIT_CLAIM_ID  mEcdsaUpdateClaims[] = {
+  EcitDbUpdateAuthorizationX509,
+  EcitDbUpdateVerificationEcdsaSha256,
+  EcitDbUpdateVerificationSha256,
+  EcitDbUpdateVerificationEcdsaSha256Profile
 };
 
 STATIC CONST ECIT_CLAIM_ID  mMldsaImageVerificationClaims[] = {
@@ -101,7 +109,50 @@ STATIC CONST ECIT_CLAIM_ID  mMldsaImageVerificationClaims[] = {
 
 STATIC CONST ECIT_CLAIM_ID  mRsaImageVerificationClaims[] = {
   EcitImageVerificationRsaSha256,
-  EcitImageVerificationSha256
+  EcitImageVerificationSha256,
+  EcitImageVerificationRsaSha256Profile
+};
+
+STATIC CONST ECIT_CLAIM_ID  mEcdsaImageVerificationClaims[] = {
+  EcitImageVerificationEcdsaSha256,
+  EcitImageVerificationSha256,
+  EcitImageVerificationEcdsaSha256Profile
+};
+
+STATIC CONST ECIT_CLAIM_ID  mImageAuthorizationFormatClaims[] = {
+  EcitImageAuthorizationX509V1,
+  EcitImageAuthorizationX509V2,
+  EcitImageAuthorizationHashV1Sha1,
+  EcitImageAuthorizationHashV1Sha256,
+  EcitImageAuthorizationHashV2Sha256,
+  EcitImageAuthorizationHashV1Sha384,
+  EcitImageAuthorizationHashV2Sha384,
+  EcitImageAuthorizationHashV1Sha512,
+  EcitImageAuthorizationHashV2Sha512,
+  EcitImageAuthorizationTbsV1Sha256,
+  EcitImageAuthorizationTbsV2Sha256,
+  EcitImageAuthorizationTbsV1Sha384,
+  EcitImageAuthorizationTbsV2Sha384,
+  EcitImageAuthorizationTbsV1Sha512,
+  EcitImageAuthorizationTbsV2Sha512
+};
+
+STATIC CONST ECIT_CLAIM_ID  mImageRevocationFormatClaims[] = {
+  EcitImageRevocationX509V1,
+  EcitImageRevocationX509V2,
+  EcitImageRevocationHashV1Sha1,
+  EcitImageRevocationHashV1Sha256,
+  EcitImageRevocationHashV2Sha256,
+  EcitImageRevocationHashV1Sha384,
+  EcitImageRevocationHashV2Sha384,
+  EcitImageRevocationHashV1Sha512,
+  EcitImageRevocationHashV2Sha512,
+  EcitImageRevocationTbsV1Sha256,
+  EcitImageRevocationTbsV2Sha256,
+  EcitImageRevocationTbsV1Sha384,
+  EcitImageRevocationTbsV2Sha384,
+  EcitImageRevocationTbsV1Sha512,
+  EcitImageRevocationTbsV2Sha512
 };
 
 STATIC
@@ -254,11 +305,6 @@ ParseEcitClaims (
     return EFI_COMPROMISED_DATA;
   }
 
-  if (!Sha256HashAll ((CONST UINT8 *)Table, Table->Length, mEcitSha256)) {
-    UT_LOG_ERROR ("Unable to hash the parsed ECIT\n");
-    return EFI_DEVICE_ERROR;
-  }
-
   Status = PopulateEcitClaimStates (
              Table,
              mEcitClaimResults,
@@ -316,7 +362,6 @@ ECIT_COVERAGE_STATE
 CorrelateEcitResult (
   IN ECIT_CLAIM_STATE        Claim,
   IN ECIT_OBSERVATION_STATE  Observation,
-  IN BOOLEAN                 CandidateProfile,
   IN EFI_STATUS              ParseStatus
   )
 {
@@ -324,107 +369,27 @@ CorrelateEcitResult (
     return EcitCoverageInconclusive;
   }
 
-  if (CandidateProfile || (Claim == EcitClaimUnknown)) {
-    return EcitCoverageNotIndependentlyVerifiable;
-  }
-
-  if (Observation == EcitObservationNotTested) {
-    return EcitCoverageNotTested;
+  if (Claim == EcitClaimUnknown) {
+    return EcitCoverageInconclusive;
   }
 
   if (Claim == EcitClaimAdvertised) {
+    if (Observation == EcitObservationNotTested) {
+      return EcitCoverageNotTested;
+    }
+
     return (Observation == EcitObservationSuccess) ?
            EcitCoverageVerified :
            EcitCoverageOverReported;
   }
 
+  if (Observation == EcitObservationNotTested) {
+    return EcitCoverageNotAdvertised;
+  }
+
   return (Observation == EcitObservationSuccess) ?
-         EcitCoverageUnderReported :
+         EcitCoverageUnadvertisedSuccess :
          EcitCoverageVerifiedAbsent;
-}
-
-STATIC
-CONST CHAR8 *
-EcitClaimStateName (
-  IN ECIT_CLAIM_STATE  Claim
-  )
-{
-  switch (Claim) {
-    case EcitClaimAdvertised:
-      return "ADVERTISED";
-    case EcitClaimAbsent:
-      return "ABSENT";
-    default:
-      return "UNKNOWN";
-  }
-}
-
-STATIC
-CONST CHAR8 *
-EcitObservationStateName (
-  IN ECIT_OBSERVATION_STATE  Observation
-  )
-{
-  switch (Observation) {
-    case EcitObservationSuccess:
-      return "SUCCESS";
-    case EcitObservationFailure:
-      return "FAILURE";
-    case EcitObservationInconclusive:
-      return "INCONCLUSIVE";
-    default:
-      return "NOT_TESTED";
-  }
-}
-
-STATIC
-CONST CHAR8 *
-EcitCoverageStateName (
-  IN ECIT_COVERAGE_STATE  Coverage
-  )
-{
-  switch (Coverage) {
-    case EcitCoverageVerified:
-      return "VERIFIED";
-    case EcitCoverageOverReported:
-      return "OVER_REPORTED";
-    case EcitCoverageUnderReported:
-      return "UNDER_REPORTED";
-    case EcitCoverageVerifiedAbsent:
-      return "VERIFIED_ABSENT";
-    case EcitCoverageNotIndependentlyVerifiable:
-      return "NOT_INDEPENDENTLY_VERIFIABLE";
-    case EcitCoverageNotTested:
-      return "NOT_TESTED";
-    default:
-      return "INCONCLUSIVE";
-  }
-}
-
-STATIC
-CONST CHAR8 *
-EcitCoverageReason (
-  IN CONST ECIT_CLAIM_RESULT  *Result,
-  IN ECIT_COVERAGE_STATE      Coverage
-  )
-{
-  if (EFI_ERROR (mEcitParseStatus)) {
-    return "ECIT_PARSE_FAILED";
-  }
-
-  if (Result->CandidateProfile) {
-    return "FLAT_PROFILE_AMBIGUITY";
-  }
-
-  switch (Coverage) {
-    case EcitCoverageNotTested:
-      return "NO_OPERATIONAL_OBSERVATION";
-    case EcitCoverageOverReported:
-    case EcitCoverageVerifiedAbsent:
-      return "OPERATION_FAILED";
-    default:
-      return "NONE";
-  }
 }
 
 STATIC
@@ -435,7 +400,6 @@ EcitSuiteSetup (
   )
 {
   mEcitTable = NULL;
-  ZeroMem (mEcitSha256, sizeof (mEcitSha256));
   InitializeEcitClaimResults (
     mEcitClaimResults,
     ARRAY_SIZE (mEcitClaimResults)
@@ -463,48 +427,40 @@ EcitCorrelationReportTest (
     CoverageRows[Index] = CorrelateEcitResult (
                             mEcitClaimResults[Index].Claim,
                             mEcitClaimResults[Index].Observation,
-                            mEcitClaimResults[Index].CandidateProfile,
                             mEcitParseStatus
                             );
     Counts[CoverageRows[Index]]++;
-    if (!mEcitClaimResults[Index].CandidateProfile &&
-        (mEcitClaimResults[Index].Claim == EcitClaimAdvertised))
-    {
+    if (mEcitClaimResults[Index].Claim == EcitClaimAdvertised) {
       AdvertisedClaims++;
     }
-
-    UT_LOG_INFO (
-      "[ECIT_RESULT] name=%a claim=%a observation=%a coverage=%a reason=%a status=%r\n",
-      mEcitClaimResults[Index].Name,
-      EcitClaimStateName (mEcitClaimResults[Index].Claim),
-      EcitObservationStateName (mEcitClaimResults[Index].Observation),
-      EcitCoverageStateName (CoverageRows[Index]),
-      EcitCoverageReason (&mEcitClaimResults[Index], CoverageRows[Index]),
-      mEcitClaimResults[Index].ObservationStatus
-      );
   }
 
   UT_LOG_INFO (
-    "[ECIT_SCENARIO_SUMMARY] rows=%u advertised_claims=%u verified=%u over_reported=%u under_reported=%u "
-    "verified_absent=%u not_independently_verifiable=%u not_tested=%u inconclusive=%u\n",
+    "[ECIT_SCENARIO_SUMMARY] rows=%u advertised_claims=%u verified=%u over_reported=%u "
+    "unadvertised_success=%u verified_absent=%u not_advertised=%u "
+    "not_independently_verifiable=%u not_tested=%u inconclusive=%u\n",
     EcitClaimCount,
     AdvertisedClaims,
     Counts[EcitCoverageVerified],
     Counts[EcitCoverageOverReported],
-    Counts[EcitCoverageUnderReported],
+    Counts[EcitCoverageUnadvertisedSuccess],
     Counts[EcitCoverageVerifiedAbsent],
+    Counts[EcitCoverageNotAdvertised],
     Counts[EcitCoverageNotIndependentlyVerifiable],
     Counts[EcitCoverageNotTested],
     Counts[EcitCoverageInconclusive]
     );
 
-  if (mEcitTable != NULL) {
-    LogEcitCoverageReport (mEcitTable, mEcitClaimResults, CoverageRows);
-  }
+  LogEcitEvidence (
+    mEcitTable,
+    mEcitClaimResults,
+    CoverageRows,
+    ARRAY_SIZE (mEcitClaimResults),
+    mEcitParseStatus
+    );
 
   if (EFI_ERROR (mEcitParseStatus) ||
       (Counts[EcitCoverageOverReported] != 0) ||
-      (Counts[EcitCoverageUnderReported] != 0) ||
       (Counts[EcitCoverageNotTested] != 0) ||
       (Counts[EcitCoverageInconclusive] != 0))
   {
@@ -536,34 +492,126 @@ EcitCorrelationClassifierTest (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
+  STATIC CONST struct {
+    UINT8    Mask;
+    UINT8    Count;
+    UINT8    Algorithms[AUDIT_MAX_CAPABILITY_PATH_LENGTH];
+  } mPathCases[] = {
+    { AUDIT_IMAGE_ALGORITHM_RSA,    1,                            { AUDIT_IMAGE_ALGORITHM_RSA,    0, 0 }
+    },
+    { AUDIT_IMAGE_ALGORITHM_ECDSA,  1,                            { AUDIT_IMAGE_ALGORITHM_ECDSA,  0, 0 }
+    },
+    { AUDIT_IMAGE_ALGORITHM_ML_DSA, 1,                            { AUDIT_IMAGE_ALGORITHM_ML_DSA, 0, 0 }
+    },
+    {
+      AUDIT_IMAGE_ALGORITHM_RSA | AUDIT_IMAGE_ALGORITHM_ECDSA,
+      2,
+      { AUDIT_IMAGE_ALGORITHM_RSA,    AUDIT_IMAGE_ALGORITHM_ECDSA,  0 }
+    },
+    {
+      AUDIT_IMAGE_ALGORITHM_RSA | AUDIT_IMAGE_ALGORITHM_ML_DSA,
+      2,
+      { AUDIT_IMAGE_ALGORITHM_RSA,    AUDIT_IMAGE_ALGORITHM_ML_DSA, 0 }
+    },
+    {
+      AUDIT_IMAGE_ALGORITHM_ECDSA | AUDIT_IMAGE_ALGORITHM_ML_DSA,
+      2,
+      { AUDIT_IMAGE_ALGORITHM_ECDSA,  AUDIT_IMAGE_ALGORITHM_ML_DSA, 0 }
+    },
+    {
+      AUDIT_IMAGE_ALGORITHM_ALL,
+      3,
+      {
+        AUDIT_IMAGE_ALGORITHM_RSA,
+        AUDIT_IMAGE_ALGORITHM_ECDSA,
+        AUDIT_IMAGE_ALGORITHM_ML_DSA
+      }
+    }
+  };
+  AUDIT_CAPABILITY_PATH  Path;
+  UINTN                  AlgorithmIndex;
+  UINTN                  CaseIndex;
+
   UT_ASSERT_EQUAL (
-    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationSuccess, FALSE, EFI_SUCCESS),
+    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationSuccess, EFI_SUCCESS),
     EcitCoverageVerified
     );
   UT_ASSERT_EQUAL (
-    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationFailure, FALSE, EFI_SUCCESS),
+    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationFailure, EFI_SUCCESS),
     EcitCoverageOverReported
     );
   UT_ASSERT_EQUAL (
-    CorrelateEcitResult (EcitClaimAbsent, EcitObservationSuccess, FALSE, EFI_SUCCESS),
-    EcitCoverageUnderReported
+    CorrelateEcitResult (EcitClaimAbsent, EcitObservationSuccess, EFI_SUCCESS),
+    EcitCoverageUnadvertisedSuccess
     );
   UT_ASSERT_EQUAL (
-    CorrelateEcitResult (EcitClaimAbsent, EcitObservationFailure, FALSE, EFI_SUCCESS),
+    CorrelateEcitResult (EcitClaimAbsent, EcitObservationFailure, EFI_SUCCESS),
     EcitCoverageVerifiedAbsent
     );
   UT_ASSERT_EQUAL (
-    CorrelateEcitResult (EcitClaimUnknown, EcitObservationSuccess, TRUE, EFI_SUCCESS),
-    EcitCoverageNotIndependentlyVerifiable
+    CorrelateEcitResult (EcitClaimAbsent, EcitObservationNotTested, EFI_SUCCESS),
+    EcitCoverageNotAdvertised
     );
   UT_ASSERT_EQUAL (
-    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationNotTested, FALSE, EFI_SUCCESS),
+    CorrelateEcitResult (EcitClaimUnknown, EcitObservationSuccess, EFI_SUCCESS),
+    EcitCoverageInconclusive
+    );
+  UT_ASSERT_EQUAL (
+    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationNotTested, EFI_SUCCESS),
     EcitCoverageNotTested
     );
   UT_ASSERT_EQUAL (
-    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationInconclusive, FALSE, EFI_SUCCESS),
+    CorrelateEcitResult (EcitClaimAdvertised, EcitObservationInconclusive, EFI_SUCCESS),
     EcitCoverageInconclusive
     );
+  UT_ASSERT_EQUAL (
+    FindEcitOidPairClaim (
+      &gEfiEcitFeatureSbImageVerificationGuid,
+      "2.16.840.1.101.3.4.3.19",
+      "2.16.840.1.101.3.4.2.3"
+      ),
+    EcitImageVerificationMldsa87Sha512Profile
+    );
+  UT_ASSERT_EQUAL (
+    FindEcitOidPairClaim (
+      &gEfiEcitFeatureSbImageVerificationGuid,
+      "2.16.840.1.101.3.4.3.19",
+      "2.16.840.1.101.3.4.2.1"
+      ),
+    EcitClaimCount
+    );
+
+  UT_ASSERT_STATUS_EQUAL (
+    BuildImageCapabilityPath (0, FALSE, &Path),
+    EFI_NOT_FOUND
+    );
+  UT_ASSERT_STATUS_EQUAL (
+    BuildImageCapabilityPath (AUDIT_IMAGE_ALGORITHM_ALL + 1, FALSE, &Path),
+    EFI_INVALID_PARAMETER
+    );
+
+  for (CaseIndex = 0; CaseIndex < ARRAY_SIZE (mPathCases); CaseIndex++) {
+    UT_ASSERT_STATUS_EQUAL (
+      BuildImageCapabilityPath (mPathCases[CaseIndex].Mask, FALSE, &Path),
+      EFI_SUCCESS
+      );
+    UT_ASSERT_EQUAL (Path.Count, mPathCases[CaseIndex].Count);
+    for (AlgorithmIndex = 0; AlgorithmIndex < Path.Count; AlgorithmIndex++) {
+      UT_ASSERT_EQUAL (
+        Path.Algorithms[AlgorithmIndex],
+        mPathCases[CaseIndex].Algorithms[AlgorithmIndex]
+        );
+    }
+  }
+
+  UT_ASSERT_STATUS_EQUAL (
+    BuildImageCapabilityPath (AUDIT_IMAGE_ALGORITHM_RSA, TRUE, &Path),
+    EFI_SUCCESS
+    );
+  UT_ASSERT_EQUAL (Path.Count, 3);
+  UT_ASSERT_EQUAL (Path.Algorithms[0], AUDIT_IMAGE_ALGORITHM_RSA);
+  UT_ASSERT_EQUAL (Path.Algorithms[1], AUDIT_IMAGE_ALGORITHM_ECDSA);
+  UT_ASSERT_EQUAL (Path.Algorithms[2], AUDIT_IMAGE_ALGORITHM_ML_DSA);
 
   return UNIT_TEST_PASSED;
 }
@@ -580,40 +628,49 @@ RecoveryStateClassifierTest (
     BOOLEAN                    Expected;
   } Cases[] = {
     {
-      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStateAbsent,  0,                          0, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, TRUE
+      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStateAbsent,  0,                          0, AuditVariableStateAbsent,         0,                          0, AuditVariableStateAbsent,               0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,         0,                          0, AuditVariableStateAbsent,               0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkB,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkB,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,         0,                          0, AuditVariableStateAbsent,               0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,         0,                          0, AuditVariableStateAbsent,               0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,          SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkEcdsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,         0,                          0, AuditVariableStateAbsent,               0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV2,          SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,           SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,               0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbMultiSigner, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbxRsaSigner, SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV2,           SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,               0,                          0 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStateUnknown, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,          SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbMultiSigner,  SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbxRsaSigner,         SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,          SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbCaMigration,  SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbxMigrationRsaEcdsa, SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateUnknown,       SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,       0,                          0 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkEcdsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbCaCapability, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbxCaCapability,      SECURE_BOOT_KEY_ATTRIBUTES, 1 }, TRUE
     },
     {
-      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, 0,                          1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStateUnknown, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,           SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,               0,                          0 }, FALSE
     },
     {
-      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,        0,                          0, AuditVariableStateAbsent,       0,                          0 }, FALSE
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkA,     SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateDbV1,           SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,               0,                          0 }, FALSE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateUnknown,        SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,               0,                          0 }, FALSE
+    },
+    {
+      { USER_MODE,  SECURE_BOOT_MODE_ENABLE,  AuditVariableStatePkMldsa, 0,                          1, AuditVariableStateAbsent,         0,                          0, AuditVariableStateAbsent,               0,                          0 }, FALSE
+    },
+    {
+      { SETUP_MODE, SECURE_BOOT_MODE_DISABLE, AuditVariableStatePkMldsa, SECURE_BOOT_KEY_ATTRIBUTES, 1, AuditVariableStateAbsent,         0,                          0, AuditVariableStateAbsent,               0,                          0 }, FALSE
     }
   };
   UINTN  Index;
@@ -829,7 +886,6 @@ InitializeAuditJournal (
     gSecureBootKeyAuditManifestSha256,
     sizeof (Journal->ManifestSha256)
     );
-  CopyMem (Journal->EcitSha256, mEcitSha256, sizeof (Journal->EcitSha256));
   Journal->SetupMode     = Snapshot->SetupMode;
   Journal->SecureBoot    = Snapshot->SecureBoot;
   Journal->PkState       = Snapshot->PkState;
@@ -850,8 +906,7 @@ CompareJournalState (
   IN CONST AUDIT_BASELINE_SNAPSHOT  *Snapshot
   )
 {
-  if ((CompareMem (Journal->EcitSha256, mEcitSha256, sizeof (Journal->EcitSha256)) != 0) ||
-      (Journal->SetupMode != Snapshot->SetupMode) ||
+  if ((Journal->SetupMode != Snapshot->SetupMode) ||
       (Journal->SecureBoot != Snapshot->SecureBoot) ||
       (Journal->PkState != (UINT32)Snapshot->PkState) ||
       (Journal->PkAttributes != Snapshot->PkAttributes) ||
@@ -891,7 +946,7 @@ RequireClearedRebootMarker (
   )
 {
   UINT32  Attributes;
-  UINT8   Marker[SHA256_DIGEST_SIZE];
+  UINT8   Marker[AUDIT_MANIFEST_SHA256_SIZE];
   UINTN   MarkerSize;
 
   MarkerSize = sizeof (Marker);
@@ -1060,7 +1115,7 @@ PersistentJournalRebootTest (
 
   UT_LOG_INFO (
     "[AUDIT_JOURNAL] phase=%a boot=%u boundary=after_cold_reset "
-    "framework_context=RESTORED ecit_reread=MATCH state_reread=MATCH\n",
+    "framework_context=RESTORED ecit_reread=VALID state_reread=MATCH\n",
     AuditJournalPhaseName ((AUDIT_JOURNAL_PHASE)Journal.Phase),
     Journal.BootCount
     );
@@ -2194,6 +2249,1318 @@ Exit:
   return Result;
 }
 
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+RunThreeCaRetirementTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  BOOLEAN           ImageEvidenceAttempted;
+  EFI_STATUS        RecoveryStatus;
+  UNIT_TEST_STATUS  Result;
+  EFI_STATUS        Status;
+
+  ImageEvidenceAttempted = FALSE;
+  Result                 = UNIT_TEST_ERROR_TEST_FAILED;
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("The Secure Boot baseline is unsafe: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             gSecureBootKeyAuditSetupPkA,
+             gSecureBootKeyAuditSetupPkASize,
+             gSecureBootKeyAuditPkA,
+             gSecureBootKeyAuditPkASize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Setup Mode enrollment of RSA PK A failed: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = RequireSecureBootEnforcement ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "Three-CA image before db enrollment",
+             gSecureBootKeyAuditHelloRsaEcdsaMldsa,
+             gSecureBootKeyAuditHelloRsaEcdsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbUpdate (
+             gSecureBootKeyAuditEnrollDbCaMigration,
+             gSecureBootKeyAuditEnrollDbCaMigrationSize,
+             gSecureBootKeyAuditDbCaMigration,
+             gSecureBootKeyAuditDbCaMigrationSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not authorize all three image CAs in db: %r\n", Status);
+    goto Exit;
+  }
+
+  RecordEcitObservations (
+    mRsaUpdateClaims,
+    ARRAY_SIZE (mRsaUpdateClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  ImageEvidenceAttempted = TRUE;
+
+  Status = LoadAndStartImage (
+             "RSA-only control before CA retirement",
+             gSecureBootKeyAuditHelloRsa,
+             gSecureBootKeyAuditHelloRsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "ECDSA-only control before CA retirement",
+             gSecureBootKeyAuditHelloEcdsa,
+             gSecureBootKeyAuditHelloEcdsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "ML-DSA-only control before CA retirement",
+             gSecureBootKeyAuditHelloMldsa,
+             gSecureBootKeyAuditHelloMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "Three-CA image before CA retirement",
+             gSecureBootKeyAuditHelloRsaEcdsaMldsa,
+             gSecureBootKeyAuditHelloRsaEcdsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbxUpdate (
+             gSecureBootKeyAuditEnrollDbxMigrationRsa,
+             gSecureBootKeyAuditEnrollDbxMigrationRsaSize,
+             gSecureBootKeyAuditDbxMigrationRsa,
+             gSecureBootKeyAuditDbxMigrationRsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not retire the RSA image CA: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "RSA-only control after RSA CA retirement",
+             gSecureBootKeyAuditHelloRsa,
+             gSecureBootKeyAuditHelloRsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "Three-CA image after RSA CA retirement",
+             gSecureBootKeyAuditHelloRsaEcdsaMldsa,
+             gSecureBootKeyAuditHelloRsaEcdsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbxUpdate (
+             gSecureBootKeyAuditEnrollDbxMigrationRsaEcdsa,
+             gSecureBootKeyAuditEnrollDbxMigrationRsaEcdsaSize,
+             gSecureBootKeyAuditDbxMigrationRsaEcdsa,
+             gSecureBootKeyAuditDbxMigrationRsaEcdsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not retire the ECDSA image CA cumulatively: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "ECDSA-only control after ECDSA CA retirement",
+             gSecureBootKeyAuditHelloEcdsa,
+             gSecureBootKeyAuditHelloEcdsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "ML-DSA-only control after RSA and ECDSA CA retirement",
+             gSecureBootKeyAuditHelloMldsa,
+             gSecureBootKeyAuditHelloMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadAndStartImage (
+             "Three-CA image after RSA and ECDSA CA retirement",
+             gSecureBootKeyAuditHelloRsaEcdsaMldsa,
+             gSecureBootKeyAuditHelloRsaEcdsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbxUpdate (
+             gSecureBootKeyAuditEnrollDbxMigrationAll,
+             gSecureBootKeyAuditEnrollDbxMigrationAllSize,
+             gSecureBootKeyAuditDbxMigrationAll,
+             gSecureBootKeyAuditDbxMigrationAllSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not retire the final ML-DSA image CA: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "ML-DSA-only control after final CA retirement",
+             gSecureBootKeyAuditHelloMldsa,
+             gSecureBootKeyAuditHelloMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "Three-CA image after final CA retirement",
+             gSecureBootKeyAuditHelloRsaEcdsaMldsa,
+             gSecureBootKeyAuditHelloRsaEcdsaMldsaSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  RecordEcitObservation (
+    EcitImageAuthorizationTbsV2Sha512,
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  RecordEcitObservation (
+    EcitImageRevocationTbsV2Sha512,
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  RecordEcitObservations (
+    mRsaImageVerificationClaims,
+    ARRAY_SIZE (mRsaImageVerificationClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  RecordEcitObservations (
+    mEcdsaImageVerificationClaims,
+    ARRAY_SIZE (mEcdsaImageVerificationClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  RecordEcitObservations (
+    mMldsaImageVerificationClaims,
+    ARRAY_SIZE (mMldsaImageVerificationClaims),
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+
+  Status = ApplyDbxUpdate (
+             gSecureBootKeyAuditDeleteDbxCaMigrationByA,
+             gSecureBootKeyAuditDeleteDbxCaMigrationByASize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not delete the cumulative CA migration dbx: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyDbUpdate (
+             gSecureBootKeyAuditDeleteDbCaMigrationByA,
+             gSecureBootKeyAuditDeleteDbCaMigrationByASize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not delete the cumulative CA migration db: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             gSecureBootKeyAuditDeleteByA,
+             gSecureBootKeyAuditDeleteByASize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("RSA PK A could not authenticate cleanup: %r\n", Status);
+    goto Exit;
+  }
+
+  Result = UNIT_TEST_PASSED;
+
+Exit:
+  if ((Result != UNIT_TEST_PASSED) && ImageEvidenceAttempted) {
+    RecordEcitObservation (
+      EcitImageAuthorizationTbsV2Sha512,
+      EcitObservationFailure,
+      Status
+      );
+    RecordEcitObservation (
+      EcitImageRevocationTbsV2Sha512,
+      EcitObservationFailure,
+      Status
+      );
+    RecordEcitObservations (
+      mRsaImageVerificationClaims,
+      ARRAY_SIZE (mRsaImageVerificationClaims),
+      EcitObservationFailure,
+      Status
+      );
+    RecordEcitObservations (
+      mEcdsaImageVerificationClaims,
+      ARRAY_SIZE (mEcdsaImageVerificationClaims),
+      EcitObservationFailure,
+      Status
+      );
+    RecordEcitObservations (
+      mMldsaImageVerificationClaims,
+      ARRAY_SIZE (mMldsaImageVerificationClaims),
+      EcitObservationFailure,
+      Status
+      );
+  }
+
+  RecoveryStatus = RecoverSetupMode ();
+  if (EFI_ERROR (RecoveryStatus)) {
+    UT_LOG_ERROR ("Unable to recover the cumulative CA migration state: %r\n", RecoveryStatus);
+    Result = UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return Result;
+}
+
+typedef struct {
+  CONST UINT8    *Update;
+  UINTN          UpdateSize;
+  CONST UINT8    *Expected;
+  UINTN          ExpectedSize;
+  UINT8          RetiredAlgorithm;
+} CAPABILITY_RETIREMENT_STEP;
+
+typedef struct {
+  UINT8                         Mask;
+  UINT8                         AuthorityAlgorithm;
+  CONST UINT8                   *SetupPk;
+  UINTN                         SetupPkSize;
+  CONST UINT8                   *ExpectedPk;
+  UINTN                         ExpectedPkSize;
+  CONST UINT8                   *EnrollDb;
+  UINTN                         EnrollDbSize;
+  CONST UINT8                   *ExpectedDb;
+  UINTN                         ExpectedDbSize;
+  CONST UINT8                   *MultiImage;
+  UINTN                         MultiImageSize;
+  CAPABILITY_RETIREMENT_STEP    Steps[AUDIT_MAX_CAPABILITY_PATH_LENGTH];
+  UINTN                         StepCount;
+  CONST UINT8                   *DeleteDbx;
+  UINTN                         DeleteDbxSize;
+  CONST UINT8                   *DeleteDb;
+  UINTN                         DeleteDbSize;
+  CONST UINT8                   *DeletePk;
+  UINTN                         DeletePkSize;
+} CAPABILITY_RETIREMENT_FIXTURE;
+
+STATIC
+CONST CHAR8 *
+GetAlgorithmName (
+  IN UINT8  Algorithm
+  )
+{
+  switch (Algorithm) {
+    case AUDIT_IMAGE_ALGORITHM_RSA:
+      return "RSA";
+    case AUDIT_IMAGE_ALGORITHM_ECDSA:
+      return "ECDSA";
+    case AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      return "ML-DSA";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+STATIC
+EFI_STATUS
+GetAlgorithmImage (
+  IN UINT8         Algorithm,
+  OUT CONST CHAR8  **Name,
+  OUT CONST UINT8  **Image,
+  OUT UINTN        *ImageSize
+  )
+{
+  *Name = GetAlgorithmName (Algorithm);
+  switch (Algorithm) {
+    case AUDIT_IMAGE_ALGORITHM_RSA:
+      *Image     = gSecureBootKeyAuditHelloRsa;
+      *ImageSize = gSecureBootKeyAuditHelloRsaSize;
+      return EFI_SUCCESS;
+    case AUDIT_IMAGE_ALGORITHM_ECDSA:
+      *Image     = gSecureBootKeyAuditHelloEcdsa;
+      *ImageSize = gSecureBootKeyAuditHelloEcdsaSize;
+      return EFI_SUCCESS;
+    case AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      *Image     = gSecureBootKeyAuditHelloMldsa;
+      *ImageSize = gSecureBootKeyAuditHelloMldsaSize;
+      return EFI_SUCCESS;
+    default:
+      return EFI_INVALID_PARAMETER;
+  }
+}
+
+STATIC
+VOID
+RecordAlgorithmImageObservation (
+  IN UINT8                   Algorithm,
+  IN ECIT_OBSERVATION_STATE  Observation,
+  IN EFI_STATUS              Status
+  )
+{
+  switch (Algorithm) {
+    case AUDIT_IMAGE_ALGORITHM_RSA:
+      RecordEcitObservations (
+        mRsaImageVerificationClaims,
+        ARRAY_SIZE (mRsaImageVerificationClaims),
+        Observation,
+        Status
+        );
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ECDSA:
+      RecordEcitObservations (
+        mEcdsaImageVerificationClaims,
+        ARRAY_SIZE (mEcdsaImageVerificationClaims),
+        Observation,
+        Status
+        );
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      RecordEcitObservations (
+        mMldsaImageVerificationClaims,
+        ARRAY_SIZE (mMldsaImageVerificationClaims),
+        Observation,
+        Status
+        );
+      break;
+    default:
+      break;
+  }
+}
+
+STATIC
+VOID
+RecordAuthorityUpdateObservation (
+  IN UINT8                   Algorithm,
+  IN ECIT_OBSERVATION_STATE  Observation,
+  IN EFI_STATUS              Status
+  )
+{
+  switch (Algorithm) {
+    case AUDIT_IMAGE_ALGORITHM_RSA:
+      RecordEcitObservations (
+        mRsaUpdateClaims,
+        ARRAY_SIZE (mRsaUpdateClaims),
+        Observation,
+        Status
+        );
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ECDSA:
+      RecordEcitObservations (
+        mEcdsaUpdateClaims,
+        ARRAY_SIZE (mEcdsaUpdateClaims),
+        Observation,
+        Status
+        );
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      RecordEcitObservations (
+        mMldsaUpdateClaims,
+        ARRAY_SIZE (mMldsaUpdateClaims),
+        Observation,
+        Status
+        );
+      break;
+    default:
+      break;
+  }
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+CapabilityAuthorityPathTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  AUDIT_CAPABILITY_PATH  Path;
+  CONST UINT8            *DeletePk;
+  UINTN                  DeletePkSize;
+  CONST UINT8            *ExpectedPk;
+  UINTN                  ExpectedPkSize;
+  CONST UINT8            *SetupPk;
+  UINTN                  SetupPkSize;
+  CONST UINT8            *Transition;
+  UINTN                  TransitionSize;
+  UINT8                  CurrentAlgorithm;
+  UINT8                  Mask;
+  EFI_STATUS             RecoveryStatus;
+  UNIT_TEST_STATUS       Result;
+  EFI_STATUS             Status;
+  UINTN                  Index;
+
+  Result = UNIT_TEST_ERROR_TEST_FAILED;
+  Mask   = GetAdvertisedUpdateAlgorithmMask (
+             mEcitClaimResults,
+             ARRAY_SIZE (mEcitClaimResults)
+             );
+  UT_LOG_INFO ("Advertised update-algorithm mask: 0x%x\n", Mask);
+  if (Mask == 0) {
+    UT_LOG_INFO ("No fixture-backed update algorithm is advertised; authority path is not applicable\n");
+    return UNIT_TEST_PASSED;
+  }
+
+  Status = BuildImageCapabilityPath (Mask, FALSE, &Path);
+  if (EFI_ERROR (Status)) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  switch (Path.Algorithms[0]) {
+    case AUDIT_IMAGE_ALGORITHM_RSA:
+      SetupPk        = gSecureBootKeyAuditSetupPkA;
+      SetupPkSize    = gSecureBootKeyAuditSetupPkASize;
+      ExpectedPk     = gSecureBootKeyAuditPkA;
+      ExpectedPkSize = gSecureBootKeyAuditPkASize;
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ECDSA:
+      SetupPk        = gSecureBootKeyAuditSetupPkEcdsa;
+      SetupPkSize    = gSecureBootKeyAuditSetupPkEcdsaSize;
+      ExpectedPk     = gSecureBootKeyAuditPkEcdsa;
+      ExpectedPkSize = gSecureBootKeyAuditPkEcdsaSize;
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      SetupPk        = gSecureBootKeyAuditSetupPkMldsa;
+      SetupPkSize    = gSecureBootKeyAuditSetupPkMldsaSize;
+      ExpectedPk     = gSecureBootKeyAuditPkMldsa;
+      ExpectedPkSize = gSecureBootKeyAuditPkMldsaSize;
+      break;
+    default:
+      return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (SetupPk, SetupPkSize, ExpectedPk, ExpectedPkSize);
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = RequireSecureBootEnforcement ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  CurrentAlgorithm = Path.Algorithms[0];
+  for (Index = 1; Index < Path.Count; Index++) {
+    Transition     = NULL;
+    TransitionSize = 0;
+    ExpectedPk     = NULL;
+    ExpectedPkSize = 0;
+
+    if ((CurrentAlgorithm == AUDIT_IMAGE_ALGORITHM_RSA) &&
+        (Path.Algorithms[Index] == AUDIT_IMAGE_ALGORITHM_ECDSA))
+    {
+      Transition     = gSecureBootKeyAuditPkAToEcdsa;
+      TransitionSize = gSecureBootKeyAuditPkAToEcdsaSize;
+      ExpectedPk     = gSecureBootKeyAuditPkEcdsa;
+      ExpectedPkSize = gSecureBootKeyAuditPkEcdsaSize;
+    } else if ((CurrentAlgorithm == AUDIT_IMAGE_ALGORITHM_RSA) &&
+               (Path.Algorithms[Index] == AUDIT_IMAGE_ALGORITHM_ML_DSA))
+    {
+      Transition     = gSecureBootKeyAuditPkAToMldsa;
+      TransitionSize = gSecureBootKeyAuditPkAToMldsaSize;
+      ExpectedPk     = gSecureBootKeyAuditPkMldsa;
+      ExpectedPkSize = gSecureBootKeyAuditPkMldsaSize;
+    } else if ((CurrentAlgorithm == AUDIT_IMAGE_ALGORITHM_ECDSA) &&
+               (Path.Algorithms[Index] == AUDIT_IMAGE_ALGORITHM_ML_DSA))
+    {
+      Transition     = gSecureBootKeyAuditPkEcdsaToMldsa;
+      TransitionSize = gSecureBootKeyAuditPkEcdsaToMldsaSize;
+      ExpectedPk     = gSecureBootKeyAuditPkMldsa;
+      ExpectedPkSize = gSecureBootKeyAuditPkMldsaSize;
+    }
+
+    if (Transition == NULL) {
+      Status = EFI_UNSUPPORTED;
+      goto Exit;
+    }
+
+    UT_LOG_INFO (
+      "Applying authority transition %a -> %a\n",
+      GetAlgorithmName (CurrentAlgorithm),
+      GetAlgorithmName (Path.Algorithms[Index])
+      );
+    Status = ApplyPkUpdate (
+               Transition,
+               TransitionSize,
+               ExpectedPk,
+               ExpectedPkSize
+               );
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR (
+        "Authority transition %a -> %a failed: %r\n",
+        GetAlgorithmName (CurrentAlgorithm),
+        GetAlgorithmName (Path.Algorithms[Index]),
+        Status
+        );
+      RecordAuthorityUpdateObservation (
+        CurrentAlgorithm,
+        EcitObservationFailure,
+        Status
+        );
+      goto Exit;
+    }
+
+    RecordAuthorityUpdateObservation (
+      CurrentAlgorithm,
+      EcitObservationSuccess,
+      EFI_SUCCESS
+      );
+    CurrentAlgorithm = Path.Algorithms[Index];
+  }
+
+  switch (CurrentAlgorithm) {
+    case AUDIT_IMAGE_ALGORITHM_RSA:
+      DeletePk     = gSecureBootKeyAuditDeleteByA;
+      DeletePkSize = gSecureBootKeyAuditDeleteByASize;
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ECDSA:
+      if (Path.Count == 1) {
+        DeletePk     = gSecureBootKeyAuditDeleteByEcdsa;
+        DeletePkSize = gSecureBootKeyAuditDeleteByEcdsaSize;
+      } else {
+        DeletePk     = gSecureBootKeyAuditDeleteByEcdsaAfterTransition;
+        DeletePkSize = gSecureBootKeyAuditDeleteByEcdsaAfterTransitionSize;
+      }
+
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      if (Path.Count == 1) {
+        DeletePk     = gSecureBootKeyAuditDeleteByMldsa;
+        DeletePkSize = gSecureBootKeyAuditDeleteByMldsaSize;
+      } else {
+        DeletePk     = gSecureBootKeyAuditDeleteByMldsaAfterTransition;
+        DeletePkSize = gSecureBootKeyAuditDeleteByMldsaAfterTransitionSize;
+      }
+
+      break;
+    default:
+      Status = EFI_UNSUPPORTED;
+      goto Exit;
+  }
+
+  UT_LOG_INFO (
+    "Applying final %a-authorized PK deletion\n",
+    GetAlgorithmName (CurrentAlgorithm)
+    );
+  Status = ApplyPkUpdate (DeletePk, DeletePkSize, NULL, 0);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR (
+      "Final %a-authorized PK deletion failed: %r\n",
+      GetAlgorithmName (CurrentAlgorithm),
+      Status
+      );
+    RecordAuthorityUpdateObservation (
+      CurrentAlgorithm,
+      EcitObservationFailure,
+      Status
+      );
+    goto Exit;
+  }
+
+  RecordAuthorityUpdateObservation (
+    CurrentAlgorithm,
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Result = UNIT_TEST_PASSED;
+
+Exit:
+  RecoveryStatus = RecoverSetupMode ();
+  if (EFI_ERROR (RecoveryStatus)) {
+    UT_LOG_ERROR ("Unable to recover the capability authority path: %r\n", RecoveryStatus);
+    Result = UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return Result;
+}
+
+STATIC
+EFI_STATUS
+SelectCapabilityRetirementFixture (
+  IN UINT8                           Mask,
+  OUT CAPABILITY_RETIREMENT_FIXTURE  *Fixture
+  )
+{
+  ZeroMem (Fixture, sizeof (*Fixture));
+  Fixture->Mask = Mask;
+
+  if ((Mask & AUDIT_IMAGE_ALGORITHM_RSA) != 0) {
+    Fixture->AuthorityAlgorithm = AUDIT_IMAGE_ALGORITHM_RSA;
+    Fixture->SetupPk            = gSecureBootKeyAuditSetupPkA;
+    Fixture->SetupPkSize        = gSecureBootKeyAuditSetupPkASize;
+    Fixture->ExpectedPk         = gSecureBootKeyAuditPkA;
+    Fixture->ExpectedPkSize     = gSecureBootKeyAuditPkASize;
+    Fixture->DeleteDbx          = gSecureBootKeyAuditDeleteDbxCaMigrationByA;
+    Fixture->DeleteDbxSize      = gSecureBootKeyAuditDeleteDbxCaMigrationByASize;
+    Fixture->DeleteDb           = gSecureBootKeyAuditDeleteDbCaMigrationByA;
+    Fixture->DeleteDbSize       = gSecureBootKeyAuditDeleteDbCaMigrationByASize;
+    Fixture->DeletePk           = gSecureBootKeyAuditDeleteByA;
+    Fixture->DeletePkSize       = gSecureBootKeyAuditDeleteByASize;
+  } else if ((Mask & AUDIT_IMAGE_ALGORITHM_ECDSA) != 0) {
+    Fixture->AuthorityAlgorithm = AUDIT_IMAGE_ALGORITHM_ECDSA;
+    Fixture->SetupPk            = gSecureBootKeyAuditSetupPkEcdsa;
+    Fixture->SetupPkSize        = gSecureBootKeyAuditSetupPkEcdsaSize;
+    Fixture->ExpectedPk         = gSecureBootKeyAuditPkEcdsa;
+    Fixture->ExpectedPkSize     = gSecureBootKeyAuditPkEcdsaSize;
+    Fixture->DeleteDbx          = gSecureBootKeyAuditDeleteDbxCaMigrationByEcdsa;
+    Fixture->DeleteDbxSize      = gSecureBootKeyAuditDeleteDbxCaMigrationByEcdsaSize;
+    Fixture->DeleteDb           = gSecureBootKeyAuditDeleteDbCaMigrationByEcdsa;
+    Fixture->DeleteDbSize       = gSecureBootKeyAuditDeleteDbCaMigrationByEcdsaSize;
+    Fixture->DeletePk           = gSecureBootKeyAuditDeleteByEcdsa;
+    Fixture->DeletePkSize       = gSecureBootKeyAuditDeleteByEcdsaSize;
+  } else if ((Mask & AUDIT_IMAGE_ALGORITHM_ML_DSA) != 0) {
+    Fixture->AuthorityAlgorithm = AUDIT_IMAGE_ALGORITHM_ML_DSA;
+    Fixture->SetupPk            = gSecureBootKeyAuditSetupPkMldsa;
+    Fixture->SetupPkSize        = gSecureBootKeyAuditSetupPkMldsaSize;
+    Fixture->ExpectedPk         = gSecureBootKeyAuditPkMldsa;
+    Fixture->ExpectedPkSize     = gSecureBootKeyAuditPkMldsaSize;
+    Fixture->DeleteDbx          = gSecureBootKeyAuditDeleteDbxByMldsa;
+    Fixture->DeleteDbxSize      = gSecureBootKeyAuditDeleteDbxByMldsaSize;
+    Fixture->DeleteDb           = gSecureBootKeyAuditDeleteDbMultiSignerByMldsa;
+    Fixture->DeleteDbSize       = gSecureBootKeyAuditDeleteDbMultiSignerByMldsaSize;
+    Fixture->DeletePk           = gSecureBootKeyAuditDeleteByMldsa;
+    Fixture->DeletePkSize       = gSecureBootKeyAuditDeleteByMldsaSize;
+  } else {
+    return EFI_NOT_FOUND;
+  }
+
+  switch (Mask) {
+    case AUDIT_IMAGE_ALGORITHM_RSA:
+      Fixture->EnrollDb                  = gSecureBootKeyAuditEnrollDbCaRsaByA;
+      Fixture->EnrollDbSize              = gSecureBootKeyAuditEnrollDbCaRsaByASize;
+      Fixture->ExpectedDb                = gSecureBootKeyAuditDbCaRsa;
+      Fixture->ExpectedDbSize            = gSecureBootKeyAuditDbCaRsaSize;
+      Fixture->MultiImage                = gSecureBootKeyAuditHelloRsa;
+      Fixture->MultiImageSize            = gSecureBootKeyAuditHelloRsaSize;
+      Fixture->Steps[0].Update           = gSecureBootKeyAuditEnrollDbxCaRsaByA;
+      Fixture->Steps[0].UpdateSize       = gSecureBootKeyAuditEnrollDbxCaRsaByASize;
+      Fixture->Steps[0].Expected         = gSecureBootKeyAuditDbxRsaSigner;
+      Fixture->Steps[0].ExpectedSize     = gSecureBootKeyAuditDbxRsaSignerSize;
+      Fixture->Steps[0].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_RSA;
+      Fixture->StepCount                 = 1;
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ECDSA:
+      Fixture->EnrollDb                  = gSecureBootKeyAuditEnrollDbCaEcdsaByEcdsa;
+      Fixture->EnrollDbSize              = gSecureBootKeyAuditEnrollDbCaEcdsaByEcdsaSize;
+      Fixture->ExpectedDb                = gSecureBootKeyAuditDbCaEcdsa;
+      Fixture->ExpectedDbSize            = gSecureBootKeyAuditDbCaEcdsaSize;
+      Fixture->MultiImage                = gSecureBootKeyAuditHelloEcdsa;
+      Fixture->MultiImageSize            = gSecureBootKeyAuditHelloEcdsaSize;
+      Fixture->Steps[0].Update           = gSecureBootKeyAuditEnrollDbxCaEcdsaByEcdsa;
+      Fixture->Steps[0].UpdateSize       = gSecureBootKeyAuditEnrollDbxCaEcdsaByEcdsaSize;
+      Fixture->Steps[0].Expected         = gSecureBootKeyAuditDbCaEcdsa;
+      Fixture->Steps[0].ExpectedSize     = gSecureBootKeyAuditDbCaEcdsaSize;
+      Fixture->Steps[0].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_ECDSA;
+      Fixture->StepCount                 = 1;
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      Fixture->EnrollDb                  = gSecureBootKeyAuditEnrollDbTbsHashV2;
+      Fixture->EnrollDbSize              = gSecureBootKeyAuditEnrollDbTbsHashV2Size;
+      Fixture->ExpectedDb                = gSecureBootKeyAuditDbTbsHashV2;
+      Fixture->ExpectedDbSize            = gSecureBootKeyAuditDbTbsHashV2Size;
+      Fixture->MultiImage                = gSecureBootKeyAuditHelloMldsa;
+      Fixture->MultiImageSize            = gSecureBootKeyAuditHelloMldsaSize;
+      Fixture->Steps[0].Update           = gSecureBootKeyAuditEnrollDbxMldsaSigner;
+      Fixture->Steps[0].UpdateSize       = gSecureBootKeyAuditEnrollDbxMldsaSignerSize;
+      Fixture->Steps[0].Expected         = gSecureBootKeyAuditDbxMldsaSigner;
+      Fixture->Steps[0].ExpectedSize     = gSecureBootKeyAuditDbxMldsaSignerSize;
+      Fixture->Steps[0].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_ML_DSA;
+      Fixture->StepCount                 = 1;
+      break;
+    case AUDIT_IMAGE_ALGORITHM_RSA | AUDIT_IMAGE_ALGORITHM_ECDSA:
+      Fixture->EnrollDb                  = gSecureBootKeyAuditEnrollDbCaRsaEcdsaByA;
+      Fixture->EnrollDbSize              = gSecureBootKeyAuditEnrollDbCaRsaEcdsaByASize;
+      Fixture->ExpectedDb                = gSecureBootKeyAuditDbCaRsaEcdsa;
+      Fixture->ExpectedDbSize            = gSecureBootKeyAuditDbCaRsaEcdsaSize;
+      Fixture->MultiImage                = gSecureBootKeyAuditHelloRsaEcdsa;
+      Fixture->MultiImageSize            = gSecureBootKeyAuditHelloRsaEcdsaSize;
+      Fixture->Steps[0].Update           = gSecureBootKeyAuditEnrollDbxCaRsaByA;
+      Fixture->Steps[0].UpdateSize       = gSecureBootKeyAuditEnrollDbxCaRsaByASize;
+      Fixture->Steps[0].Expected         = gSecureBootKeyAuditDbxRsaSigner;
+      Fixture->Steps[0].ExpectedSize     = gSecureBootKeyAuditDbxRsaSignerSize;
+      Fixture->Steps[0].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_RSA;
+      Fixture->Steps[1].Update           = gSecureBootKeyAuditEnrollDbxMigrationRsaEcdsa;
+      Fixture->Steps[1].UpdateSize       = gSecureBootKeyAuditEnrollDbxMigrationRsaEcdsaSize;
+      Fixture->Steps[1].Expected         = gSecureBootKeyAuditDbxMigrationRsaEcdsa;
+      Fixture->Steps[1].ExpectedSize     = gSecureBootKeyAuditDbxMigrationRsaEcdsaSize;
+      Fixture->Steps[1].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_ECDSA;
+      Fixture->StepCount                 = 2;
+      break;
+    case AUDIT_IMAGE_ALGORITHM_RSA | AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      Fixture->EnrollDb                  = gSecureBootKeyAuditEnrollDbCaRsaMldsaByA;
+      Fixture->EnrollDbSize              = gSecureBootKeyAuditEnrollDbCaRsaMldsaByASize;
+      Fixture->ExpectedDb                = gSecureBootKeyAuditDbMultiSigner;
+      Fixture->ExpectedDbSize            = gSecureBootKeyAuditDbMultiSignerSize;
+      Fixture->MultiImage                = gSecureBootKeyAuditHelloRsaMldsa;
+      Fixture->MultiImageSize            = gSecureBootKeyAuditHelloRsaMldsaSize;
+      Fixture->Steps[0].Update           = gSecureBootKeyAuditEnrollDbxCaRsaByA;
+      Fixture->Steps[0].UpdateSize       = gSecureBootKeyAuditEnrollDbxCaRsaByASize;
+      Fixture->Steps[0].Expected         = gSecureBootKeyAuditDbxRsaSigner;
+      Fixture->Steps[0].ExpectedSize     = gSecureBootKeyAuditDbxRsaSignerSize;
+      Fixture->Steps[0].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_RSA;
+      Fixture->Steps[1].Update           = gSecureBootKeyAuditEnrollDbxCaRsaMldsaByA;
+      Fixture->Steps[1].UpdateSize       = gSecureBootKeyAuditEnrollDbxCaRsaMldsaByASize;
+      Fixture->Steps[1].Expected         = gSecureBootKeyAuditDbxBothSigners;
+      Fixture->Steps[1].ExpectedSize     = gSecureBootKeyAuditDbxBothSignersSize;
+      Fixture->Steps[1].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_ML_DSA;
+      Fixture->StepCount                 = 2;
+      break;
+    case AUDIT_IMAGE_ALGORITHM_ECDSA | AUDIT_IMAGE_ALGORITHM_ML_DSA:
+      Fixture->EnrollDb                  = gSecureBootKeyAuditEnrollDbCaEcdsaMldsaByEcdsa;
+      Fixture->EnrollDbSize              = gSecureBootKeyAuditEnrollDbCaEcdsaMldsaByEcdsaSize;
+      Fixture->ExpectedDb                = gSecureBootKeyAuditDbCaEcdsaMldsa;
+      Fixture->ExpectedDbSize            = gSecureBootKeyAuditDbCaEcdsaMldsaSize;
+      Fixture->MultiImage                = gSecureBootKeyAuditHelloEcdsaMldsa;
+      Fixture->MultiImageSize            = gSecureBootKeyAuditHelloEcdsaMldsaSize;
+      Fixture->Steps[0].Update           = gSecureBootKeyAuditEnrollDbxCaEcdsaByEcdsa;
+      Fixture->Steps[0].UpdateSize       = gSecureBootKeyAuditEnrollDbxCaEcdsaByEcdsaSize;
+      Fixture->Steps[0].Expected         = gSecureBootKeyAuditDbCaEcdsa;
+      Fixture->Steps[0].ExpectedSize     = gSecureBootKeyAuditDbCaEcdsaSize;
+      Fixture->Steps[0].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_ECDSA;
+      Fixture->Steps[1].Update           = gSecureBootKeyAuditEnrollDbxCaEcdsaMldsaByEcdsa;
+      Fixture->Steps[1].UpdateSize       = gSecureBootKeyAuditEnrollDbxCaEcdsaMldsaByEcdsaSize;
+      Fixture->Steps[1].Expected         = gSecureBootKeyAuditDbCaEcdsaMldsa;
+      Fixture->Steps[1].ExpectedSize     = gSecureBootKeyAuditDbCaEcdsaMldsaSize;
+      Fixture->Steps[1].RetiredAlgorithm = AUDIT_IMAGE_ALGORITHM_ML_DSA;
+      Fixture->StepCount                 = 2;
+      break;
+    default:
+      return EFI_UNSUPPORTED;
+  }
+
+  return EFI_SUCCESS;
+}
+
+STATIC
+UNIT_TEST_STATUS
+RunCapabilityRetirementTest (
+  IN UINT8  Mask
+  )
+{
+  AUDIT_CAPABILITY_PATH          Path;
+  CAPABILITY_RETIREMENT_FIXTURE  Fixture;
+  BOOLEAN                        ImageEvidenceAttempted;
+  CONST UINT8                    *Image;
+  UINTN                          ImageSize;
+  CONST CHAR8                    *Name;
+  EFI_STATUS                     RecoveryStatus;
+  UNIT_TEST_STATUS               Result;
+  EFI_STATUS                     Status;
+  UINTN                          Index;
+
+  ImageEvidenceAttempted = FALSE;
+  Result                 = UNIT_TEST_ERROR_TEST_FAILED;
+
+  Status = BuildImageCapabilityPath (Mask, FALSE, &Path);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not build the advertised capability path: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = SelectCapabilityRetirementFixture (Mask, &Fixture);
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("No fixture covers advertised capability mask 0x%x: %r\n", Mask, Status);
+    goto Exit;
+  }
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             Fixture.SetupPk,
+             Fixture.SetupPkSize,
+             Fixture.ExpectedPk,
+             Fixture.ExpectedPkSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not enroll the selected update authority: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = RequireSecureBootEnforcement ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = LoadImageExpectDenied (
+             "Capability image before db enrollment",
+             Fixture.MultiImage,
+             Fixture.MultiImageSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbUpdate (
+             Fixture.EnrollDb,
+             Fixture.EnrollDbSize,
+             Fixture.ExpectedDb,
+             Fixture.ExpectedDbSize
+             );
+  if (EFI_ERROR (Status)) {
+    RecordAuthorityUpdateObservation (
+      Fixture.AuthorityAlgorithm,
+      EcitObservationFailure,
+      Status
+      );
+    goto Exit;
+  }
+
+  RecordAuthorityUpdateObservation (
+    Fixture.AuthorityAlgorithm,
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  ImageEvidenceAttempted = TRUE;
+
+  for (Index = 0; Index < Path.Count; Index++) {
+    Status = GetAlgorithmImage (
+               Path.Algorithms[Index],
+               &Name,
+               &Image,
+               &ImageSize
+               );
+    if (EFI_ERROR (Status)) {
+      goto Exit;
+    }
+
+    Status = LoadAndStartImage (Name, Image, ImageSize);
+    if (EFI_ERROR (Status)) {
+      goto Exit;
+    }
+  }
+
+  Status = LoadAndStartImage (
+             "Selected capability image before retirement",
+             Fixture.MultiImage,
+             Fixture.MultiImageSize
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  for (Index = 0; Index < Fixture.StepCount; Index++) {
+    Status = ApplyDbxUpdate (
+               Fixture.Steps[Index].Update,
+               Fixture.Steps[Index].UpdateSize,
+               Fixture.Steps[Index].Expected,
+               Fixture.Steps[Index].ExpectedSize
+               );
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR ("Could not apply retirement step %u: %r\n", (UINT32)Index, Status);
+      goto Exit;
+    }
+
+    Status = GetAlgorithmImage (
+               Fixture.Steps[Index].RetiredAlgorithm,
+               &Name,
+               &Image,
+               &ImageSize
+               );
+    if (EFI_ERROR (Status)) {
+      goto Exit;
+    }
+
+    Status = LoadImageExpectDenied (Name, Image, ImageSize);
+    if (EFI_ERROR (Status)) {
+      goto Exit;
+    }
+
+    if (Index + 1 < Fixture.StepCount) {
+      Status = GetAlgorithmImage (
+                 Path.Algorithms[Index + 1],
+                 &Name,
+                 &Image,
+                 &ImageSize
+                 );
+      if (EFI_ERROR (Status)) {
+        goto Exit;
+      }
+
+      Status = LoadAndStartImage (Name, Image, ImageSize);
+      if (EFI_ERROR (Status)) {
+        goto Exit;
+      }
+
+      Status = LoadAndStartImage (
+                 "Selected capability image after partial retirement",
+                 Fixture.MultiImage,
+                 Fixture.MultiImageSize
+                 );
+    } else {
+      Status = LoadImageExpectDenied (
+                 "Selected capability image after final retirement",
+                 Fixture.MultiImage,
+                 Fixture.MultiImageSize
+                 );
+    }
+
+    if (EFI_ERROR (Status)) {
+      goto Exit;
+    }
+  }
+
+  for (Index = 0; Index < Path.Count; Index++) {
+    RecordAlgorithmImageObservation (
+      Path.Algorithms[Index],
+      EcitObservationSuccess,
+      EFI_SUCCESS
+      );
+  }
+
+  RecordEcitObservation (
+    EcitImageAuthorizationTbsV2Sha512,
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+  RecordEcitObservation (
+    EcitImageRevocationTbsV2Sha512,
+    EcitObservationSuccess,
+    EFI_SUCCESS
+    );
+
+  Status = ApplyDbxUpdate (
+             Fixture.DeleteDbx,
+             Fixture.DeleteDbxSize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyDbUpdate (
+             Fixture.DeleteDb,
+             Fixture.DeleteDbSize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             Fixture.DeletePk,
+             Fixture.DeletePkSize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Result = UNIT_TEST_PASSED;
+
+Exit:
+  if (ImageEvidenceAttempted && (Result != UNIT_TEST_PASSED)) {
+    for (Index = 0; Index < Path.Count; Index++) {
+      RecordAlgorithmImageObservation (
+        Path.Algorithms[Index],
+        EcitObservationFailure,
+        Status
+        );
+    }
+  }
+
+  RecoveryStatus = RecoverSetupMode ();
+  if (EFI_ERROR (RecoveryStatus)) {
+    UT_LOG_ERROR ("Unable to recover the capability-selected CA state: %r\n", RecoveryStatus);
+    Result = UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return Result;
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+CumulativeCaRetirementTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  UINT8  Mask;
+
+  Mask = GetAdvertisedImageAlgorithmMask (
+           mEcitClaimResults,
+           ARRAY_SIZE (mEcitClaimResults)
+           );
+  UT_LOG_INFO ("Advertised image-algorithm mask: 0x%x\n", Mask);
+
+  if (Mask == 0) {
+    UT_LOG_INFO ("No fixture-backed image algorithm is advertised; migration is not applicable\n");
+    return UNIT_TEST_PASSED;
+  }
+
+  if (Mask == AUDIT_IMAGE_ALGORITHM_ALL) {
+    return RunThreeCaRetirementTest (Context);
+  }
+
+  return RunCapabilityRetirementTest (Mask);
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+ImageFormatSweepTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  CONST SECURE_BOOT_FORMAT_SWEEP_CASE  *Case;
+  UINTN                                Index;
+  BOOLEAN                              OperationalFailure;
+  EFI_STATUS                           RecoveryStatus;
+  UNIT_TEST_STATUS                     Result;
+  EFI_STATUS                           Status;
+
+  Result             = UNIT_TEST_ERROR_TEST_FAILED;
+  OperationalFailure = FALSE;
+
+  if ((gSecureBootKeyAuditFormatSweepCaseCount !=
+       ARRAY_SIZE (mImageAuthorizationFormatClaims)) ||
+      (gSecureBootKeyAuditFormatSweepCaseCount !=
+       ARRAY_SIZE (mImageRevocationFormatClaims)))
+  {
+    UT_LOG_ERROR ("The generated format sweep does not match the ECIT claim registry\n");
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             gSecureBootKeyAuditSetupPkA,
+             gSecureBootKeyAuditSetupPkASize,
+             gSecureBootKeyAuditPkA,
+             gSecureBootKeyAuditPkASize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not enroll the format-sweep PK: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = RequireSecureBootEnforcement ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  for (Index = 0; Index < gSecureBootKeyAuditFormatSweepCaseCount; Index++) {
+    if (mEcitClaimResults[mImageAuthorizationFormatClaims[Index]].Claim !=
+        EcitClaimAdvertised)
+    {
+      continue;
+    }
+
+    Case   = &gSecureBootKeyAuditFormatSweepCases[Index];
+    Status = ApplyDbUpdate (
+               Case->EnrollDb,
+               Case->EnrollDbSize,
+               Case->Esl,
+               Case->EslSize
+               );
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR ("%a authorization enrollment failed: %r\n", Case->Name, Status);
+      RecordEcitObservation (
+        mImageAuthorizationFormatClaims[Index],
+        EcitObservationFailure,
+        Status
+        );
+      goto Exit;
+    }
+
+    Status = LoadAndStartImage (
+               Case->Name,
+               gSecureBootKeyAuditHelloRsa,
+               gSecureBootKeyAuditHelloRsaSize
+               );
+    if (EFI_ERROR (Status)) {
+      RecordEcitObservation (
+        mImageAuthorizationFormatClaims[Index],
+        EcitObservationFailure,
+        Status
+        );
+      OperationalFailure = TRUE;
+    } else {
+      RecordEcitObservation (
+        mImageAuthorizationFormatClaims[Index],
+        EcitObservationSuccess,
+        EFI_SUCCESS
+        );
+    }
+
+    Status = ApplyDbUpdate (
+               Case->DeleteDb,
+               Case->DeleteDbSize,
+               NULL,
+               0
+               );
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR ("%a authorization cleanup failed: %r\n", Case->Name, Status);
+      goto Exit;
+    }
+  }
+
+  Status = ApplyDbUpdate (
+             gSecureBootKeyAuditEnrollDbForRevocationSweep,
+             gSecureBootKeyAuditEnrollDbForRevocationSweepSize,
+             gSecureBootKeyAuditFormatSweepCases[0].Esl,
+             gSecureBootKeyAuditFormatSweepCases[0].EslSize
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not authorize the revocation-sweep image: %r\n", Status);
+    goto Exit;
+  }
+
+  for (Index = 0; Index < gSecureBootKeyAuditFormatSweepCaseCount; Index++) {
+    if (mEcitClaimResults[mImageRevocationFormatClaims[Index]].Claim !=
+        EcitClaimAdvertised)
+    {
+      continue;
+    }
+
+    Case   = &gSecureBootKeyAuditFormatSweepCases[Index];
+    Status = ApplyDbxUpdate (
+               Case->EnrollDbx,
+               Case->EnrollDbxSize,
+               Case->Esl,
+               Case->EslSize
+               );
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR ("%a revocation enrollment failed: %r\n", Case->Name, Status);
+      RecordEcitObservation (
+        mImageRevocationFormatClaims[Index],
+        EcitObservationFailure,
+        Status
+        );
+      goto Exit;
+    }
+
+    Status = LoadImageExpectDenied (
+               Case->Name,
+               gSecureBootKeyAuditHelloRsa,
+               gSecureBootKeyAuditHelloRsaSize
+               );
+    if (EFI_ERROR (Status)) {
+      RecordEcitObservation (
+        mImageRevocationFormatClaims[Index],
+        EcitObservationFailure,
+        Status
+        );
+      OperationalFailure = TRUE;
+    } else {
+      RecordEcitObservation (
+        mImageRevocationFormatClaims[Index],
+        EcitObservationSuccess,
+        EFI_SUCCESS
+        );
+    }
+
+    Status = ApplyDbxUpdate (
+               Case->DeleteDbx,
+               Case->DeleteDbxSize,
+               NULL,
+               0
+               );
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR ("%a revocation cleanup failed: %r\n", Case->Name, Status);
+      goto Exit;
+    }
+  }
+
+  Status = ApplyDbUpdate (
+             gSecureBootKeyAuditDeleteDbForRevocationSweep,
+             gSecureBootKeyAuditDeleteDbForRevocationSweepSize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not clean up the revocation-sweep db: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = ApplyPkUpdate (
+             gSecureBootKeyAuditRecoveryDeleteByA,
+             gSecureBootKeyAuditRecoveryDeleteByASize,
+             NULL,
+             0
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not clean up the format-sweep PK: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = RequireSetupModeBaseline ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  Result = OperationalFailure ? UNIT_TEST_ERROR_TEST_FAILED : UNIT_TEST_PASSED;
+
+Exit:
+  RecoveryStatus = RecoverSetupMode ();
+  if (EFI_ERROR (RecoveryStatus)) {
+    UT_LOG_ERROR ("Unable to recover the format-sweep state: %r\n", RecoveryStatus);
+    Result = UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return Result;
+}
+
 EFI_STATUS
 EFIAPI
 SecureBootKeyAuditAppEntry (
@@ -2335,6 +3702,33 @@ SecureBootKeyAuditAppEntry (
     "Continue multi-signature verification after individual signer revocation",
     "MultiSignatureRevocation",
     MultiSignatureRevocationTest,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Retire RSA, ECDSA, and ML-DSA image CAs cumulatively",
+    "CumulativeCaRetirement",
+    CumulativeCaRetirementTest,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Traverse every advertised Secure Boot update authority",
+    "CapabilityAuthorityPath",
+    CapabilityAuthorityPathTest,
+    NULL,
+    NULL,
+    NULL
+    );
+  AddTestCase (
+    Suite,
+    "Exercise every advertised image authorization and revocation format",
+    "ImageFormatSweep",
+    ImageFormatSweepTest,
     NULL,
     NULL,
     NULL
