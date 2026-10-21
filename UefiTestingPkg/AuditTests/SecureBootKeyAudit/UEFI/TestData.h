@@ -50,9 +50,15 @@ extern CONST UINT8  gSecureBootKeyAuditEnrollDbTbsHashV1[];
 extern CONST UINTN  gSecureBootKeyAuditEnrollDbTbsHashV1Size;
 extern CONST UINT8  gSecureBootKeyAuditEnrollDbTbsHashV2[];
 extern CONST UINTN  gSecureBootKeyAuditEnrollDbTbsHashV2Size;
-extern CONST UINT8  gSecureBootKeyAuditDeleteDbByMldsa[];
-extern CONST UINTN  gSecureBootKeyAuditDeleteDbByMldsaSize;
+extern CONST UINT8  gSecureBootKeyAuditDeleteDbV1ByMldsa[];
+extern CONST UINTN  gSecureBootKeyAuditDeleteDbV1ByMldsaSize;
+extern CONST UINT8  gSecureBootKeyAuditDeleteDbV2ByMldsa[];
+extern CONST UINTN  gSecureBootKeyAuditDeleteDbV2ByMldsaSize;
 extern CONST UINT8  gSecureBootKeyAuditHelloMldsa[];
 extern CONST UINTN  gSecureBootKeyAuditHelloMldsaSize;
+extern CONST UINT8  gSecureBootKeyAuditFixtureId[];
+extern CONST UINTN  gSecureBootKeyAuditFixtureIdSize;
+extern CONST UINT8  gSecureBootKeyAuditManifestSha256[];
+extern CONST UINTN  gSecureBootKeyAuditManifestSha256Size;
 
 #endif
