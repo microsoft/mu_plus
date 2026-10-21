@@ -457,6 +457,17 @@ FindEcitSignatureListClaim (
   return EcitClaimCount;
 }
 
+CONST CHAR8 *
+GetEcitClaimName (
+  IN ECIT_CLAIM_ID  ClaimId
+  )
+{
+  CONST ECIT_CLAIM_DESCRIPTOR  *Descriptor;
+
+  Descriptor = GetClaimDescriptor (ClaimId);
+  return (Descriptor == NULL) ? NULL : Descriptor->Name;
+}
+
 VOID
 RecordEcitClaimObservation (
   IN OUT ECIT_CLAIM_RESULT   *ClaimResults,

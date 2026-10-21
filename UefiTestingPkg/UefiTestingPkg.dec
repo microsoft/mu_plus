@@ -61,3 +61,7 @@
   ## GIC address for Die 2 : ((offset*2) + x) and so on.
   ## If these assumption don't apply to your platform, redeclaration of the PCD can break functionality
   gUefiTestingPkgTokenSpaceGuid.PcdGicPerPackageOffset|0x0|UINT64|0x00000004
+
+  ## Allow a successful operation for an unadvertised Secure Boot capability to pass the audit.
+  # FALSE treats the unexpected capability as an audit failure.
+  gUefiTestingPkgTokenSpaceGuid.PcdSecureBootKeyAuditAllowUnadvertisedSuccess|FALSE|BOOLEAN|0x00000005

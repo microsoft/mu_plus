@@ -1,6 +1,13 @@
 import unittest
 
-from Host.EcitEvidence import CLAIMS, TABLE_RULE, parse_evidence, render_evidence
+from Host.EcitEvidence import (
+    CLAIMS,
+    TABLE_RULE,
+    Result,
+    parse_evidence,
+    parse_evidence_v2,
+    render_evidence,
+)
 
 FEATURE = "03092d2c-9a52-4c5c-8bf5-eaf04f45229d"
 SIGNATURE = "1.2.840.113549.1.1.11"
@@ -43,6 +50,30 @@ def representative_records() -> list[str]:
 def evidence_text(records: list[str] | None = None) -> str:
     records = representative_records() if records is None else records
     return "\n".join(f"[INFO]        [ECIT_V1] {record}" for record in records)
+
+
+def representative_results() -> dict[str, Result]:
+    results = {}
+    for name, identity in CLAIMS.items():
+        if name in MATCHING_CLAIMS:
+            values = ("ADVERTISED", "SUCCESS", "VERIFIED", 0)
+        elif identity.feature == FEATURE:
+            values = ("ABSENT", "NOT_TESTED", "NOT_ADVERTISED", 0x8000000000000006)
+        else:
+            values = ("UNKNOWN", "NOT_TESTED", "INCONCLUSIVE", 0x8000000000000006)
+        results[name] = Result(name, *values)
+    return results
+
+
+def v2_evidence_text() -> str:
+    records = [
+        "t=begin features=1 parse=0x0",
+        f"t=feature i=1 id={FEATURE} kind=OIDS",
+        f"t=ads f=1 k=OID v={SIGNATURE},{DIGEST}",
+        "t=derived f=1 advertised=1 modeled=1 unmodeled=0",
+        "t=end features=1 records=5",
+    ]
+    return "\n".join(f"[INFO]        [ECIT_V2] {record}" for record in records)
 
 
 class EcitEvidenceTests(unittest.TestCase):
@@ -103,6 +134,14 @@ class EcitEvidenceTests(unittest.TestCase):
                 ),
             ],
         )
+
+    def test_v2_merges_metadata_with_native_results(self) -> None:
+        evidence = parse_evidence_v2(v2_evidence_text(), representative_results())
+
+        self.assertEqual(evidence.summary["advertised"], 3)
+        self.assertEqual(evidence.summary["verified"], 3)
+        self.assertEqual(evidence.summary["verdict"], "PASS")
+        self.assertEqual(len(evidence.results), len(CLAIMS))
 
     def test_serialized_evidence_fits_log_budget(self) -> None:
         serialized = evidence_text().encode("utf-8")

@@ -1,4 +1,4 @@
-"""Strict parser and renderer for the ECIT_V1 JUnit evidence contract."""
+"""Strict parsers and renderer for the ECIT JUnit evidence contracts."""
 
 from __future__ import annotations
 
@@ -8,6 +8,8 @@ from enum import Enum
 from uuid import UUID
 
 MARKER = "[ECIT_V1]"
+V2_MARKER = "[ECIT_V2]"
+CLAIM_MARKER = "[ECIT_CLAIM]"
 TABLE_RULE = "-" * 108
 
 FEATURES = {
@@ -282,6 +284,14 @@ SCHEMAS = {
     "end": {"t", "features", "results", "records"},
 }
 
+V2_SCHEMAS = {
+    "begin": {"t", "features", "parse"},
+    "feature": {"t", "i", "id", "kind"},
+    "ads": {"t", "f", "k", "v"},
+    "derived": {"t", "f", "advertised", "modeled", "unmodeled"},
+    "end": {"t", "features", "records"},
+}
+
 
 def _uint(value: str, field: str) -> int:
     if UINT_RE.fullmatch(value) is None:
@@ -305,14 +315,18 @@ def _guid(value: str, field: str) -> str:
     return parsed
 
 
-def _records(output: str) -> list[dict[str, str]]:
+def _records(
+    output: str,
+    marker: str = MARKER,
+    schemas: dict[str, set[str]] = SCHEMAS,
+) -> list[dict[str, str]]:
     records = []
     for line_number, line in enumerate(output.splitlines(), 1):
-        if MARKER not in line:
+        if marker not in line:
             continue
-        payload = line.split(MARKER, 1)[1].strip()
+        payload = line.split(marker, 1)[1].strip()
         if not payload:
-            raise ValueError(f"empty {MARKER} record on line {line_number}")
+            raise ValueError(f"empty {marker} record on line {line_number}")
         record: dict[str, str] = {}
         for token in payload.split():
             if token.count("=") != 1:
@@ -324,11 +338,13 @@ def _records(output: str) -> list[dict[str, str]]:
                 raise ValueError(f"duplicate key {key!r} on line {line_number}")
             record[key] = value
         record_type = record.get("t")
-        if record_type not in SCHEMAS:
-            raise ValueError(f"unsupported ECIT_V1 record type: {record_type!r}")
-        if set(record) != SCHEMAS[record_type]:
-            missing = sorted(SCHEMAS[record_type] - set(record))
-            extra = sorted(set(record) - SCHEMAS[record_type])
+        if record_type not in schemas:
+            raise ValueError(
+                f"unsupported {marker.strip('[]')} record type: {record_type!r}"
+            )
+        if set(record) != schemas[record_type]:
+            missing = sorted(schemas[record_type] - set(record))
+            extra = sorted(set(record) - schemas[record_type])
             raise ValueError(
                 f"invalid {record_type} schema; missing={missing}, extra={extra}"
             )
@@ -692,6 +708,240 @@ def parse_evidence(output: str) -> Evidence:
         raise ValueError(
             f"global summary mismatch: expected {calculated_summary}, got {summary}"
         )
+    return Evidence(parse_status, features, results, rows, summary)
+
+
+def parse_native_claim(output: str, expected_name: str) -> Result:
+    """Parse one native EcitClaim testcase's diagnostic record."""
+    matching = [
+        line.split(CLAIM_MARKER, 1)[1].strip()
+        for line in output.splitlines()
+        if CLAIM_MARKER in line
+    ]
+    if len(matching) != 1:
+        raise ValueError(
+            f"EcitClaim {expected_name!r} must contain exactly one {CLAIM_MARKER} record"
+        )
+
+    record: dict[str, str] = {}
+    for token in matching[0].split():
+        if token.count("=") != 1:
+            raise ValueError(f"malformed {CLAIM_MARKER} token: {token!r}")
+        key, value = token.split("=", 1)
+        if not key or not value or key in record:
+            raise ValueError(f"invalid {CLAIM_MARKER} token: {token!r}")
+        record[key] = value
+
+    expected_fields = {"name", "claim", "observation", "validation", "status"}
+    if set(record) != expected_fields:
+        missing = sorted(expected_fields - set(record))
+        extra = sorted(set(record) - expected_fields)
+        raise ValueError(
+            f"invalid {CLAIM_MARKER} schema; missing={missing}, extra={extra}"
+        )
+    if record["name"] != expected_name:
+        raise ValueError(
+            f"EcitClaim testcase name {expected_name!r} disagrees with "
+            f"diagnostic name {record['name']!r}"
+        )
+    if expected_name not in CLAIMS:
+        raise ValueError(f"unknown native ECIT claim name: {expected_name!r}")
+
+    return Result(
+        expected_name,
+        _enum(record["claim"], CLAIM_STATES, "claim state"),
+        _enum(record["observation"], OBSERVATION_STATES, "observation state"),
+        _enum(record["validation"], COVERAGE_STATES, "coverage state"),
+        _hex(record["status"], "result status"),
+    )
+
+
+def parse_evidence_v2(output: str, results: dict[str, Result]) -> Evidence:
+    """Merge ECIT_V2 advertisement metadata with native JUnit claim results."""
+    records = _records(output, V2_MARKER, V2_SCHEMAS)
+    if not records:
+        raise ValueError("EcitCorrelationReport contains no ECIT_V2 records")
+    if records[0]["t"] != "begin":
+        raise ValueError("ECIT_V2 evidence must begin with t=begin")
+    if records[-1]["t"] != "end":
+        raise ValueError("ECIT_V2 evidence is missing its final t=end")
+    if any(record["t"] in {"begin", "end"} for record in records[1:-1]):
+        raise ValueError("duplicate or misplaced begin/end record")
+
+    begin, end = records[0], records[-1]
+    expected_features = _uint(begin["features"], "begin features")
+    parse_status = _hex(begin["parse"], "parse")
+    if _uint(end["records"], "end records") != len(records):
+        raise ValueError(
+            f"record count mismatch: end says {end['records']}, parsed {len(records)}"
+        )
+    if _uint(end["features"], "end features") != expected_features:
+        raise ValueError("begin/end feature count mismatch")
+
+    features_by_index: dict[int, Feature] = {}
+    for record in records[1:-1]:
+        record_type = record["t"]
+        if record_type == "feature":
+            index = _uint(record["i"], "feature index")
+            if index == 0 or index in features_by_index:
+                raise ValueError(f"duplicate or invalid feature index: {index}")
+            identifier = _guid(record["id"], "feature id")
+            kind = _enum(record["kind"], {"OIDS", "GUIDS", "OPAQUE"}, "kind")
+            known = FEATURES.get(identifier)
+            if known is not None and kind != known[1]:
+                raise ValueError(
+                    f"feature {index} kind {kind} disagrees with known kind {known[1]}"
+                )
+            features_by_index[index] = Feature(index, identifier, kind, [])
+        elif record_type == "ads":
+            index = _uint(record["f"], "ads feature")
+            feature = features_by_index.get(index)
+            if feature is None:
+                raise ValueError(f"ads references unknown feature {index}")
+            advertised_kind = _enum(record["k"], {"OID", "GUID"}, "ads kind")
+            expected_kind = "OID" if feature.kind == "OIDS" else "GUID"
+            if feature.kind == "OPAQUE" or advertised_kind != expected_kind:
+                raise ValueError(f"ads kind is invalid for feature {index}")
+            values = record["v"].split(",")
+            if any(not value for value in values):
+                raise ValueError(f"ads feature {index} contains an empty identifier")
+            for value in values:
+                normalized = (
+                    _guid(value, "advertised GUID")
+                    if advertised_kind == "GUID"
+                    else value
+                )
+                if advertised_kind == "OID" and OID_RE.fullmatch(value) is None:
+                    raise ValueError(f"invalid advertised OID: {value!r}")
+                if normalized in feature.advertised:
+                    raise ValueError(
+                        f"duplicate advertised identifier for feature {index}: "
+                        f"{normalized}"
+                    )
+                feature.advertised.append(normalized)
+        elif record_type == "derived":
+            index = _uint(record["f"], "derived feature")
+            feature = features_by_index.get(index)
+            if feature is None:
+                raise ValueError(f"derived references unknown feature {index}")
+            if feature.kind != "OIDS" or feature.derived is not None:
+                raise ValueError(
+                    f"duplicate or invalid derived record for feature {index}"
+                )
+            control = _control(record, ("advertised", "modeled", "unmodeled"))
+            if control["modeled"] + control["unmodeled"] != control["advertised"]:
+                raise ValueError(
+                    f"feature {index} derived modeled/unmodeled count mismatch"
+                )
+            feature.derived = {
+                "advertised": control["advertised"],
+                "tested": control["modeled"],
+                "not_tested": control["unmodeled"],
+            }
+
+    if sorted(features_by_index) != list(range(1, expected_features + 1)):
+        raise ValueError("feature indexes are not the declared contiguous 1-based set")
+    feature_identifiers = [feature.identifier for feature in features_by_index.values()]
+    if len(set(feature_identifiers)) != len(feature_identifiers):
+        raise ValueError("duplicate feature identifier")
+    if set(results) != set(CLAIMS):
+        missing = sorted(set(CLAIMS) - set(results))
+        extra = sorted(set(results) - set(CLAIMS))
+        raise ValueError(
+            f"native result set does not match claim registry; "
+            f"missing={missing}, extra={extra}"
+        )
+
+    features = [features_by_index[index] for index in sorted(features_by_index)]
+    for feature in features:
+        if feature.kind == "OIDS" and feature.derived is None:
+            raise ValueError(f"OID feature {feature.index} is missing derived control")
+        if feature.kind != "OIDS" and feature.derived is not None:
+            raise ValueError(f"non-OID feature {feature.index} has derived control")
+
+    advertised_by_feature = {
+        feature.identifier: set(feature.advertised) for feature in features
+    }
+    parse_error = bool(parse_status & (1 << 63))
+    for name, result in results.items():
+        identity = CLAIMS[name]
+        advertised = advertised_by_feature.get(identity.feature)
+        if advertised is None:
+            expected_claim = "UNKNOWN"
+        elif identity.kind == IdentifierKind.OID_PAIR:
+            expected_claim = (
+                "ADVERTISED"
+                if identity.identifier in advertised
+                and identity.paired_identifier in advertised
+                else "ABSENT"
+            )
+        else:
+            expected_claim = (
+                "ADVERTISED" if identity.identifier in advertised else "ABSENT"
+            )
+        if result.claim != expected_claim:
+            raise ValueError(
+                f"result {name} claim state mismatch: "
+                f"expected {expected_claim}, got {result.claim}"
+            )
+
+        if (
+            parse_error
+            or result.observation == "INCONCLUSIVE"
+            or result.claim == "UNKNOWN"
+        ):
+            expected_coverage = "INCONCLUSIVE"
+        elif result.claim == "ADVERTISED":
+            if result.observation == "NOT_TESTED":
+                expected_coverage = "NOT_TESTED"
+            elif result.observation == "SUCCESS":
+                expected_coverage = "VERIFIED"
+            else:
+                expected_coverage = "OVER_REPORTED"
+        elif result.observation == "NOT_TESTED":
+            expected_coverage = "NOT_ADVERTISED"
+        elif result.observation == "SUCCESS":
+            expected_coverage = "UNADVERTISED_SUCCESS"
+        else:
+            expected_coverage = "VERIFIED_ABSENT"
+        if result.coverage != expected_coverage:
+            raise ValueError(
+                f"result {name} coverage mismatch: "
+                f"expected {expected_coverage}, got {result.coverage}"
+            )
+
+    rows, feature_totals, global_totals = _derive(features, results)
+    for feature in features:
+        totals = feature_totals[feature.index]
+        feature.summary = {
+            "advertised": totals["advertised"],
+            "verified": totals["VERIFIED"],
+            "not_tested": totals["NOT_TESTED"],
+            "limitations": totals["NOT_INDEPENDENTLY_VERIFIABLE"],
+            "mismatches": totals["OVER_REPORTED"],
+        }
+
+    verdict = (
+        "FAIL"
+        if global_totals["OVER_REPORTED"] or global_totals["INCONCLUSIVE"]
+        else (
+            "PASS_WITH_LIMITATIONS"
+            if global_totals["NOT_INDEPENDENTLY_VERIFIABLE"]
+            or global_totals["NOT_TESTED"]
+            else "PASS"
+        )
+    )
+    summary: dict[str, int | str] = {
+        "verdict": verdict,
+        "advertised": global_totals["advertised"],
+        "verified": global_totals["VERIFIED"],
+        "not_tested": global_totals["NOT_TESTED"],
+        "unverifiable": global_totals["NOT_INDEPENDENTLY_VERIFIABLE"],
+        "over_reported": global_totals["OVER_REPORTED"],
+        "unadvertised_success": global_totals["UNADVERTISED_SUCCESS"],
+        "inconclusive": global_totals["INCONCLUSIVE"],
+        "verified_absent": global_totals["VERIFIED_ABSENT"],
+    }
     return Evidence(parse_status, features, results, rows, summary)
 
 

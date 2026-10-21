@@ -10,15 +10,21 @@ requirements outside the ECIT and Secure Boot operations listed below remain
 unevaluated by this application.
 
 > [!CAUTION]
-> The application changes PK, `db`, and `dbx`. Use the QEMU runner for routine
-> development. Run on physical hardware only on a dedicated lab device after
-> proving an independent recovery path and backing up the platform's Secure
-> Boot configuration.
+> The application changes PK, `db`, and `dbx`. Use only a virtual or physical
+> test machine that can be completely reflashed or restored through a path
+> independent of the Secure Boot implementation under test. Back up the
+> platform's Secure Boot configuration before running the audit.
 
-## Run on a dedicated physical test machine
+## Run on a recoverable test machine
 
-The physical target must be an X64 lab machine that publishes ECIT and can boot
-an X64 UEFI Shell from USB. Do not use an end-user or production machine.
+The target may be virtual or physical, but it must be a non-production test
+machine that publishes ECIT and can be completely reflashed or restored. It
+must boot a UEFI Shell and audit application matching the fixture architecture.
+The checked-in signed-image fixture is currently X64. Do not use an end-user or
+production machine.
+
+The steps below describe removable-media execution on a physical target. For a
+recoverable virtual target, use the equivalent procedure in [QEMU.md](QEMU.md).
 
 ### 1. Qualify and back up the target
 
@@ -90,16 +96,16 @@ SecureBootKeyAuditJournal.bin
 The cache resumes the framework after the cold reboot. Reusing a completed
 cache or JUnit file can make old evidence look like a new run.
 
-Example PowerShell preparation, replacing `E:` with the USB drive:
+From the `mu_tiano_platforms` root, run this PowerShell example after
+replacing `E:` with the USB drive:
 
 ```powershell
+$RepoRoot = (Get-Location).Path
 $UsbDrive = "E:"
-$AuditApp = "\\wsl.localhost\Ubuntu-24.04\home\doug\git\pqc" +
-            "\mu_tiano_platforms\Build\UefiTestingPkg\DEBUG_GCC5" +
-            "\X64\SecureBootKeyAuditApp.efi"
-$StartupScript = "\\wsl.localhost\Ubuntu-24.04\home\doug\git\pqc" +
-                 "\mu_tiano_platforms\Common\MU\UefiTestingPkg\AuditTests" +
-                 "\SecureBootKeyAudit\startup.nsh"
+$AuditApp = Join-Path $RepoRoot `
+  "Build\UefiTestingPkg\DEBUG_GCC5\X64\SecureBootKeyAuditApp.efi"
+$StartupScript = Join-Path $RepoRoot `
+  "Common\MU\UefiTestingPkg\AuditTests\SecureBootKeyAudit\startup.nsh"
 
 Remove-Item "$UsbDrive\SecureBootKeyAuditApp_Cache.dat" -ErrorAction Ignore
 Remove-Item "$UsbDrive\SecureBootKeyAuditApp_JUNIT.XML" -ErrorAction Ignore
@@ -115,17 +121,22 @@ Through firmware setup or the independently tested recovery mechanism:
 1. back up the existing Secure Boot configuration;
 2. clear PK, `db`, and `dbx`;
 3. confirm `SetupMode=1` and `SecureBoot=0`; and
-4. put the USB UEFI Shell first in the boot order.
+4. make the USB UEFI Shell the persistent first/default boot option for both
+   audit boots.
 
 Do not proceed if the machine cannot be placed in this exact baseline or if
 the original configuration cannot be restored independently.
 
 ### 5. Execute both boots
 
+Do not rely on a one-time boot-menu selection. The audit requests a cold reset,
+so the persistent boot order must return to the same USB and `startup.nsh`
+without operator intervention.
+
 1. Boot the USB. The shell runs `startup.nsh`.
 2. The audit writes its journal and framework cache, then requests a cold
    reset.
-3. Ensure the same USB boots again.
+3. Confirm that the persistent boot order starts the same USB again.
 4. The shell reruns `startup.nsh`; the framework resumes from
    `SecureBootKeyAuditApp_Cache.dat`.
 5. Wait for the application to return to the shell after the second boot.
@@ -142,7 +153,7 @@ After a complete second boot, the USB root contains:
 
 | File | Purpose |
 | --- | --- |
-| `SecureBootKeyAuditApp_JUNIT.XML` | Primary result: scenario pass/fail data, operational logs, and versioned structured ECIT evidence |
+| `SecureBootKeyAuditApp_JUNIT.XML` | Primary result: run identity, scenario pass/fail data, operational logs, and versioned structured ECIT evidence |
 | `SecureBootKeyAuditJournal.bin` | Independently validated proof that the same fixture and ECIT state resumed across the cold reboot |
 | `SecureBootKeyAuditApp_Cache.dat` | Unit-test framework resume state; archive for diagnosis, but do not use it as the result |
 
@@ -150,12 +161,14 @@ Archive those files with the serial log, machine identity, firmware version,
 test date, operator, and the pre-test Secure Boot backup. Copy them off the USB
 before restoring or reusing it.
 
-Example PowerShell collection:
+From the `mu_tiano_platforms` root, replace the example machine and date in
+this PowerShell collection:
 
 ```powershell
+$RepoRoot = (Get-Location).Path
 $UsbDrive = "E:"
-$Evidence = "\\wsl.localhost\Ubuntu-24.04\home\doug\git\pqc" +
-            "\audit-evidence\machine-name-2026-10-19"
+$Evidence = Join-Path $RepoRoot `
+  "Build\SecureBootKeyAuditEvidence\machine-name-YYYY-MM-DD"
 
 New-Item -ItemType Directory -Force $Evidence | Out-Null
 Copy-Item "$UsbDrive\SecureBootKeyAuditApp_JUNIT.XML" $Evidence
@@ -168,7 +181,7 @@ Copy-Item "$UsbDrive\SecureBootKeyAuditApp_Cache.dat" $Evidence
 From the `SecureBootKeyAudit` directory, replace the example evidence path:
 
 ```bash
-evidence=/home/doug/git/pqc/audit-evidence/machine-name-2026-10-19
+evidence="${HOME}/audit-evidence/machine-name-YYYY-MM-DD"
 
 python3 Host/PrintEcitReport.py \
   "$evidence/SecureBootKeyAuditApp_JUNIT.XML"
@@ -202,162 +215,56 @@ After preserving the evidence:
 
 1. restore the known-good PK, KEK, `db`, and `dbx` through the independently
    tested recovery path;
-2. verify Secure Boot mode and normal boot;
-3. verify disk unlock, measured boot, and attestation behavior; and
-4. retain the evidence with the restored-configuration verification.
+2. restore the original boot order;
+3. verify Secure Boot mode and normal boot;
+4. verify disk unlock, measured boot, and attestation behavior; and
+5. retain the evidence with the restored-configuration verification.
 
-## Prototype the physical workflow on QemuQ35
+## QEMU developer prototype
 
-Use QemuQ35 to exercise the same standalone application, FAT filesystem,
-startup script, two-boot sequence, and evidence collection expected on a
-physical machine. The commands remain separate so each operator-visible step
-can be inspected.
+Physical platforms are the primary target and the workflow above is
+authoritative. QEMU is a secondary development environment for exercising the
+same standalone application, FAT filesystem, two-boot sequence, evidence
+collection, and recovery checks.
 
-The examples require `mtools` and `dosfstools`. From the
-`mu_tiano_platforms` root, define the paths used below:
-
-```bash
-root=$PWD
-audit_dir="$root/Common/MU/UefiTestingPkg/AuditTests/SecureBootKeyAudit"
-build="$root/Build/QemuQ35PkgX64/DEBUG_GCC5"
-audit_app="$root/Build/UefiTestingPkg/DEBUG_GCC5/X64/SecureBootKeyAuditApp.efi"
-startup="$audit_dir/startup.nsh"
-virtual_drive="$build/VirtualDrive.img"
-variable_store="$build/FV/QEMUQ35_VARS.fd"
-variable_backup="$build/FV/QEMUQ35_VARS.fd.secure-boot-audit-backup"
-evidence="$root/Build/SecureBootKeyAuditEvidence"
-
-command -v mcopy
-command -v mkfs.vfat
-```
-
-Build the standalone application that would be copied to the physical USB:
-
-```bash
-stuart_ci_build \
-  -c .pytool/CISettings.py \
-  -p UefiTestingPkg \
-  -a X64 \
-  -t DEBUG \
-  TOOL_CHAIN_TAG=GCC5 \
-  BLD_*_SECURE_BOOT_KEY_AUDIT_ONLY=TRUE
-
-test -f "$audit_app"
-sha256sum "$audit_app"
-```
-
-Build the QemuQ35 firmware used only as the prototype target:
-
-```bash
-stuart_build \
-  -c Platforms/QemuQ35Pkg/PlatformBuild.py \
-  TOOL_CHAIN_TAG=GCC5
-```
-
-Back up and hash the complete QEMU variable store. Refuse to overwrite an
-existing backup:
-
-```bash
-test -f "$variable_store"
-test ! -e "$variable_backup"
-
-cp --preserve=all "$variable_store" "$variable_backup"
-baseline_sha=$(sha256sum "$variable_backup" | cut -d' ' -f1)
-echo "Baseline variable-store SHA-256: $baseline_sha"
-```
-
-Create a clean FAT32 virtual USB and copy only the standalone application:
-
-```bash
-rm -f "$virtual_drive"
-truncate -s 60M "$virtual_drive"
-mkfs.vfat -F 32 "$virtual_drive"
-
-mcopy -D overwrite -i "$virtual_drive" "$audit_app" ::
-mdir -i "$virtual_drive" ::
-```
-
-Run QEMU. `STARTUP_NSH` copies the checked-in physical startup commands to the
-virtual USB. `SHUTDOWN_AFTER_RUN=TRUE` adds a QEMU-only shutdown after the
-application returns on boot 2. The application's cold reset on boot 1 occurs
-before that shutdown command:
-
-```bash
-rm -rf "$evidence"
-mkdir -p "$evidence"
-
-set -o pipefail
-stuart_build \
-  -c Platforms/QemuQ35Pkg/PlatformBuild.py \
-  --FlashRom \
-  TOOL_CHAIN_TAG=GCC5 \
-  RUN_TESTS=FALSE \
-  EMPTY_DRIVE=FALSE \
-  STARTUP_NSH="$startup" \
-  SHUTDOWN_AFTER_RUN=TRUE \
-  2>&1 | tee "$evidence/qemu-console.log"
-```
-
-The single QEMU process boots twice. On boot 1 the application creates its
-cache and journal and requests a cold reset. On boot 2 the same startup script
-runs again, the framework resumes, writes JUnit, and returns to the shell.
-
-List and collect the same physical evidence filenames from the virtual USB:
-
-```bash
-mdir -i "$virtual_drive" ::
-
-mcopy -n -i "$virtual_drive" \
-  ::/SecureBootKeyAuditApp_JUNIT.XML "$evidence/"
-mcopy -n -i "$virtual_drive" \
-  ::/SecureBootKeyAuditJournal.bin "$evidence/"
-mcopy -n -i "$virtual_drive" \
-  ::/SecureBootKeyAuditApp_Cache.dat "$evidence/"
-
-ls -l "$evidence"
-```
-
-Restore the variable store before interpreting the result, even if QEMU or
-evidence collection failed:
-
-```bash
-cp --preserve=all "$variable_backup" "$variable_store"
-restored_sha=$(sha256sum "$variable_store" | cut -d' ' -f1)
-
-echo "Restored variable-store SHA-256: $restored_sha"
-test "$restored_sha" = "$baseline_sha"
-rm "$variable_backup"
-```
-
-Validate and render the collected evidence:
-
-```bash
-python3 "$audit_dir/Host/PrintEcitReport.py" \
-  "$evidence/SecureBootKeyAuditApp_JUNIT.XML"
-
-python3 "$audit_dir/Host/InspectJournal.py" \
-  "$evidence/SecureBootKeyAuditJournal.bin"
-```
+See [QEMU.md](QEMU.md) for the architecture-parameterized QemuQ35/X64 and
+QemuArmVirt/AARCH64 procedure. The QEMU harness supports both architectures,
+but the current embedded signed-image fixtures are generated from an X64
+application. X64 is therefore the only fully validated audit target until
+architecture-matched AARCH64 fixtures are generated and verified.
 
 ## Interpret the result
 
-First check the unit-test result. Every scenario must pass with no framework
-errors. The firmware writes compact `[ECIT_V1]` records into the JUnit test
-log. `PrintEcitReport.py` validates those records and builds the human-readable
-table; the firmware does not format the table. Then read `ECIT_SUMMARY`; a
-passing unit-test count does not mean every advertised ECIT combination was
+First check the unit-test result. Every operational scenario must pass with no
+framework errors. Each modeled ECIT claim is also a native JUnit test: verified
+claims pass, coverage limitations and unadvertised claims skip, and mismatches
+or inconclusive results fail. Two profile-coverage tests skip while advertised
+digest/signature combinations remain unmodeled.
+
+The correlation testcase writes compact `[ECIT_V2]` advertisement and derived
+profile metadata into its JUnit log. `PrintEcitReport.py` validates that
+metadata, merges it with the native `EcitClaim` testcase outcomes, and builds
+the human-readable table; the firmware does not format or duplicate the result
+table. Read the generated `ECIT_SUMMARY` after the native results because
+passing modeled claims do not mean every advertised ECIT combination was
 exercised.
 
-| Validation | Meaning | Disposition |
+| Validation | Meaning | Native JUnit result |
 | --- | --- | --- |
 | `VERIFIED` | ECIT advertised the claim and the corresponding operation succeeded. | Pass |
-| `OVER_REPORTED` | ECIT advertised the claim but the operation failed. | Conformance failure |
-| `NOT_TESTED` | ECIT advertised the claim but no exact operational observation was made. | Coverage limitation |
-| `NOT_INDEPENDENTLY_VERIFIABLE` | The operation succeeded, but the available evidence cannot independently establish the exact claim. | Coverage limitation |
-| `UNADVERTISED_SUCCESS` | An operation succeeded for a claim ECIT did not advertise. | Informational; investigate policy/reporting |
-| `VERIFIED_ABSENT` | A negative probe confirmed an unadvertised capability is unavailable. | Informational |
-| `NOT_ADVERTISED` | A modeled probe was skipped because the target did not advertise it. | Outside the advertised denominator |
-| `INCONCLUSIVE` | The audit could not establish a trustworthy operational result. | Audit failure |
+| `OVER_REPORTED` | ECIT advertised the claim but the operation failed. | Fail |
+| `NOT_TESTED` | ECIT advertised the claim but no exact operational observation was made. | Skip |
+| `NOT_INDEPENDENTLY_VERIFIABLE` | The operation succeeded, but the available evidence cannot independently establish the exact claim. | Skip |
+| `UNADVERTISED_SUCCESS` | An operation succeeded for a claim ECIT did not advertise. | Fail by default; pass with a warning only after policy opt-in |
+| `VERIFIED_ABSENT` | A precise negative probe confirmed an unadvertised capability is unavailable. | Pass |
+| `NOT_ADVERTISED` | A modeled probe was skipped because the target did not advertise it. | Skip |
+| `INCONCLUSIVE` | The audit could not establish a trustworthy operational result. | Fail |
+
+Platforms that intentionally accept successful unadvertised operations can set
+`gUefiTestingPkgTokenSpaceGuid.PcdSecureBootKeyAuditAllowUnadvertisedSuccess`
+to `TRUE`. The default is `FALSE`. This policy changes the disposition of an
+observed unadvertised success; it does not enable additional destructive
+probes.
 
 The final verdict means:
 
@@ -371,6 +278,36 @@ For signature and digest OID features, ECIT advertises two sets and the audit
 treats their Cartesian product as the profile denominator. Testing one exact
 pair verifies only that pair. The `Derived profile summary` reports how many
 advertised pairs were tested and how many remain.
+
+### Example validated QemuQ35 result
+
+The table below is a representative fixture-v6 QemuQ35/X64 result, not a
+required platform result. A target's ECIT advertisements determine its own
+denominator, and the generated report is authoritative for that run.
+
+| Feature | Advertised rows | Verified | Not tested |
+| --- | ---: | ---: | ---: |
+| Unknown opaque feature | 1 | 0 | 1 |
+| Secure Boot Image Verification | 74 | 8 | 66 |
+| Secure Boot Image Authorization | 14 | 14 | 0 |
+| Secure Boot Image Revocation | 14 | 14 | 0 |
+| Secure Boot Database Update Verification | 119 | 8 | 111 |
+| Secure Boot Database Update Authorization | 1 | 1 | 0 |
+| **Total** | **223** | **45** | **178** |
+
+The same run produced 66 native JUnit testcases: 62 passed, two modeled V1
+SHA-1 signature-list claims skipped because they were not advertised, and two
+profile-coverage cases skipped because advertised digest/signature pairings
+remain untested. It had zero failures and zero errors. Run
+`Host/PrintEcitReport.py` to obtain the complete per-claim table instead of
+treating this example as a fixed allowlist.
+
+The `AuditRunIdentity` testcase records one `[AUDIT_RUN]` line containing the
+application version, target architecture, sanitized firmware vendor, firmware
+revision, UEFI revision, fixture ID, and fixture-manifest SHA-256. The host
+report validates and prints this record before the ECIT table. This
+non-sensitive firmware identity supplements, but does not replace, the
+operator-recorded machine identity and restoration evidence.
 
 For each run, archive:
 

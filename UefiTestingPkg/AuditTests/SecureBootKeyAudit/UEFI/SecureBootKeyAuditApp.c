@@ -17,6 +17,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PeCoffLib.h>
 #include <Library/ShellLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
@@ -35,9 +36,26 @@
 #include "TestData.h"
 
 #define UNIT_TEST_APP_NAME     "SecureBootKeyAuditApp"
-#define UNIT_TEST_APP_VERSION  "0.9"
+#define UNIT_TEST_APP_VERSION  "0.10"
+
+#if defined (MDE_CPU_X64)
+#define AUDIT_TARGET_ARCH  "X64"
+#elif defined (MDE_CPU_AARCH64)
+#define AUDIT_TARGET_ARCH  "AARCH64"
+#elif defined (MDE_CPU_IA32)
+#define AUDIT_TARGET_ARCH  "IA32"
+#elif defined (MDE_CPU_ARM)
+#define AUDIT_TARGET_ARCH  "ARM"
+#else
+#define AUDIT_TARGET_ARCH  "UNKNOWN"
+#endif
 
 #define MAX_ECIT_LENGTH  SIZE_1MB
+
+#define AUDIT_FIRMWARE_VENDOR_MAX_CHARS  64
+#define AUDIT_MANIFEST_SHA256_HEX_SIZE   ((AUDIT_MANIFEST_SHA256_SIZE * 2) + 1)
+
+#define ECIT_CLAIM_CONTEXT(ClaimId)  ((UNIT_TEST_CONTEXT)(UINTN)((ClaimId) + 1))
 
 #define AUDIT_JOURNAL_FILE_NAME   L"SecureBootKeyAuditJournal.bin"
 #define AUDIT_JOURNAL_SIGNATURE   SIGNATURE_32 ('S', 'B', 'J', 'R')
@@ -409,6 +427,138 @@ EcitSuiteSetup (
 }
 
 STATIC
+BOOLEAN
+IsAuditEvidenceTokenCharacter (
+  IN CHAR16  Character
+  )
+{
+  return (((Character >= L'a') && (Character <= L'z')) ||
+          ((Character >= L'A') && (Character <= L'Z')) ||
+          ((Character >= L'0') && (Character <= L'9')) ||
+          (Character == L'.') ||
+          (Character == L'-') ||
+          (Character == L'_'));
+}
+
+STATIC
+EFI_STATUS
+FormatFirmwareVendor (
+  IN  CONST CHAR16  *FirmwareVendor,
+  OUT CHAR8         *Vendor,
+  IN  UINTN         VendorSize,
+  OUT BOOLEAN       *Truncated
+  )
+{
+  UINTN  Index;
+
+  if ((FirmwareVendor == NULL) || (Vendor == NULL) ||
+      (VendorSize < 2) || (Truncated == NULL))
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  for (Index = 0; Index < (VendorSize - 1); Index++) {
+    if (FirmwareVendor[Index] == L'\0') {
+      break;
+    }
+
+    Vendor[Index] = IsAuditEvidenceTokenCharacter (FirmwareVendor[Index]) ?
+                    (CHAR8)FirmwareVendor[Index] :
+                    '_';
+  }
+
+  Vendor[Index] = '\0';
+  *Truncated    = (FirmwareVendor[Index] != L'\0');
+  return (Index == 0) ? EFI_COMPROMISED_DATA : EFI_SUCCESS;
+}
+
+STATIC
+VOID
+FormatBytesAsHex (
+  IN  CONST UINT8  *Bytes,
+  IN  UINTN        ByteCount,
+  OUT CHAR8        *Hex
+  )
+{
+  STATIC CONST CHAR8  HexDigits[] = "0123456789abcdef";
+  UINTN               Index;
+
+  for (Index = 0; Index < ByteCount; Index++) {
+    Hex[(Index * 2)]     = HexDigits[Bytes[Index] >> 4];
+    Hex[(Index * 2) + 1] = HexDigits[Bytes[Index] & 0x0F];
+  }
+
+  Hex[ByteCount * 2] = '\0';
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+AuditRunIdentityTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  CHAR8       FixtureId[AUDIT_JOURNAL_FIXTURE_ID_SIZE + 1];
+  CHAR8       FirmwareVendor[AUDIT_FIRMWARE_VENDOR_MAX_CHARS + 1];
+  CHAR8       ManifestSha256[AUDIT_MANIFEST_SHA256_HEX_SIZE];
+  EFI_STATUS  Status;
+  BOOLEAN     VendorTruncated;
+
+  if ((gST == NULL) || (gST->FirmwareVendor == NULL)) {
+    UT_LOG_ERROR ("The UEFI system table does not provide firmware identity\n");
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  if ((gSecureBootKeyAuditFixtureIdSize == 0) ||
+      (gSecureBootKeyAuditFixtureIdSize > AUDIT_JOURNAL_FIXTURE_ID_SIZE) ||
+      (gSecureBootKeyAuditManifestSha256Size != AUDIT_MANIFEST_SHA256_SIZE))
+  {
+    UT_LOG_ERROR ("The embedded fixture identity is malformed\n");
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = FormatFirmwareVendor (
+             gST->FirmwareVendor,
+             FirmwareVendor,
+             sizeof (FirmwareVendor),
+             &VendorTruncated
+             );
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("The firmware vendor cannot be represented in audit evidence: %r\n", Status);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  ZeroMem (FixtureId, sizeof (FixtureId));
+  CopyMem (
+    FixtureId,
+    gSecureBootKeyAuditFixtureId,
+    gSecureBootKeyAuditFixtureIdSize
+    );
+  FormatBytesAsHex (
+    gSecureBootKeyAuditManifestSha256,
+    gSecureBootKeyAuditManifestSha256Size,
+    ManifestSha256
+    );
+
+  UT_LOG_INFO (
+    "[AUDIT_RUN] app=%a version=%a arch=%a firmware_vendor=%a "
+    "firmware_vendor_truncated=%a firmware_revision=0x%08x "
+    "uefi_revision=0x%08x fixture=%a manifest_sha256=%a\n",
+    UNIT_TEST_APP_NAME,
+    UNIT_TEST_APP_VERSION,
+    AUDIT_TARGET_ARCH,
+    FirmwareVendor,
+    VendorTruncated ? "TRUE" : "FALSE",
+    gST->FirmwareRevision,
+    gST->Hdr.Revision,
+    FixtureId,
+    ManifestSha256
+    );
+
+  return UNIT_TEST_PASSED;
+}
+
+STATIC
 UNIT_TEST_STATUS
 EFIAPI
 EcitCorrelationReportTest (
@@ -418,10 +568,8 @@ EcitCorrelationReportTest (
   ECIT_COVERAGE_STATE  CoverageRows[EcitClaimCount];
   UINTN                Counts[EcitCoverageInconclusive + 1];
   UINTN                Index;
-  UINTN                AdvertisedClaims;
 
   ZeroMem (Counts, sizeof (Counts));
-  AdvertisedClaims = 0;
 
   for (Index = 0; Index < EcitClaimCount; Index++) {
     CoverageRows[Index] = CorrelateEcitResult (
@@ -430,41 +578,138 @@ EcitCorrelationReportTest (
                             mEcitParseStatus
                             );
     Counts[CoverageRows[Index]]++;
-    if (mEcitClaimResults[Index].Claim == EcitClaimAdvertised) {
-      AdvertisedClaims++;
-    }
   }
-
-  UT_LOG_INFO (
-    "[ECIT_SCENARIO_SUMMARY] rows=%u advertised_claims=%u verified=%u over_reported=%u "
-    "unadvertised_success=%u verified_absent=%u not_advertised=%u "
-    "not_independently_verifiable=%u not_tested=%u inconclusive=%u\n",
-    EcitClaimCount,
-    AdvertisedClaims,
-    Counts[EcitCoverageVerified],
-    Counts[EcitCoverageOverReported],
-    Counts[EcitCoverageUnadvertisedSuccess],
-    Counts[EcitCoverageVerifiedAbsent],
-    Counts[EcitCoverageNotAdvertised],
-    Counts[EcitCoverageNotIndependentlyVerifiable],
-    Counts[EcitCoverageNotTested],
-    Counts[EcitCoverageInconclusive]
-    );
 
   LogEcitEvidence (
     mEcitTable,
-    mEcitClaimResults,
-    CoverageRows,
-    ARRAY_SIZE (mEcitClaimResults),
     mEcitParseStatus
     );
 
   if (EFI_ERROR (mEcitParseStatus) ||
       (Counts[EcitCoverageOverReported] != 0) ||
-      (Counts[EcitCoverageNotTested] != 0) ||
       (Counts[EcitCoverageInconclusive] != 0))
   {
     return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+EcitClaimTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  ECIT_CLAIM_ID        ClaimId;
+  ECIT_COVERAGE_STATE  Coverage;
+  ECIT_CLAIM_RESULT    *Result;
+
+  ClaimId = (ECIT_CLAIM_ID)((UINTN)Context - 1);
+  if (ClaimId >= EcitClaimCount) {
+    UT_LOG_ERROR ("Invalid ECIT claim test context: %p\n", Context);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Result   = &mEcitClaimResults[ClaimId];
+  Coverage = CorrelateEcitResult (
+               Result->Claim,
+               Result->Observation,
+               mEcitParseStatus
+               );
+  UT_LOG_INFO (
+    "[ECIT_CLAIM] name=%a claim=%a observation=%a validation=%a status=0x%Lx\n",
+    Result->Name,
+    EcitClaimStateName (Result->Claim),
+    EcitObservationStateName (Result->Observation),
+    EcitCoverageStateName (Coverage),
+    (UINT64)Result->ObservationStatus
+    );
+
+  switch (Coverage) {
+    case EcitCoverageVerified:
+    case EcitCoverageVerifiedAbsent:
+      return UNIT_TEST_PASSED;
+    case EcitCoverageNotTested:
+    case EcitCoverageNotAdvertised:
+    case EcitCoverageNotIndependentlyVerifiable:
+      return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
+    case EcitCoverageUnadvertisedSuccess:
+      if (FixedPcdGetBool (
+            PcdSecureBootKeyAuditAllowUnadvertisedSuccess
+            ))
+      {
+        UT_LOG_WARNING (
+          "Accepted an unadvertised successful operation by policy\n"
+          );
+        return UNIT_TEST_PASSED;
+      }
+
+      UT_LOG_ERROR (
+        "Successful unadvertised operations require an explicit policy opt-in\n"
+        );
+      return UNIT_TEST_ERROR_TEST_FAILED;
+    case EcitCoverageOverReported:
+    case EcitCoverageInconclusive:
+    default:
+      return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+}
+
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+EcitProfileCoverageTest (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  ECIT_COVERAGE_STATE  CoverageRows[EcitClaimCount];
+  ECIT_PROFILE_COUNTS  Counts;
+  CONST EFI_GUID       *Feature;
+  UINTN                Index;
+  EFI_STATUS           Status;
+
+  Feature = (CONST EFI_GUID *)Context;
+  for (Index = 0; Index < EcitClaimCount; Index++) {
+    CoverageRows[Index] = CorrelateEcitResult (
+                            mEcitClaimResults[Index].Claim,
+                            mEcitClaimResults[Index].Observation,
+                            mEcitParseStatus
+                            );
+  }
+
+  Status = GetEcitProfileCounts (
+             mEcitTable,
+             Feature,
+             CoverageRows,
+             &Counts
+             );
+  if (Status == EFI_NOT_FOUND) {
+    UT_LOG_INFO ("ECIT feature %g is not advertised\n", Feature);
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
+  }
+
+  if (EFI_ERROR (Status)) {
+    UT_LOG_ERROR ("Could not derive ECIT profile coverage: %r\n", Status);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  UT_LOG_INFO (
+    "[ECIT_PROFILE_COVERAGE] feature=%g advertised=%u tested=%u "
+    "not_tested=%u mismatches=%u\n",
+    Feature,
+    Counts.Advertised,
+    Counts.Tested,
+    Counts.NotTested,
+    Counts.Mismatches
+    );
+  if (Counts.Mismatches != 0) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  if (Counts.NotTested != 0) {
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   return UNIT_TEST_PASSED;
@@ -2735,7 +2980,7 @@ CapabilityAuthorityPathTest (
   UT_LOG_INFO ("Advertised update-algorithm mask: 0x%x\n", Mask);
   if (Mask == 0) {
     UT_LOG_INFO ("No fixture-backed update algorithm is advertised; authority path is not applicable\n");
-    return UNIT_TEST_PASSED;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   Status = BuildImageCapabilityPath (Mask, FALSE, &Path);
@@ -3342,7 +3587,7 @@ CumulativeCaRetirementTest (
 
   if (Mask == 0) {
     UT_LOG_INFO ("No fixture-backed image algorithm is advertised; migration is not applicable\n");
-    return UNIT_TEST_PASSED;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   if (Mask == AUDIT_IMAGE_ALGORITHM_ALL) {
@@ -3561,6 +3806,100 @@ Exit:
   return Result;
 }
 
+typedef struct {
+  CHAR8                 *Description;
+  CHAR8                 *ClassName;
+  UNIT_TEST_FUNCTION    Function;
+} AUDIT_TEST_CASE;
+
+STATIC CONST AUDIT_TEST_CASE  mAuditTestCases[] = {
+  {
+    "Report audit run identity",
+    "AuditRunIdentity",
+    AuditRunIdentityTest
+  },
+  {
+    "Parse ECIT capability claims",
+    "EcitClaimsParse",
+    EcitClaimsParseTest
+  },
+  {
+    "Classify ECIT claim and observation results",
+    "EcitCorrelationClassifier",
+    EcitCorrelationClassifierTest
+  },
+  {
+    "Reject unsafe Secure Boot recovery states before mutation",
+    "RecoveryStateClassifier",
+    RecoveryStateClassifierTest
+  },
+  {
+    "Persist audit identity and state across a cold reboot",
+    "PersistentJournalReboot",
+    PersistentJournalRebootTest
+  },
+  {
+    "Preserve evidence before recovering interrupted test state",
+    "InterruptedStateRecovery",
+    InterruptedStateRecoveryTest
+  },
+  {
+    "Rotate RSA-2048 PK A to B and back",
+    "RsaPkRotation",
+    RsaPkRotationTest
+  },
+  {
+    "Enroll ML-DSA-87 PK directly from Setup Mode",
+    "MldsaSetupEnrollment",
+    MldsaSetupEnrollmentTest
+  },
+  {
+    "Reject replayed authenticated db updates atomically",
+    "AuthenticatedVariableReplay",
+    AuthenticatedVariableReplayTest
+  },
+  {
+    "Rotate RSA-2048 PK to ML-DSA-87 and back",
+    "RsaToMldsaRotation",
+    RsaToMldsaRotationTest
+  },
+  {
+    "Authorize an ML-DSA-87 image with a V1 db TBS hash",
+    "MldsaImageTbsHashV1",
+    MldsaImageTbsHashV1Test
+  },
+  {
+    "Authorize an ML-DSA-87 image with a V2 db TBS hash",
+    "MldsaImageTbsHashV2",
+    MldsaImageTbsHashV2Test
+  },
+  {
+    "Continue multi-signature verification after individual signer revocation",
+    "MultiSignatureRevocation",
+    MultiSignatureRevocationTest
+  },
+  {
+    "Retire RSA, ECDSA, and ML-DSA image CAs cumulatively",
+    "CumulativeCaRetirement",
+    CumulativeCaRetirementTest
+  },
+  {
+    "Traverse every advertised Secure Boot update authority",
+    "CapabilityAuthorityPath",
+    CapabilityAuthorityPathTest
+  },
+  {
+    "Exercise every advertised image authorization and revocation format",
+    "ImageFormatSweep",
+    ImageFormatSweepTest
+  },
+  {
+    "Report ECIT claim and observation correlation",
+    "EcitCorrelationReport",
+    EcitCorrelationReportTest
+  }
+};
+
 EFI_STATUS
 EFIAPI
 SecureBootKeyAuditAppEntry (
@@ -3570,7 +3909,10 @@ SecureBootKeyAuditAppEntry (
 {
   UNIT_TEST_FRAMEWORK_HANDLE  Framework;
   UNIT_TEST_SUITE_HANDLE      Suite;
+  CHAR8                       ClaimDescription[128];
+  CONST CHAR8                 *ClaimName;
   EFI_STATUS                  Status;
+  UINTN                       Index;
 
   Framework = NULL;
   DEBUG ((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
@@ -3598,150 +3940,87 @@ SecureBootKeyAuditAppEntry (
     return Status;
   }
 
-  AddTestCase (
-    Suite,
-    "Parse ECIT capability claims",
-    "EcitClaimsParse",
-    EcitClaimsParseTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Classify ECIT claim and observation results",
-    "EcitCorrelationClassifier",
-    EcitCorrelationClassifierTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Reject unsafe Secure Boot recovery states before mutation",
-    "RecoveryStateClassifier",
-    RecoveryStateClassifierTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Persist audit identity and state across a cold reboot",
-    "PersistentJournalReboot",
-    PersistentJournalRebootTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Preserve evidence before recovering interrupted test state",
-    "InterruptedStateRecovery",
-    InterruptedStateRecoveryTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Rotate RSA-2048 PK A to B and back",
-    "RsaPkRotation",
-    RsaPkRotationTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Enroll ML-DSA-87 PK directly from Setup Mode",
-    "MldsaSetupEnrollment",
-    MldsaSetupEnrollmentTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Reject replayed authenticated db updates atomically",
-    "AuthenticatedVariableReplay",
-    AuthenticatedVariableReplayTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Rotate RSA-2048 PK to ML-DSA-87 and back",
-    "RsaToMldsaRotation",
-    RsaToMldsaRotationTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Authorize an ML-DSA-87 image with a V1 db TBS hash",
-    "MldsaImageTbsHashV1",
-    MldsaImageTbsHashV1Test,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Authorize an ML-DSA-87 image with a V2 db TBS hash",
-    "MldsaImageTbsHashV2",
-    MldsaImageTbsHashV2Test,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Continue multi-signature verification after individual signer revocation",
-    "MultiSignatureRevocation",
-    MultiSignatureRevocationTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Retire RSA, ECDSA, and ML-DSA image CAs cumulatively",
-    "CumulativeCaRetirement",
-    CumulativeCaRetirementTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Traverse every advertised Secure Boot update authority",
-    "CapabilityAuthorityPath",
-    CapabilityAuthorityPathTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Exercise every advertised image authorization and revocation format",
-    "ImageFormatSweep",
-    ImageFormatSweepTest,
-    NULL,
-    NULL,
-    NULL
-    );
-  AddTestCase (
-    Suite,
-    "Report ECIT claim and observation correlation",
-    "EcitCorrelationReport",
-    EcitCorrelationReportTest,
-    NULL,
-    NULL,
-    NULL
-    );
+  for (Index = 0; Index < ARRAY_SIZE (mAuditTestCases); Index++) {
+    Status = AddTestCase (
+               Suite,
+               mAuditTestCases[Index].Description,
+               mAuditTestCases[Index].ClassName,
+               mAuditTestCases[Index].Function,
+               NULL,
+               NULL,
+               NULL
+               );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "Unable to register %a: %r\n",
+        mAuditTestCases[Index].ClassName,
+        Status
+        ));
+      FreeUnitTestFramework (Framework);
+      return Status;
+    }
+  }
+
+  for (Index = 0; Index < EcitClaimCount; Index++) {
+    ClaimName = GetEcitClaimName ((ECIT_CLAIM_ID)Index);
+    if (ClaimName == NULL) {
+      FreeUnitTestFramework (Framework);
+      return EFI_COMPROMISED_DATA;
+    }
+
+    Status = AsciiStrCpyS (
+               ClaimDescription,
+               sizeof (ClaimDescription),
+               ClaimName
+               );
+    if (EFI_ERROR (Status)) {
+      FreeUnitTestFramework (Framework);
+      return Status;
+    }
+
+    Status = AddTestCase (
+               Suite,
+               ClaimDescription,
+               "EcitClaim",
+               EcitClaimTest,
+               NULL,
+               NULL,
+               ECIT_CLAIM_CONTEXT (Index)
+               );
+    if (EFI_ERROR (Status)) {
+      FreeUnitTestFramework (Framework);
+      return Status;
+    }
+  }
+
+  Status = AddTestCase (
+             Suite,
+             "Image verification advertised profile coverage",
+             "EcitProfileCoverage",
+             EcitProfileCoverageTest,
+             NULL,
+             NULL,
+             &gEfiEcitFeatureSbImageVerificationGuid
+             );
+  if (EFI_ERROR (Status)) {
+    FreeUnitTestFramework (Framework);
+    return Status;
+  }
+
+  Status = AddTestCase (
+             Suite,
+             "Database update verification advertised profile coverage",
+             "EcitProfileCoverage",
+             EcitProfileCoverageTest,
+             NULL,
+             NULL,
+             &gEfiEcitFeatureSbDatabaseUpdateVerificationGuid
+             );
+  if (EFI_ERROR (Status)) {
+    FreeUnitTestFramework (Framework);
+    return Status;
+  }
 
   Status = RunAllTestSuites (Framework);
   FreeUnitTestFramework (Framework);
