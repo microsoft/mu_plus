@@ -46,6 +46,11 @@ FindEcitSignatureListClaim (
   IN CONST EFI_GUID  *SignatureListType
   );
 
+CONST CHAR8 *
+GetEcitClaimName (
+  IN ECIT_CLAIM_ID  ClaimId
+  );
+
 VOID
 RecordEcitClaimObservation (
   IN OUT ECIT_CLAIM_RESULT   *ClaimResults,

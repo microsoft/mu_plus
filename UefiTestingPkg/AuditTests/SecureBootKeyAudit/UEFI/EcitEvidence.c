@@ -43,11 +43,6 @@ typedef struct {
   BOOLEAN    Digest;
 } ECIT_PROFILE_OID;
 
-typedef struct {
-  UINTN    Advertised;
-  UINTN    Coverage[EcitCoverageInconclusive + 1];
-} ECIT_COVERAGE_TOTALS;
-
 STATIC CONST ECIT_FEATURE_KIND  mFeatureKinds[] = {
   { &gEfiEcitFeatureSbImageVerificationGuid,           EcitPayloadCsvOids            },
   { &gEfiEcitFeatureSbImageAuthorizationGuid,          EcitPayloadSignatureListTypes },
@@ -134,9 +129,8 @@ FindOidDigestKind (
   return FALSE;
 }
 
-STATIC
 CONST CHAR8 *
-ClaimStateName (
+EcitClaimStateName (
   IN ECIT_CLAIM_STATE  Claim
   )
 {
@@ -150,9 +144,8 @@ ClaimStateName (
   }
 }
 
-STATIC
 CONST CHAR8 *
-ObservationStateName (
+EcitObservationStateName (
   IN ECIT_OBSERVATION_STATE  Observation
   )
 {
@@ -168,9 +161,8 @@ ObservationStateName (
   }
 }
 
-STATIC
 CONST CHAR8 *
-CoverageStateName (
+EcitCoverageStateName (
   IN ECIT_COVERAGE_STATE  Coverage
   )
 {
@@ -196,42 +188,6 @@ CoverageStateName (
 
 STATIC
 VOID
-AccumulateCoverage (
-  IN OUT ECIT_COVERAGE_TOTALS  *Totals,
-  IN ECIT_COVERAGE_STATE       Coverage,
-  IN BOOLEAN                   Advertised
-  )
-{
-  if (Advertised) {
-    Totals->Advertised++;
-  }
-
-  Totals->Coverage[Coverage]++;
-}
-
-STATIC
-CONST CHAR8 *
-AuditVerdict (
-  IN CONST ECIT_COVERAGE_TOTALS  *Totals
-  )
-{
-  if ((Totals->Coverage[EcitCoverageOverReported] != 0) ||
-      (Totals->Coverage[EcitCoverageInconclusive] != 0))
-  {
-    return "FAIL";
-  }
-
-  if ((Totals->Coverage[EcitCoverageNotIndependentlyVerifiable] != 0) ||
-      (Totals->Coverage[EcitCoverageNotTested] != 0))
-  {
-    return "PASS_WITH_LIMITATIONS";
-  }
-
-  return "PASS";
-}
-
-STATIC
-VOID
 FlushAdvertisedValues (
   IN UINTN        FeatureIndex,
   IN CONST CHAR8  *IdentifierKind,
@@ -244,7 +200,7 @@ FlushAdvertisedValues (
   }
 
   UT_LOG_INFO (
-    "[ECIT_V1] t=ads f=%u k=%a v=%a\n",
+    "[ECIT_V2] t=ads f=%u k=%a v=%a\n",
     FeatureIndex,
     IdentifierKind,
     Values
@@ -287,35 +243,136 @@ AppendAdvertisedValue (
   CopyMem (&Values[CurrentSize], Value, ValueSize + 1);
 }
 
-STATIC
-VOID
-AccumulateClaim (
-  IN ECIT_CLAIM_ID              ClaimId,
-  IN CONST ECIT_COVERAGE_STATE  *CoverageRows,
-  IN OUT ECIT_COVERAGE_TOTALS   *FeatureTotals,
-  IN OUT ECIT_COVERAGE_TOTALS   *GrandTotals
+EFI_STATUS
+GetEcitProfileCounts (
+  IN CONST EFI_CRYPTO_INDICATOR_TABLE  *Table,
+  IN CONST EFI_GUID                    *Feature,
+  IN CONST ECIT_COVERAGE_STATE         *CoverageRows,
+  OUT ECIT_PROFILE_COUNTS              *Counts
   )
 {
-  ECIT_COVERAGE_STATE  Coverage;
+  ECIT_CLAIM_ID                     ClaimId;
+  UINTN                             DigestIndex;
+  UINTN                             End;
+  CONST EFI_CRYPTO_INDICATOR_ENTRY  *Entry;
+  UINTN                             EntryIndex;
+  ECIT_PROFILE_OID                  Oids[MAX_PROFILE_OIDS];
+  UINTN                             OidCount;
+  UINTN                             Offset;
+  CONST UINT8                       *Payload;
+  UINTN                             PayloadSize;
+  UINTN                             SignatureIndex;
+  UINTN                             Start;
+  CHAR8                             Token[MAX_OID_TEXT_SIZE];
+  UINTN                             TokenSize;
 
-  Coverage = (ClaimId < EcitClaimCount) ?
-             CoverageRows[ClaimId] :
-             EcitCoverageNotTested;
-  AccumulateCoverage (FeatureTotals, Coverage, TRUE);
-  AccumulateCoverage (GrandTotals, Coverage, TRUE);
+  if ((Table == NULL) || (Feature == NULL) ||
+      (CoverageRows == NULL) || (Counts == NULL))
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  ZeroMem (Counts, sizeof (*Counts));
+  Offset = sizeof (*Table);
+  for (EntryIndex = 0; EntryIndex < Table->NumberOfEntries; EntryIndex++) {
+    if ((Offset > Table->Length) ||
+        ((Table->Length - Offset) < sizeof (*Entry)))
+    {
+      return EFI_COMPROMISED_DATA;
+    }
+
+    Entry = (CONST EFI_CRYPTO_INDICATOR_ENTRY *)((CONST UINT8 *)Table + Offset);
+    if ((Entry->EntryLength < sizeof (*Entry)) ||
+        (Entry->EntryLength > (Table->Length - Offset)))
+    {
+      return EFI_COMPROMISED_DATA;
+    }
+
+    if (!CompareGuid (&Entry->FeatureIdentifier, Feature)) {
+      Offset += Entry->EntryLength;
+      continue;
+    }
+
+    OidCount    = 0;
+    Payload     = (CONST UINT8 *)(Entry + 1);
+    PayloadSize = Entry->EntryLength - sizeof (*Entry);
+    Start       = 0;
+    while ((Start < PayloadSize) && (Payload[Start] != '\0')) {
+      End = Start;
+      while ((End < PayloadSize) && (Payload[End] != '\0') &&
+             (Payload[End] != ','))
+      {
+        End++;
+      }
+
+      TokenSize = End - Start;
+      if ((TokenSize > 0) && (TokenSize < sizeof (Token)) &&
+          (OidCount < ARRAY_SIZE (Oids)))
+      {
+        CopyMem (Token, &Payload[Start], TokenSize);
+        Token[TokenSize] = '\0';
+        if (FindOidDigestKind (Token, &Oids[OidCount].Digest)) {
+          AsciiStrCpyS (
+            Oids[OidCount].Oid,
+            sizeof (Oids[OidCount].Oid),
+            Token
+            );
+          OidCount++;
+        }
+      }
+
+      if ((End == PayloadSize) || (Payload[End] == '\0')) {
+        break;
+      }
+
+      Start = End + 1;
+    }
+
+    for (SignatureIndex = 0; SignatureIndex < OidCount; SignatureIndex++) {
+      if (Oids[SignatureIndex].Digest) {
+        continue;
+      }
+
+      for (DigestIndex = 0; DigestIndex < OidCount; DigestIndex++) {
+        if (!Oids[DigestIndex].Digest) {
+          continue;
+        }
+
+        ClaimId = FindEcitOidPairClaim (
+                    Feature,
+                    Oids[SignatureIndex].Oid,
+                    Oids[DigestIndex].Oid
+                    );
+        Counts->Advertised++;
+        if (ClaimId >= EcitClaimCount) {
+          Counts->NotTested++;
+        } else if (CoverageRows[ClaimId] == EcitCoverageVerified) {
+          Counts->Tested++;
+        } else if ((CoverageRows[ClaimId] == EcitCoverageNotTested) ||
+                   (CoverageRows[ClaimId] ==
+                    EcitCoverageNotIndependentlyVerifiable))
+        {
+          Counts->NotTested++;
+        } else {
+          Counts->Mismatches++;
+        }
+      }
+    }
+
+    return EFI_SUCCESS;
+  }
+
+  return EFI_NOT_FOUND;
 }
 
 STATIC
 VOID
 EmitOidEvidence (
-  IN UINTN                      FeatureIndex,
-  IN CONST EFI_GUID             *Feature,
-  IN CONST UINT8                *Payload,
-  IN UINTN                      PayloadSize,
-  IN CONST ECIT_COVERAGE_STATE  *CoverageRows,
-  IN OUT ECIT_COVERAGE_TOTALS   *FeatureTotals,
-  IN OUT ECIT_COVERAGE_TOTALS   *GrandTotals,
-  IN OUT UINTN                  *RecordCount
+  IN UINTN           FeatureIndex,
+  IN CONST EFI_GUID  *Feature,
+  IN CONST UINT8     *Payload,
+  IN UINTN           PayloadSize,
+  IN OUT UINTN       *RecordCount
   )
 {
   ECIT_CLAIM_ID     ClaimId;
@@ -328,14 +385,14 @@ EmitOidEvidence (
   UINTN             Start;
   CHAR8             Token[MAX_OID_TEXT_SIZE];
   UINTN             TokenSize;
-  UINTN             UntestedCount;
+  UINTN             UnmodeledCount;
   CHAR8             Values[ECIT_EVIDENCE_VALUE_SIZE];
 
-  OidCount      = 0;
-  ProfileCount  = 0;
-  Start         = 0;
-  UntestedCount = 0;
-  Values[0]     = '\0';
+  OidCount       = 0;
+  ProfileCount   = 0;
+  Start          = 0;
+  UnmodeledCount = 0;
+  Values[0]      = '\0';
 
   while ((Start < PayloadSize) && (Payload[Start] != '\0')) {
     End = Start;
@@ -356,14 +413,6 @@ EmitOidEvidence (
         Values,
         RecordCount
         );
-      ClaimId = FindEcitOidClaim (Feature, Token);
-      AccumulateClaim (
-        ClaimId,
-        CoverageRows,
-        FeatureTotals,
-        GrandTotals
-        );
-
       if ((OidCount < ARRAY_SIZE (Oids)) &&
           FindOidDigestKind (Token, &Oids[OidCount].Digest))
       {
@@ -401,14 +450,8 @@ EmitOidEvidence (
                   Oids[SignatureIndex].Oid,
                   Oids[DigestIndex].Oid
                   );
-      AccumulateClaim (
-        ClaimId,
-        CoverageRows,
-        FeatureTotals,
-        GrandTotals
-        );
       if (ClaimId >= EcitClaimCount) {
-        UntestedCount++;
+        UnmodeledCount++;
       }
 
       ProfileCount++;
@@ -416,11 +459,11 @@ EmitOidEvidence (
   }
 
   UT_LOG_INFO (
-    "[ECIT_V1] t=derived f=%u advertised=%u tested=%u not_tested=%u\n",
+    "[ECIT_V2] t=derived f=%u advertised=%u modeled=%u unmodeled=%u\n",
     FeatureIndex,
     ProfileCount,
-    ProfileCount - UntestedCount,
-    UntestedCount
+    ProfileCount - UnmodeledCount,
+    UnmodeledCount
     );
   (*RecordCount)++;
 }
@@ -428,17 +471,12 @@ EmitOidEvidence (
 STATIC
 VOID
 EmitGuidEvidence (
-  IN UINTN                      FeatureIndex,
-  IN CONST EFI_GUID             *Feature,
-  IN CONST UINT8                *Payload,
-  IN UINTN                      PayloadSize,
-  IN CONST ECIT_COVERAGE_STATE  *CoverageRows,
-  IN OUT ECIT_COVERAGE_TOTALS   *FeatureTotals,
-  IN OUT ECIT_COVERAGE_TOTALS   *GrandTotals,
-  IN OUT UINTN                  *RecordCount
+  IN UINTN        FeatureIndex,
+  IN CONST UINT8  *Payload,
+  IN UINTN        PayloadSize,
+  IN OUT UINTN    *RecordCount
   )
 {
-  ECIT_CLAIM_ID   ClaimId;
   CONST EFI_GUID  *Guid;
   CHAR8           GuidText[37];
   UINTN           Index;
@@ -454,13 +492,6 @@ EmitGuidEvidence (
       GuidText,
       Values,
       RecordCount
-      );
-    ClaimId = FindEcitSignatureListClaim (Feature, Guid);
-    AccumulateClaim (
-      ClaimId,
-      CoverageRows,
-      FeatureTotals,
-      GrandTotals
       );
   }
 
@@ -479,18 +510,14 @@ EmitFeatureEvidence (
   IN CONST EFI_CRYPTO_INDICATOR_ENTRY  *Entry,
   IN CONST UINT8                       *Payload,
   IN UINTN                             PayloadSize,
-  IN CONST ECIT_COVERAGE_STATE         *CoverageRows,
-  IN OUT ECIT_COVERAGE_TOTALS          *GrandTotals,
   IN OUT UINTN                         *RecordCount
   )
 {
-  ECIT_COVERAGE_TOTALS  FeatureTotals;
-  ECIT_PAYLOAD_KIND     PayloadKind;
+  ECIT_PAYLOAD_KIND  PayloadKind;
 
-  ZeroMem (&FeatureTotals, sizeof (FeatureTotals));
   PayloadKind = FindPayloadKind (&Entry->FeatureIdentifier);
   UT_LOG_INFO (
-    "[ECIT_V1] t=feature i=%u id=%g kind=%a\n",
+    "[ECIT_V2] t=feature i=%u id=%g kind=%a\n",
     FeatureIndex,
     &Entry->FeatureIdentifier,
     PayloadKindName (PayloadKind)
@@ -504,80 +531,44 @@ EmitFeatureEvidence (
         &Entry->FeatureIdentifier,
         Payload,
         PayloadSize,
-        CoverageRows,
-        &FeatureTotals,
-        GrandTotals,
         RecordCount
         );
       break;
     case EcitPayloadSignatureListTypes:
       EmitGuidEvidence (
         FeatureIndex,
-        &Entry->FeatureIdentifier,
         Payload,
         PayloadSize,
-        CoverageRows,
-        &FeatureTotals,
-        GrandTotals,
         RecordCount
         );
       break;
     default:
-      AccumulateCoverage (
-        &FeatureTotals,
-        EcitCoverageNotTested,
-        TRUE
-        );
-      AccumulateCoverage (
-        GrandTotals,
-        EcitCoverageNotTested,
-        TRUE
-        );
       break;
   }
-
-  UT_LOG_INFO (
-    "[ECIT_V1] t=feature_summary f=%u advertised=%u verified=%u "
-    "not_tested=%u limitations=%u mismatches=%u\n",
-    FeatureIndex,
-    FeatureTotals.Advertised,
-    FeatureTotals.Coverage[EcitCoverageVerified],
-    FeatureTotals.Coverage[EcitCoverageNotTested],
-    FeatureTotals.Coverage[EcitCoverageNotIndependentlyVerifiable],
-    FeatureTotals.Coverage[EcitCoverageOverReported]
-    );
-  (*RecordCount)++;
 }
 
 VOID
 LogEcitEvidence (
   IN CONST EFI_CRYPTO_INDICATOR_TABLE  *Table OPTIONAL,
-  IN CONST ECIT_CLAIM_RESULT           *ClaimResults,
-  IN CONST ECIT_COVERAGE_STATE         *CoverageRows,
-  IN UINTN                             ClaimResultCount,
   IN EFI_STATUS                        ParseStatus
   )
 {
-  ECIT_COVERAGE_TOTALS              GrandTotals;
   CONST UINT8                       *Payload;
   UINTN                             PayloadSize;
   CONST EFI_CRYPTO_INDICATOR_ENTRY  *Entry;
   UINTN                             EntryIndex;
   UINTN                             FeatureCount;
-  UINTN                             Index;
   UINTN                             Offset;
   UINTN                             RecordCount;
 
   FeatureCount = (Table == NULL) ? 0 : Table->NumberOfEntries;
   RecordCount  = 1;
   UT_LOG_INFO (
-    "[ECIT_V1] t=begin features=%u results=%u parse=0x%lx\n",
+    "[ECIT_V2] t=begin features=%u parse=0x%lx\n",
     FeatureCount,
-    ClaimResultCount,
     (UINT64)ParseStatus
     );
 
-  ZeroMem (&GrandTotals, sizeof (GrandTotals));
   Offset = (Table == NULL) ? 0 : sizeof (*Table);
   for (EntryIndex = 0; EntryIndex < FeatureCount; EntryIndex++) {
     Entry       = (CONST EFI_CRYPTO_INDICATOR_ENTRY *)((CONST UINT8 *)Table + Offset);
@@ -588,45 +579,14 @@ LogEcitEvidence (
       Entry,
       Payload,
       PayloadSize,
-      CoverageRows,
-      &GrandTotals,
       &RecordCount
       );
     Offset += Entry->EntryLength;
   }
 
   UT_LOG_INFO (
-    "[ECIT_V1] t=summary verdict=%a advertised=%u verified=%u "
-    "not_tested=%u unverifiable=%u over_reported=%u "
-    "unadvertised_success=%u inconclusive=%u verified_absent=%u\n",
-    AuditVerdict (&GrandTotals),
-    GrandTotals.Advertised,
-    GrandTotals.Coverage[EcitCoverageVerified],
-    GrandTotals.Coverage[EcitCoverageNotTested],
-    GrandTotals.Coverage[EcitCoverageNotIndependentlyVerifiable],
-    GrandTotals.Coverage[EcitCoverageOverReported],
-    GrandTotals.Coverage[EcitCoverageUnadvertisedSuccess],
-    GrandTotals.Coverage[EcitCoverageInconclusive],
-    GrandTotals.Coverage[EcitCoverageVerifiedAbsent]
-    );
-  RecordCount++;
-
-  for (Index = 0; Index < ClaimResultCount; Index++) {
-    UT_LOG_INFO (
-      "[ECIT_V1] t=result n=%a c=%a o=%a v=%a s=0x%lx\n",
-      ClaimResults[Index].Name,
-      ClaimStateName (ClaimResults[Index].Claim),
-      ObservationStateName (ClaimResults[Index].Observation),
-      CoverageStateName (CoverageRows[Index]),
-      (UINT64)ClaimResults[Index].ObservationStatus
-      );
-    RecordCount++;
-  }
-
-  UT_LOG_INFO (
-    "[ECIT_V1] t=end features=%u results=%u records=%u\n",
+    "[ECIT_V2] t=end features=%u records=%u\n",
     FeatureCount,
-    ClaimResultCount,
     RecordCount + 1
     );
 }
