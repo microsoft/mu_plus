@@ -34,6 +34,13 @@ FindEcitOidClaim (
   );
 
 ECIT_CLAIM_ID
+FindEcitOidPairClaim (
+  IN CONST EFI_GUID  *Feature,
+  IN CONST CHAR8     *SignatureOid,
+  IN CONST CHAR8     *DigestOid
+  );
+
+ECIT_CLAIM_ID
 FindEcitSignatureListClaim (
   IN CONST EFI_GUID  *Feature,
   IN CONST EFI_GUID  *SignatureListType

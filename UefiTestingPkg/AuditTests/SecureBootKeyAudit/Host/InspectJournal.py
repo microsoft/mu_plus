@@ -13,14 +13,35 @@ import struct
 import zlib
 from pathlib import Path
 
-JOURNAL_FORMAT = "<IHHIIIQ32s32s32sBBHIIQIIQ"
+JOURNAL_FORMAT = "<IHHIIIQ32s32sBBHIIQIIQIIQ"
 JOURNAL_SIGNATURE = int.from_bytes(b"SBJR", "little")
-JOURNAL_VERSION = 1
+JOURNAL_VERSION = 3
 PHASE_NAMES = {
     1: "PREPARED",
     2: "REBOOT_PENDING",
     3: "PERSISTENTLY_VERIFIED",
     4: "FAILED",
+}
+VARIABLE_STATE_NAMES = {
+    0: "UNREAD",
+    1: "ABSENT",
+    2: "PK_A",
+    3: "PK_B",
+    4: "PK_ML_DSA",
+    5: "PK_ECDSA",
+    6: "DB_V1",
+    7: "DB_V2",
+    8: "DB_MULTI_SIGNER",
+    9: "DB_CA_MIGRATION",
+    10: "DB_CA_CAPABILITY",
+    11: "DBX_RSA_SIGNER",
+    12: "DBX_ML_DSA_SIGNER",
+    13: "DBX_BOTH_SIGNERS",
+    14: "DBX_MIGRATION_RSA",
+    15: "DBX_MIGRATION_RSA_ECDSA",
+    16: "DBX_MIGRATION_ALL",
+    17: "DBX_CA_CAPABILITY",
+    18: "UNKNOWN",
 }
 
 
@@ -44,7 +65,6 @@ def inspect_journal(journal_path: Path, manifest_path: Path) -> dict[str, object
         prior_result,
         fixture_id_raw,
         manifest_sha256,
-        ecit_sha256,
         setup_mode,
         secure_boot,
         reserved,
@@ -54,6 +74,9 @@ def inspect_journal(journal_path: Path, manifest_path: Path) -> dict[str, object
         db_state,
         db_attributes,
         db_size,
+        dbx_state,
+        dbx_attributes,
+        dbx_size,
     ) = fields
 
     if signature != JOURNAL_SIGNATURE:
@@ -98,18 +121,25 @@ def inspect_journal(journal_path: Path, manifest_path: Path) -> dict[str, object
         "prior_result": f"0x{prior_result:016x}",
         "fixture_id": fixture_id,
         "manifest_sha256": manifest_sha256.hex(),
-        "ecit_sha256": ecit_sha256.hex(),
         "setup_mode": setup_mode,
         "secure_boot": secure_boot,
         "pk": {
             "state": pk_state,
+            "state_name": VARIABLE_STATE_NAMES.get(pk_state, "INVALID"),
             "attributes": f"0x{pk_attributes:08x}",
             "size": pk_size,
         },
         "db": {
             "state": db_state,
+            "state_name": VARIABLE_STATE_NAMES.get(db_state, "INVALID"),
             "attributes": f"0x{db_attributes:08x}",
             "size": db_size,
+        },
+        "dbx": {
+            "state": dbx_state,
+            "state_name": VARIABLE_STATE_NAMES.get(dbx_state, "INVALID"),
+            "attributes": f"0x{dbx_attributes:08x}",
+            "size": dbx_size,
         },
         "crc32": f"0x{stored_crc32:08x}",
     }

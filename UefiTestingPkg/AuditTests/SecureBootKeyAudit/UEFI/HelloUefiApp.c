@@ -16,6 +16,6 @@ HelloUefiAppEntry (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  Print (L"Hello from the ML-DSA Secure Boot audit\r\n");
+  Print (L"Hello from the UEFI 2.12 Secure Boot audit\r\n");
   return EFI_SUCCESS;
 }

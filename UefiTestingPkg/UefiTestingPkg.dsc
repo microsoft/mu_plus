@@ -15,6 +15,10 @@
   BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
 
+!ifndef $(SECURE_BOOT_KEY_AUDIT_ONLY)
+  DEFINE SECURE_BOOT_KEY_AUDIT_ONLY = FALSE
+!endif
+
 ## NOTE: Some of these library configurations are just for CI builds.
 #        If you would like to build these tests to run on your platform,
 #        you should substitute your LibraryClasses configuration.
@@ -121,9 +125,18 @@
 #
 ###################################################################################################
 [Components]
-  UefiTestingPkg/AuditTests/BootAuditTest/UEFI/BootAuditTestApp.inf
   UefiTestingPkg/AuditTests/SecureBootKeyAudit/UEFI/HelloUefiApp.inf
-  UefiTestingPkg/AuditTests/SecureBootKeyAudit/UEFI/SecureBootKeyAuditApp.inf
+  UefiTestingPkg/AuditTests/SecureBootKeyAudit/UEFI/SecureBootKeyAuditApp.inf {
+    <LibraryClasses>
+      MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+      PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
+      PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
+      UnitTestPersistenceLib|UnitTestFrameworkPkg/Library/UnitTestPersistenceLibSimpleFileSystem/UnitTestPersistenceLibSimpleFileSystem.inf
+      UnitTestResultReportLib|XmlSupportPkg/Library/UnitTestResultReportJUnitFormatLib/UnitTestResultReportLib.inf
+  }
+
+!if $(SECURE_BOOT_KEY_AUDIT_ONLY) == FALSE
+  UefiTestingPkg/AuditTests/BootAuditTest/UEFI/BootAuditTestApp.inf
   UefiTestingPkg/AuditTests/TpmEventLogAudit/TpmEventLogAuditTestApp.inf
   UefiTestingPkg/AuditTests/UefiVarLockAudit/UEFI/UefiVarLockAuditTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/ExceptionPersistenceTestApp/ExceptionPersistenceTestApp.inf
@@ -159,6 +172,7 @@
   #       If needed on X86, should port (and test) the functions.
   UefiTestingPkg/FunctionalSystemTests/MpManagement/Driver/MpManagement.inf
   UefiTestingPkg/AuditTests/DMAProtectionAudit/UEFI/DMASmmuProtectionUnitTestApp.inf
+!endif
 
 [BuildOptions]
 #force deprecated interfaces off

@@ -7,7 +7,6 @@
 
 #include <Uefi.h>
 
-#include <Library/BaseCryptLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
@@ -118,11 +117,6 @@ LogVariableValue (
   IN CONST AUDIT_VARIABLE_VALUE  *Value
   )
 {
-  STATIC CONST CHAR8  Hex[] = "0123456789abcdef";
-  UINT8               Digest[SHA256_DIGEST_SIZE];
-  CHAR8               DigestString[(SHA256_DIGEST_SIZE * 2) + 1];
-  UINTN               Index;
-
   if (!Value->Exists) {
     UT_LOG_INFO (
       "[AUDIT_CONFORMANCE] scenario=%a stage=%a state=ABSENT\n",
@@ -132,24 +126,13 @@ LogVariableValue (
     return EFI_SUCCESS;
   }
 
-  if (!Sha256HashAll (Value->Data, Value->DataSize, Digest)) {
-    return EFI_DEVICE_ERROR;
-  }
-
-  for (Index = 0; Index < SHA256_DIGEST_SIZE; Index++) {
-    DigestString[Index * 2]     = Hex[Digest[Index] >> 4];
-    DigestString[Index * 2 + 1] = Hex[Digest[Index] & 0x0F];
-  }
-
-  DigestString[sizeof (DigestString) - 1] = '\0';
   UT_LOG_INFO (
     "[AUDIT_CONFORMANCE] scenario=%a stage=%a state=PRESENT "
-    "attributes=0x%08x size=%u sha256=%a\n",
+    "attributes=0x%08x size=%u\n",
     ScenarioId,
     Stage,
     Value->Attributes,
-    Value->DataSize,
-    DigestString
+    Value->DataSize
     );
   return EFI_SUCCESS;
 }

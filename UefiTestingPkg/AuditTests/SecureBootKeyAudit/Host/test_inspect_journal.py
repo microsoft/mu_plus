@@ -36,8 +36,8 @@ class InspectJournalTests(unittest.TestCase):
         self.manifest_data = (
             json.dumps(
                 {
-                    "version": 1,
-                    "fixture_id": "secure-boot-key-audit-v1",
+                    "version": 3,
+                    "fixture_id": "secure-boot-key-audit-v6",
                 },
                 indent=2,
             )
@@ -47,7 +47,7 @@ class InspectJournalTests(unittest.TestCase):
         self.journal.write_bytes(self._build_journal())
 
     def _build_journal(self) -> bytes:
-        fixture_id = b"secure-boot-key-audit-v1".ljust(32, b"\0")
+        fixture_id = b"secure-boot-key-audit-v6".ljust(32, b"\0")
         values = [
             JOURNAL_SIGNATURE,
             JOURNAL_VERSION,
@@ -58,7 +58,9 @@ class InspectJournalTests(unittest.TestCase):
             0,
             fixture_id,
             hashlib.sha256(self.manifest_data).digest(),
-            bytes(range(32)),
+            1,
+            0,
+            0,
             1,
             0,
             0,
@@ -78,7 +80,10 @@ class InspectJournalTests(unittest.TestCase):
 
         self.assertEqual(evidence["phase"], "PERSISTENTLY_VERIFIED")
         self.assertEqual(evidence["boot_count"], 2)
-        self.assertEqual(evidence["fixture_id"], "secure-boot-key-audit-v1")
+        self.assertEqual(evidence["fixture_id"], "secure-boot-key-audit-v6")
+        self.assertEqual(evidence["pk"]["state_name"], "ABSENT")
+        self.assertEqual(evidence["db"]["state_name"], "ABSENT")
+        self.assertEqual(evidence["dbx"]["state_name"], "ABSENT")
 
     def test_corrupt_journal_is_rejected(self) -> None:
         journal = bytearray(self.journal.read_bytes())
@@ -90,7 +95,7 @@ class InspectJournalTests(unittest.TestCase):
 
     def test_wrong_manifest_is_rejected(self) -> None:
         self.manifest.write_text(
-            '{"version": 1, "fixture_id": "different-fixture"}\n',
+            '{"version": 3, "fixture_id": "different-fixture"}\n',
             encoding="utf-8",
         )
 
