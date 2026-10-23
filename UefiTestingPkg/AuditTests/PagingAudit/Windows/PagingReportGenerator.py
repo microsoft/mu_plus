@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+import bisect
 import logging
 import operator
 import glob
@@ -23,6 +24,35 @@ from BinaryParsing import *
 
 
 VERSION = "0.90"
+
+
+class RangeIndex(object):
+    ''' Interval lookup returning the ranges that may overlap a span, in their original list order.
+
+    Avoids scanning every memory range for every page, which is prohibitive when the
+    page table maps the full 52-bit address space (millions of entries).
+    '''
+
+    def __init__(self, ranges):
+        self.Ranges = ranges
+        self.Points = sorted(set([r.PhysicalStart for r in ranges] + [r.PhysicalEnd + 1 for r in ranges]))
+        # Bucket b covers [Points[b], Points[b + 1] - 1]
+        self.Buckets = [[] for _ in self.Points]
+        for i, r in enumerate(ranges):
+            lo = bisect.bisect_left(self.Points, r.PhysicalStart)
+            hi = bisect.bisect_left(self.Points, r.PhysicalEnd + 1)
+            for b in range(lo, hi):
+                self.Buckets[b].append(i)
+
+    def candidates(self, start, end):
+        if len(self.Points) == 0:
+            return []
+        lo = max(bisect.bisect_right(self.Points, start) - 1, 0)
+        hi = bisect.bisect_right(self.Points, end)
+        found = set()
+        for b in range(lo, hi):
+            found.update(self.Buckets[b])
+        return [self.Ranges[i] for i in sorted(found)]
 
 
 class ParsingTool(object):
@@ -114,10 +144,12 @@ class ParsingTool(object):
         # Matching memory ranges up to page table entries
         # use index based iteration so that page splitting
         # is supported.
+        RangeLookup = RangeIndex(self.MemoryRangeInfo)
+        MatLookup = RangeIndex(self.MemoryAttributesTable)
         index = 0
         while index < len(self.PageDirectoryInfo):
             page = self.PageDirectoryInfo[index]
-            for mr in self.MemoryRangeInfo:
+            for mr in RangeLookup.candidates(page.PhysicalStart, page.PhysicalEnd):
                 if page.overlap(mr):
                     if (mr.MemoryType is not None) or (mr.GcdType is not None) or (mr.ImageName is not None) or (mr.SystemMemoryType is not None):
                         if (page.PhysicalStart < mr.PhysicalStart):
@@ -169,25 +201,24 @@ class ParsingTool(object):
                             self.ErrorMsg.append("Multiple Cpu Numbers found for one region.  Base: 0x%X.  Cpu Numbers: %s and %s."% (page.PhysicalStart,page.CpuNumber, mr.CpuNumber))
                             logging.error("Multiple Cpu Numbers found for one region " + page.pageDebugStr() + " " +  mr.pageDebugStr())
 
-            for MatEntry in self.MemoryAttributesTable:
+            for MatEntry in MatLookup.candidates(page.PhysicalStart, page.PhysicalEnd):
                 if page.overlap(MatEntry):
                     page.Attribute = MatEntry.Attribute
             index += 1
 
         # Combining adjacent pages that have the same attributes.
-        index = 0
-        while index < (len(self.PageDirectoryInfo) - 1):
-            currentPage = self.PageDirectoryInfo[index]
-            nextPage = self.PageDirectoryInfo[index + 1]
-            # Skip guard pages
-            if currentPage.SystemMemoryType == SystemMemoryTypes.GuardPage or nextPage.SystemMemoryType == SystemMemoryTypes.GuardPage:
-                index += 1
-                continue
-            if currentPage.sameAttributes(nextPage):
-                currentPage.grow(nextPage)
-                del self.PageDirectoryInfo[index + 1]
-            else:
-                index += 1
+        # Build a new list in one pass; deleting from a list of millions of entries is quadratic.
+        Combined = []
+        for nextPage in self.PageDirectoryInfo:
+            if len(Combined) > 0:
+                currentPage = Combined[-1]
+                # Skip guard pages
+                if currentPage.SystemMemoryType != SystemMemoryTypes.GuardPage and nextPage.SystemMemoryType != SystemMemoryTypes.GuardPage:
+                    if currentPage.sameAttributes(nextPage):
+                        currentPage.grow(nextPage)
+                        continue
+            Combined.append(nextPage)
+        self.PageDirectoryInfo = Combined
 
         return 0
 
