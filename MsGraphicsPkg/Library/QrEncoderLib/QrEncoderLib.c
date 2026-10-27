@@ -121,7 +121,7 @@ CheckQrVersion (
   for (i = gQrLevel - 1; i < QR_TABLE_ENTRIES; i += 4) {
     // Spec has versions 1-40, and 4 EC levels.
     QrT = &gQrTable[i];
-    DEBUG ((DEBUG_INFO, "Checking version table entry %d\n", i));
+    DEBUG ((DEBUG_VERBOSE, "Checking version table entry %d\n", i));
 
     switch (gQrMode) {
       case QrNumericMode:
@@ -148,7 +148,7 @@ CheckQrVersion (
   if (Version == 0) {
     DEBUG ((DEBUG_ERROR, "Unable to find a proper QrCode version\n"));
   } else {
-    DEBUG ((DEBUG_INFO, "suggesting Version %d\n", Version));
+    DEBUG ((DEBUG_VERBOSE, "suggesting Version %d\n", Version));
   }
 
   return Version;
@@ -244,6 +244,7 @@ AddCodeWordBits (
 static
 VOID
 PrintBinary (
+  UINTN  DebugLevel,
   UINTN  data,
   UINTN  width,
   CHAR8  fill
@@ -271,7 +272,7 @@ PrintBinary (
   }
 
   binString[Index] = '\0';
-  DEBUG ((DEBUG_INFO, "%a", binString));
+  DEBUG ((DebugLevel, "%a", binString));
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -314,7 +315,7 @@ AddCodeWordPadBytes (
   if (gFlags & QR_FLAGS_DEBUG_CODE_WORDS) {
     for (i = 0; i < pvCwTarget; i++) {
       DEBUG ((DEBUG_INFO, " CodeWord %4d is %4d - ", i, gCodeWords[i]));
-      PrintBinary (gCodeWords[i], 8, '0');
+      PrintBinary (DEBUG_INFO, gCodeWords[i], 8, '0');
       DEBUG ((DEBUG_INFO, "\n"));
     }
   }
@@ -446,7 +447,7 @@ EncodeBytes (
     AddCodeWordBits (Data[i], 8);
     if (gFlags & QR_FLAGS_DEBUG_ENCODING) {
       DEBUG ((DEBUG_INFO, " Binary %2d:%2d is %4d - ", i - 1, i, Data[i]));
-      PrintBinary (Data[i], 8, '0');
+      PrintBinary (DEBUG_INFO, Data[i], 8, '0');
       DEBUG ((DEBUG_INFO, "\n"));
     }
   }
@@ -475,7 +476,7 @@ EncodeNumeric (
       AddCodeWordBits (Triplet, 10);         // Three digits pack into 10 bits
       if (gFlags & QR_FLAGS_DEBUG_ENCODING) {
         DEBUG ((DEBUG_INFO, " Triplet %2d:%2d is %4d - ", i - 1, i, Triplet));
-        PrintBinary (Triplet, 10, '0');
+        PrintBinary (DEBUG_INFO, Triplet, 10, '0');
         DEBUG ((DEBUG_INFO, "\n"));
       }
 
@@ -489,14 +490,14 @@ EncodeNumeric (
     AddCodeWordBits (Triplet, 4);            // One left over digits pack into 4 bits
     if (gFlags & QR_FLAGS_DEBUG_ENCODING) {
       DEBUG ((DEBUG_INFO, " Triplet %2d:%2d is %4d -       ", i - 1, i, Triplet));
-      PrintBinary (Triplet, 4, '0');
+      PrintBinary (DEBUG_INFO, Triplet, 4, '0');
       DEBUG ((DEBUG_INFO, "\n"));
     }
   } else if (TripIndx == 2) {
     AddCodeWordBits (Triplet, 7);            // Two left over digits pack into 7 bits;
     if (gFlags & QR_FLAGS_DEBUG_ENCODING) {
       DEBUG ((DEBUG_INFO, " Triplet %2d:%2d is %4d -    ", i - 1, i, Triplet));
-      PrintBinary (Triplet, 7, '0');
+      PrintBinary (DEBUG_INFO, Triplet, 7, '0');
       DEBUG ((DEBUG_INFO, "\n"));
     }
   }
@@ -538,7 +539,7 @@ EncodeAlphanumeric (
       AddCodeWordBits (Pair, 11);
       if (gFlags & QR_FLAGS_DEBUG_ENCODING) {
         DEBUG ((DEBUG_INFO, " Pair %2d:%2d is %4d - ", i - 1, i, Pair));
-        PrintBinary (Pair, 11, '0');
+        PrintBinary (DEBUG_INFO, Pair, 11, '0');
         DEBUG ((DEBUG_INFO, "\n"));
       }
     }
@@ -548,7 +549,7 @@ EncodeAlphanumeric (
     AddCodeWordBits (Pair, 6);
     if (gFlags & QR_FLAGS_DEBUG_ENCODING) {
       DEBUG ((DEBUG_INFO, " Pair  :%2d is%4d -      ", i, Pair));
-      PrintBinary (Pair, 6, '0');
+      PrintBinary (DEBUG_INFO, Pair, 6, '0');
       DEBUG ((DEBUG_INFO, "\n"));
     }
   }
@@ -960,7 +961,7 @@ Evaluate1 (
     }
   }
 
-  DEBUG ((DEBUG_INFO, "Evaluate 1 penalty is %d\n", Penalty));
+  DEBUG ((DEBUG_VERBOSE, "Evaluate 1 penalty is %d\n", Penalty));
   return Penalty;
 }
 
@@ -1025,7 +1026,7 @@ Evaluate2 (
     }
   }
 
-  DEBUG ((DEBUG_INFO, "Evaluate 2 penalty is %d\n", Penalty));
+  DEBUG ((DEBUG_VERBOSE, "Evaluate 2 penalty is %d\n", Penalty));
   return Penalty;
 }
 
@@ -1076,7 +1077,7 @@ Evaluate3 (
         if (Target1Index == 10) {
           Penalty     += 40;
           Target1Index = 0;
-          DEBUG ((DEBUG_INFO, "Found horizontal pattern 1 at %d:%d\n", y, x));
+          DEBUG ((DEBUG_VERBOSE, "Found horizontal pattern 1 at %d:%d\n", y, x));
         }
       } else {
         Target1Index = 0;
@@ -1087,7 +1088,7 @@ Evaluate3 (
         if (Target2Index == 10) {
           Penalty     += 40;
           Target2Index = 0;
-          DEBUG ((DEBUG_INFO, "Found horizontal pattern 2 at %d:%d\n", y, x));
+          DEBUG ((DEBUG_VERBOSE, "Found horizontal pattern 2 at %d:%d\n", y, x));
         }
       } else {
         Target2Index = 0;
@@ -1115,7 +1116,7 @@ Evaluate3 (
         if (Target1Index == 10) {
           Penalty     += 40;
           Target1Index = 0;
-          DEBUG ((DEBUG_INFO, "Found vertical pattern 1 at %d:%d\n", y, x));
+          DEBUG ((DEBUG_VERBOSE, "Found vertical pattern 1 at %d:%d\n", y, x));
         }
       } else {
         Target1Index = 0;
@@ -1126,7 +1127,7 @@ Evaluate3 (
         if (Target2Index == 10) {
           Penalty     += 40;
           Target2Index = 0;
-          DEBUG ((DEBUG_INFO, "Found vertical pattern 2 at %d:%d\n", y, x));
+          DEBUG ((DEBUG_VERBOSE, "Found vertical pattern 2 at %d:%d\n", y, x));
         }
       } else {
         Target2Index = 0;
@@ -1134,7 +1135,7 @@ Evaluate3 (
     }
   }
 
-  DEBUG ((DEBUG_INFO, "Evaluate 3 penalty is %d\n", Penalty));
+  DEBUG ((DEBUG_VERBOSE, "Evaluate 3 penalty is %d\n", Penalty));
   return Penalty;
 }
 
@@ -1180,7 +1181,7 @@ Evaluate4 (
 
   Penalty = 10 * (Ratio / 5);
 
-  DEBUG ((DEBUG_INFO, "Evaluate 4 penalty is %d, based on TC=%d, CB=%d, R=%d\n", Penalty, TotalCount, CountOfBlack, Ratio));
+  DEBUG ((DEBUG_VERBOSE, "Evaluate 4 penalty is %d, based on TC=%d, CB=%d, R=%d\n", Penalty, TotalCount, CountOfBlack, Ratio));
 
   return Penalty;
 }
@@ -1236,7 +1237,7 @@ Step1_Process (
     return EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((DEBUG_INFO, "QrVersion is %d\n", gQrVersion));
+  DEBUG ((DEBUG_VERBOSE, "QrVersion is %d\n", gQrVersion));
   gQrSize = gQrVersion * 4 + 17;    // Rule from ISO 18004.
   if (RegionSize < (gQrSize + (2 * QR_QUIET_ZONE))) {
     DEBUG ((DEBUG_ERROR, "Region size %d for QR code size %d is too small\n", RegionSize, gQrSize));
@@ -1248,10 +1249,10 @@ Step1_Process (
 
   gQrT = &gQrTable[(gQrVersion - 1) * 4 + gQrLevel - 1];   // QrT points to the table entry to use;
 
-  DEBUG ((DEBUG_INFO, "Using QrCode=%d (%dx%d), Mode=%d, ECLevel=%d\n", gQrVersion, gQrSize, gQrSize, gQrMode, gQrLevel));
+  DEBUG ((DEBUG_VERBOSE, "Using QrCode=%d (%dx%d), Mode=%d, ECLevel=%d\n", gQrVersion, gQrSize, gQrSize, gQrMode, gQrLevel));
 
   DEBUG ((
-    DEBUG_INFO,
+    DEBUG_VERBOSE,
     "entry   %d %d %d %d %d %d %d %d %d %d %d\n",
     gQrT->totalWords,
     gQrT->ECWordsPerBlock,
@@ -1322,7 +1323,7 @@ Step2_Process (
       break;
   }
 
-  DEBUG ((DEBUG_INFO, "Adding terminator bits. They are allowed not to fit, so ignore AddWords error on this call\n"));
+  DEBUG ((DEBUG_VERBOSE, "Adding terminator bits. They are allowed not to fit, so ignore AddWords error on this call\n"));
 
   AddCodeWordBits (0, 4);    // Terminating 0000's as required - if they fit
   AddCodeWordPadBytes ();
@@ -1427,7 +1428,7 @@ Step3_Process (
     DEBUG ((DEBUG_INFO, "ECWords=%d, ECWordIndex=%d\n", ECWords, ECWordIndex));
     for (i = 0; i < ECWords; i++) {
       DEBUG ((DEBUG_INFO, " EC Word %4d is %4d - ", i, gECWords[i]));
-      PrintBinary (gECWords[i], 8, '0');
+      PrintBinary (DEBUG_INFO, gECWords[i], 8, '0');
       DEBUG ((DEBUG_INFO, "\n"));
     }
   }
@@ -1491,7 +1492,7 @@ Step4_Process (
   if (gFlags & QR_FLAGS_DEBUG_BIT_STREAM) {
     for (i = 0; i < gBitStreamCount; i++) {
       DEBUG ((DEBUG_INFO, " BitStream %4d is %4d - ", i, gBitStream[i]));
-      PrintBinary (gBitStream[i], 8, '0');
+      PrintBinary (DEBUG_INFO, gBitStream[i], 8, '0');
       DEBUG ((DEBUG_INFO, "\n"));
     }
   }
@@ -1578,7 +1579,7 @@ Step6_Process (
 
   // Get 8 copies of the bitmap to apply mask patterns to.
   for (k = 0; k < QR_MASK_PATTERNS; k++) {
-    DEBUG ((DEBUG_INFO, "Processing pattern %d\n", k));
+    DEBUG ((DEBUG_VERBOSE, "Processing pattern %d\n", k));
     TestBitmaps[k] = AllocateCopyPool (gQrBitmapLen, gQrBitmap);
 
     for (Row = 0; Row < gQrSize; Row++) {
@@ -1659,10 +1660,10 @@ Step6_Process (
     }
   }
 
-  DEBUG ((DEBUG_INFO, "Minimum penalty is %d from index %d\n", MinPenalty, MinPenaltyIndex));
+  DEBUG ((DEBUG_VERBOSE, "Minimum penalty is %d from index %d\n", MinPenalty, MinPenaltyIndex));
   ASSERT (MinPenaltyIndex < QR_MASK_PATTERNS);
   if (gFlags & QR_FLAGS_NO_MASK) {
-    DEBUG ((DEBUG_INFO, "Not using mask\n"));
+    DEBUG ((DEBUG_VERBOSE, "Not using mask\n"));
   } else {
     if (gFlags & QR_FLAGS_MASK_SEL) {
       MinPenaltyIndex = gFlags & 0x07;
@@ -1673,7 +1674,7 @@ Step6_Process (
     TestBitmaps[MinPenaltyIndex] = gQrBitmap;
     gQrBitmap                    = Temp;
     gQrMask                      = MinPenaltyIndex;
-    DEBUG ((DEBUG_INFO, "Using mask %d\n", MinPenaltyIndex));
+    DEBUG ((DEBUG_VERBOSE, "Using mask %d\n", MinPenaltyIndex));
   }
 
   for (k = 0; k < QR_MASK_PATTERNS; k++) {
@@ -1704,9 +1705,9 @@ Step7_Process (
 
   FormatInfo = gFormatInfo[gQrLevel-1][gQrMask];
 
-  DEBUG ((DEBUG_INFO, " FormatInfo %x - ", FormatInfo));
-  PrintBinary (FormatInfo, 15, '0');
-  DEBUG ((DEBUG_INFO, "\n"));
+  DEBUG ((DEBUG_VERBOSE, " FormatInfo %x - ", FormatInfo));
+  PrintBinary (DEBUG_VERBOSE, FormatInfo, 15, '0');
+  DEBUG ((DEBUG_VERBOSE, "\n"));
   if (gFlags & QR_FLAGS_DEBUG_MASK_ONLY) {
     // Don't draw Format or version info
     return EFI_SUCCESS;
@@ -1740,9 +1741,9 @@ Step7_Process (
   if (gQrVersion > 6) {
     VersionInfo = gVersionInfo[gQrVersion-7];      // Table starts at version 7
     VMask       = 0x00001;
-    DEBUG ((DEBUG_INFO, " VersionInfo  %x - ", VersionInfo));
-    PrintBinary (VersionInfo, 18, '0');
-    DEBUG ((DEBUG_INFO, "\n"));
+    DEBUG ((DEBUG_VERBOSE, " VersionInfo  %x - ", VersionInfo));
+    PrintBinary (DEBUG_VERBOSE, VersionInfo, 18, '0');
+    DEBUG ((DEBUG_VERBOSE, "\n"));
 
     // Write the VersionInfo data to the lower block
     for (j = 0; j < 6; j++) {
@@ -1787,7 +1788,7 @@ Step8_Process (
 
   Factor   = RegionSize / (gQrSize + 2 * QR_QUIET_ZONE);    // There must be 4 modules of white around bitmap from spec.
   QrOffset = ((RegionSize - (Factor * gQrSize)) / Factor) / 2;
-  DEBUG ((DEBUG_INFO, "RegionSize data R=%d, Computed R%d\n", RegionSize, Factor * gQrSize));
+  DEBUG ((DEBUG_VERBOSE, "RegionSize data R=%d, Computed R%d\n", RegionSize, Factor * gQrSize));
   BltBufferSize = RegionSize * RegionSize;
   gBltBuffer    = AllocatePool (BltBufferSize * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   if (NULL == gBltBuffer) {
@@ -2002,7 +2003,7 @@ QrEncodeData (
     goto error_exit;
   }
 
-  DEBUG ((DEBUG_INFO, "Step 1 Complete\n"));
+  DEBUG ((DEBUG_VERBOSE, "Step 1 Complete\n"));
   /*--------------------------------------------------------------------------------*/
   /* Step 2. Data Encoding                                                          */
   /*         Convert the characters to a bit stream in accordance with the QR Code, */
@@ -2014,7 +2015,7 @@ QrEncodeData (
     goto error_exit;
   }
 
-  DEBUG ((DEBUG_INFO, "Step 2 Complete\n"));
+  DEBUG ((DEBUG_VERBOSE, "Step 2 Complete\n"));
 
   /*--------------------------------------------------------------------------------*/
   /* Step 3. Error Correction Encoding                                              */
@@ -2028,7 +2029,7 @@ QrEncodeData (
     goto error_exit;
   }
 
-  DEBUG ((DEBUG_INFO, "Step 3 Complete\n"));
+  DEBUG ((DEBUG_VERBOSE, "Step 3 Complete\n"));
 
   /*--------------------------------------------------------------------------------*/
   /* Step 4. Structure the final message                                            */
@@ -2041,7 +2042,7 @@ QrEncodeData (
     goto error_exit;
   }
 
-  DEBUG ((DEBUG_INFO, "Step 4 Complete\n"));
+  DEBUG ((DEBUG_VERBOSE, "Step 4 Complete\n"));
 
   /*--------------------------------------------------------------------------------*/
   /* Step 5. Module placement in matrix                                             */
@@ -2058,7 +2059,7 @@ QrEncodeData (
     goto error_exit;
   }
 
-  DEBUG ((DEBUG_INFO, "Step 5 Complete\n"));
+  DEBUG ((DEBUG_VERBOSE, "Step 5 Complete\n"));
 
   /*--------------------------------------------------------------------------------*/
   /* Step 6. Data Masking                                                           */
@@ -2071,7 +2072,7 @@ QrEncodeData (
     goto error_exit;
   }
 
-  DEBUG ((DEBUG_INFO, "Step 6 Complete\n"));
+  DEBUG ((DEBUG_VERBOSE, "Step 6 Complete\n"));
 
   /*--------------------------------------------------------------------------------*/
   /* Step 7. Format and version information                                         */
@@ -2084,7 +2085,7 @@ QrEncodeData (
     goto error_exit;
   }
 
-  DEBUG ((DEBUG_INFO, "Step 7 Complete\n"));
+  DEBUG ((DEBUG_VERBOSE, "Step 7 Complete\n"));
 
   /*--------------------------------------------------------------------------------*/
   /* Step 8. Build the Gop->Blt ready bitmap                                        */
@@ -2095,7 +2096,7 @@ QrEncodeData (
     goto error_exit;
   }
 
-  DEBUG ((DEBUG_INFO, "Step 8 Complete\n"));
+  DEBUG ((DEBUG_VERBOSE, "Step 8 Complete\n"));
 
 error_exit:
 
@@ -2132,7 +2133,7 @@ error_exit:
     gBltBuffer = NULL;
   }
 
-  DEBUG ((DEBUG_INFO, "QrEncode complete. Code = %r\n", Status));
+  DEBUG ((DEBUG_VERBOSE, "QrEncode complete. Code = %r\n", Status));
 
   return Status;
 }
