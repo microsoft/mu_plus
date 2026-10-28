@@ -13,7 +13,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #pragma pack(1)
 
 #define MAX_IMAGE_NAME_SIZE  100
-#define MAX_SMI_CALL_COUNT   1000
 
 typedef struct {
   UINT64    ImageBase;
@@ -25,6 +24,13 @@ typedef struct {
 #define BUFFER_COUNT_2M      500
 #define BUFFER_COUNT_4K      1000
 #define BUFFER_COUNT_IMAGES  25
+
+//
+// SMM page-table collection increments RequestIndex before multiplying it by
+// BUFFER_COUNT_4K. Limit the externally supplied index so both operations
+// remain representable on IA32 and X64.
+//
+#define MAX_SMI_CALL_COUNT  ((MAX_UINTN / BUFFER_COUNT_4K) - 1)
 
 #define SMM_PAGE_AUDIT_TABLE_REQUEST       0x01
 #define SMM_PAGE_AUDIT_MISC_DATA_REQUEST   0x03
