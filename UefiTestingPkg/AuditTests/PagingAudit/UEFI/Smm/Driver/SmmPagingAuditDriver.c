@@ -94,8 +94,9 @@ SmmLoadedImageTableDump (
   //
   HandleBufferCount = HandleBufferSize / sizeof (EFI_HANDLE);
 
-  // RequestIndex is capped at MAX_SMI_CALL_COUNT in the root handler,
-  // Multiplication overflow should not occur on x86 or x64 systems
+  // RequestIndex is capped at MAX_SMI_CALL_COUNT in the root handler, which is
+  // derived from MAX_UINTN / BUFFER_COUNT_4K. BUFFER_COUNT_IMAGES is smaller, so
+  // this multiplication cannot overflow on IA32 or X64.
   SourceIndex = RequestIndex * BUFFER_COUNT_IMAGES;
   if (SourceIndex < HandleBufferCount) {
     for (DestinationIndex = 0;
@@ -484,14 +485,15 @@ SmmPagingAuditHandler (
   //
   // Make sure that user-supplied values don't cause math errors.
   //
-  // This upper limit is somewhat arbitrary, currently capped at MAX_SMI_CALL_COUNT,
-  // in order to prevent overflow on x86 or x64 systems during related multiplications
+  // MAX_SMI_CALL_COUNT is derived from MAX_UINTN / BUFFER_COUNT_4K so that
+  // RequestIndex * BUFFER_COUNT_* and (RequestIndex + 1) * BUFFER_COUNT_* cannot
+  // overflow on IA32 or X64.
   if (AuditCommBuffer->Header.RequestIndex > MAX_SMI_CALL_COUNT) {
-    DEBUG ((DEBUG_ERROR, "%a - RequestIndex %d > MAX_SMI_CALL_COUNT!\n", __FUNCTION__, AuditCommBuffer->Header.RequestIndex));
+    DEBUG ((DEBUG_ERROR, "%a - RequestIndex %Lu > MAX_SMI_CALL_COUNT!\n", __FUNCTION__, (UINT64)AuditCommBuffer->Header.RequestIndex));
     return EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((DEBUG_INFO, "%a - RequestIndex %d !\n", __FUNCTION__, AuditCommBuffer->Header.RequestIndex));
+  DEBUG ((DEBUG_INFO, "%a - RequestIndex %Lu !\n", __FUNCTION__, (UINT64)AuditCommBuffer->Header.RequestIndex));
   //
   // If this call will need cached data, load that now.
   //
@@ -563,7 +565,7 @@ SmmPagingAuditHandler (
       break;
 
     case SMM_PAGE_AUDIT_MISC_DATA_REQUEST:
-      DEBUG ((DEBUG_INFO, "%a - Getting misc info run #%d\n", __FUNCTION__, AuditCommBuffer->Header.RequestIndex));
+      DEBUG ((DEBUG_INFO, "%a - Getting misc info run #%Lu\n", __FUNCTION__, (UINT64)AuditCommBuffer->Header.RequestIndex));
       IdtDumpHandler (&AuditCommBuffer->Data.MiscData);
       GdtDumpHandler (&AuditCommBuffer->Data.MiscData);
       SmmLoadedImageTableDump (AuditCommBuffer->Header.RequestIndex, &AuditCommBuffer->Data.MiscData);
