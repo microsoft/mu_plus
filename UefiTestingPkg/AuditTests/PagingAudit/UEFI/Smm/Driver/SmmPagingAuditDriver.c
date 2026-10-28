@@ -25,6 +25,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "../../PagingAuditCommon.h"
 #include "../SmmPagingAuditCommon.h"
 
+//
+// CR3 bits 51:12 hold the physical address of the top-level paging table.
+//
+#define SMM_PAGING_AUDIT_CR3_BASE_MASK  0x000FFFFFFFFFF000ULL
+
 /**
  * @brief      Locates loaded image table and copies the image information into the comm buffer.
  *
@@ -186,6 +191,9 @@ GdtDumpHandler (
   - [optional] a flat list of each entry
   - [optional] a flat list of each directory entry
 
+  The walk starts at CR3. If CR4.LA57 is set, CR3 points to a PML5 table and every
+  present PML5 entry is followed to a PML4 table; otherwise CR3 points to the PML4 table.
+
   @param[in, out]   Pte1GCount, Pte2MCount, Pte4KCount
       On input, the number of entries that can fit in the corresponding buffer (if provided).
       It is expected that this will be zero if the corresponding buffer is NULL.
@@ -219,10 +227,15 @@ GetFlatPageTableDataSmm (
   PAGE_TABLE_1G_ENTRY             *Pte1G;
   PAGE_TABLE_ENTRY                *Pte2M;
   PAGE_TABLE_4K_ENTRY             *Pte4K;
+  PAGE_MAP_AND_DIRECTORY_POINTER  *Pml5;
+  IA32_CR4                        Cr4;
+  BOOLEAN                         Is5Level;
+  UINTN                           Pml4TableCount;
   UINTN                           Index1;
   UINTN                           Index2;
   UINTN                           Index3;
   UINTN                           Index4;
+  UINTN                           Index5;
   UINTN                           My4KCount           = 0;
   UINTN                           My2MCount           = 0;
   UINTN                           My1GCount           = 0;
@@ -249,71 +262,92 @@ GetFlatPageTableDataSmm (
   //
   // Alright, let's get to work.
   //
-  Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *)AsmReadCr3 ();
+  // CR3 bits 11:0 hold PCID/flags, so mask them off to get the top-level table base.
+  // With CR4.LA57 set the top level is the PML5 table and every present PML5 entry
+  // points to a PML4 table. Otherwise CR3 points directly at the (only) PML4 table.
+  //
+  Cr4.UintN      = AsmReadCr4 ();
+  Is5Level       = (BOOLEAN)(Cr4.Bits.LA57 != 0);
+  Pml5           = (PAGE_MAP_AND_DIRECTORY_POINTER *)(UINTN)(AsmReadCr3 () & SMM_PAGING_AUDIT_CR3_BASE_MASK);
+  Pml4TableCount = Is5Level ? 0x200 : 1;
 
-  for (Index4 = 0x0; Index4 < 0x200; Index4++) {
-    if (!Pml4[Index4].Bits.Present) {
-      continue;
-    }
+  DEBUG ((DEBUG_INFO, "%a - Walking %a page tables.\n", __FUNCTION__, Is5Level ? "5-level" : "4-level"));
 
-    Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
-
-    for (Index3 = 0x0; Index3 < 0x200; Index3++ ) {
-      if (!Pte1G[Index3].Bits.Present) {
-        NumPage1GNotPresent++;
+  for (Index5 = 0x0; Index5 < Pml4TableCount; Index5++) {
+    if (Is5Level) {
+      if (!Pml5[Index5].Bits.Present) {
         continue;
       }
 
-      //
-      // MustBe1 is the bit that indicates whether the pointer is a directory
-      // pointer or a page table entry.
-      //
-      if (!(Pte1G[Index3].Bits.MustBe1)) {
+      Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *)(UINTN)(Pml5[Index5].Bits.PageTableBaseAddress << 12);
+    } else {
+      Pml4 = Pml5;
+    }
+
+    for (Index4 = 0x0; Index4 < 0x200; Index4++) {
+      if (!Pml4[Index4].Bits.Present) {
+        continue;
+      }
+
+      Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
+
+      for (Index3 = 0x0; Index3 < 0x200; Index3++ ) {
+        if (!Pte1G[Index3].Bits.Present) {
+          NumPage1GNotPresent++;
+          continue;
+        }
+
         //
-        // We have to cast 1G and 2M directories to this to
-        // get all of their address bits.
+        // MustBe1 is the bit that indicates whether the pointer is a directory
+        // pointer or a page table entry.
         //
-        Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
-        Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
+        if (!(Pte1G[Index3].Bits.MustBe1)) {
+          //
+          // We have to cast 1G and 2M directories to this to
+          // get all of their address bits.
+          //
+          Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
+          Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
 
-        for (Index2 = 0x0; Index2 < 0x200; Index2++ ) {
-          if (!Pte2M[Index2].Bits.Present) {
-            NumPage2MNotPresent++;
-            continue;
-          }
+          for (Index2 = 0x0; Index2 < 0x200; Index2++ ) {
+            if (!Pte2M[Index2].Bits.Present) {
+              NumPage2MNotPresent++;
+              continue;
+            }
 
-          if (!(Pte2M[Index2].Bits.MustBe1)) {
-            Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
-            Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
+            if (!(Pte2M[Index2].Bits.MustBe1)) {
+              Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
+              Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
 
-            for (Index1 = 0x0; Index1 < 0x200; Index1++ ) {
-              if (!Pte4K[Index1].Bits.Present) {
-                NumPage4KNotPresent++;
-                continue;
+              for (Index1 = 0x0; Index1 < 0x200; Index1++ ) {
+                if (!Pte4K[Index1].Bits.Present) {
+                  NumPage4KNotPresent++;
+                  continue;
+                }
+
+                // Increase the count.
+                // If we have room for more Page Table entries, add one.
+                My4KCount++;
+                if (My4KCount <= *Pte4KCount) {
+                  Pte4KEntries[My4KCount-1] = Pte4K[Index1];
+                }
               }
-
+            } else {
               // Increase the count.
               // If we have room for more Page Table entries, add one.
-              My4KCount++;
-              if (My4KCount <= *Pte4KCount) {
-                Pte4KEntries[My4KCount-1] = Pte4K[Index1];
+              My2MCount++;
+              if (My2MCount <= *Pte2MCount) {
+                Pte2MEntries[My2MCount-1] = Pte2M[Index2];
               }
             }
-          } else {
-            // Increase the count.
-            // If we have room for more Page Table entries, add one.
-            My2MCount++;
-            if (My2MCount <= *Pte2MCount) {
-              Pte2MEntries[My2MCount-1] = Pte2M[Index2];
-            }
           }
-        }
-      } else {
-        // Increase the count.
-        // If we have room for more Page Table entries, add one.
-        My1GCount++;
-        if (My1GCount <= *Pte1GCount) {
-          Pte1GEntries[My1GCount-1] = Pte1G[Index3];
+        } else {
+          // Increase the count.
+          // If we have room for more Page Table entries, add one.
+          My1GCount++;
+          if (My1GCount <= *Pte1GCount) {
+            Pte1GEntries[My1GCount-1] = Pte1G[Index3];
+          }
         }
       }
     }
