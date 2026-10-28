@@ -144,6 +144,65 @@ SmmLoadedImageTableDump (
 } // SmmLoadedImageTableDump()
 
 /**
+  Appends entries to a growable buffer. The capacity grows geometrically so that
+  collecting millions of entries does not repeatedly copy the whole buffer.
+
+  @param[in, out] Buffer      The buffer holding the entries. May point to NULL on first use.
+  @param[in, out] Count       The number of entries currently stored.
+  @param[in, out] Capacity    The number of entries the buffer can hold.
+  @param[in]      EntrySize   The size of a single entry, in bytes.
+  @param[in]      NewEntries  The entries to append.
+  @param[in]      NewCount    The number of entries to append.
+
+  @retval TRUE    The entries were appended.
+  @retval FALSE   The size would overflow or allocation failed. Existing data is left intact.
+
+**/
+STATIC
+BOOLEAN
+AppendToEntryBuffer (
+  IN OUT VOID        **Buffer,
+  IN OUT UINTN       *Count,
+  IN OUT UINTN       *Capacity,
+  IN     UINTN       EntrySize,
+  IN     CONST VOID  *NewEntries,
+  IN     UINTN       NewCount
+  )
+{
+  UINTN  MaxEntries;
+  UINTN  NewTotal;
+  UINTN  NewCapacity;
+  VOID   *NewBuffer;
+
+  MaxEntries = MAX_UINTN / EntrySize;
+  if ((NewCount > MaxEntries) || (*Count > (MaxEntries - NewCount))) {
+    return FALSE;
+  }
+
+  NewTotal = *Count + NewCount;
+
+  if (NewTotal > *Capacity) {
+    NewCapacity = (*Capacity <= (MaxEntries / 2)) ? (*Capacity * 2) : MaxEntries;
+    if (NewCapacity < NewTotal) {
+      NewCapacity = NewTotal;
+    }
+
+    NewBuffer = ReallocatePool (*Capacity * EntrySize, NewCapacity * EntrySize, *Buffer);
+    if (NewBuffer == NULL) {
+      return FALSE;
+    }
+
+    *Buffer   = NewBuffer;
+    *Capacity = NewCapacity;
+  }
+
+  CopyMem ((UINT8 *)(*Buffer) + (*Count * EntrySize), NewEntries, NewCount * EntrySize);
+  *Count = NewTotal;
+
+  return TRUE;
+}
+
+/**
   This helper function will call to the SMM agent to retrieve the entire contents of the
   SMM Page Tables. It will then dump those tables to files differentiated by the
   page size (1G, 2M, 4K).
@@ -169,10 +228,12 @@ SmmPageTableEntriesDump (
   SMM_PAGE_AUDIT_COMM_HEADER              *AuditCommHeader;
   SMM_PAGE_AUDIT_TABLE_ENTRY_COMM_BUFFER  *AuditCommData;
   UINTN                                   MinBufferSize, BufferSize;
-  UINTN                                   NewCount, NewSize;
   UINTN                                   Pte1GCount    = 0;
   UINTN                                   Pte2MCount    = 0;
   UINTN                                   Pte4KCount    = 0;
+  UINTN                                   Pte1GCapacity = 0;
+  UINTN                                   Pte2MCapacity = 0;
+  UINTN                                   Pte4KCapacity = 0;
   PAGE_TABLE_1G_ENTRY                     *Pte1GEntries = NULL;
   PAGE_TABLE_ENTRY                        *Pte2MEntries = NULL;
   PAGE_TABLE_4K_ENTRY                     *Pte4KEntries = NULL;
@@ -227,42 +288,48 @@ SmmPageTableEntriesDump (
     // Get the data out of the comm buffer.
     //
     if (AuditCommData->Pte1GCount > 0) {
-      NewCount     = Pte1GCount + AuditCommData->Pte1GCount;
-      NewSize      = NewCount * sizeof (PAGE_TABLE_1G_ENTRY);
-      Pte1GEntries = ReallocatePool (Pte1GCount * sizeof (PAGE_TABLE_1G_ENTRY), NewSize, Pte1GEntries);
-      if (Pte1GEntries == NULL) {
+      if (!AppendToEntryBuffer (
+             (VOID **)&Pte1GEntries,
+             &Pte1GCount,
+             &Pte1GCapacity,
+             sizeof (PAGE_TABLE_1G_ENTRY),
+             &AuditCommData->Pte1G[0],
+             AuditCommData->Pte1GCount
+             ))
+      {
         DEBUG ((DEBUG_ERROR, "%a - 1G entries not allocated.\n", __FUNCTION__));
         goto Cleanup;
       }
-
-      CopyMem (&Pte1GEntries[Pte1GCount], &AuditCommData->Pte1G[0], AuditCommData->Pte1GCount * sizeof (PAGE_TABLE_1G_ENTRY));
-      Pte1GCount = NewCount;
     }
 
     if (AuditCommData->Pte2MCount > 0) {
-      NewCount     = Pte2MCount + AuditCommData->Pte2MCount;
-      NewSize      = NewCount * sizeof (PAGE_TABLE_ENTRY);
-      Pte2MEntries = ReallocatePool (Pte2MCount * sizeof (PAGE_TABLE_ENTRY), NewSize, Pte2MEntries);
-      if (Pte2MEntries == NULL) {
+      if (!AppendToEntryBuffer (
+             (VOID **)&Pte2MEntries,
+             &Pte2MCount,
+             &Pte2MCapacity,
+             sizeof (PAGE_TABLE_ENTRY),
+             &AuditCommData->Pte2M[0],
+             AuditCommData->Pte2MCount
+             ))
+      {
         DEBUG ((DEBUG_ERROR, "%a - 2M entries not allocated.\n", __FUNCTION__));
         goto Cleanup;
       }
-
-      CopyMem (&Pte2MEntries[Pte2MCount], &AuditCommData->Pte2M[0], AuditCommData->Pte2MCount * sizeof (PAGE_TABLE_ENTRY));
-      Pte2MCount = NewCount;
     }
 
     if (AuditCommData->Pte4KCount > 0) {
-      NewCount     = Pte4KCount + AuditCommData->Pte4KCount;
-      NewSize      = NewCount * sizeof (PAGE_TABLE_4K_ENTRY);
-      Pte4KEntries = ReallocatePool (Pte4KCount * sizeof (PAGE_TABLE_4K_ENTRY), NewSize, Pte4KEntries);
-      if (Pte4KEntries == NULL) {
+      if (!AppendToEntryBuffer (
+             (VOID **)&Pte4KEntries,
+             &Pte4KCount,
+             &Pte4KCapacity,
+             sizeof (PAGE_TABLE_4K_ENTRY),
+             &AuditCommData->Pte4K[0],
+             AuditCommData->Pte4KCount
+             ))
+      {
         DEBUG ((DEBUG_ERROR, "%a - 4K entries not allocated.\n", __FUNCTION__));
         goto Cleanup;
       }
-
-      CopyMem (&Pte4KEntries[Pte4KCount], &AuditCommData->Pte4K[0], AuditCommData->Pte4KCount * sizeof (PAGE_TABLE_4K_ENTRY));
-      Pte4KCount = NewCount;
     }
 
     AuditCommHeader->RequestIndex++;
