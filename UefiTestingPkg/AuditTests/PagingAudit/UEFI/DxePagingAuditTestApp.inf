@@ -71,6 +71,7 @@
   gCpuMpDebugProtocolGuid
   gEfiMemoryAttributeProtocolGuid
   gEfiLoadedImageProtocolGuid
+  gEfiMmAccessProtocolGuid                      ## SOMETIMES_CONSUMES
 
 [Protocols.X64]
   gEfiSmmBase2ProtocolGuid
