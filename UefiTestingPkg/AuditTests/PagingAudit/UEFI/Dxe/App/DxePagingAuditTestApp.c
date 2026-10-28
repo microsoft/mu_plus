@@ -25,10 +25,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_VERSION  "2"
 #define MAX_CHARS_TO_READ      4
 
-// TRUE if A interval subsumes B interval
-#define CHECK_SUBSUMPTION(AStart, AEnd, BStart, BEnd) \
-  ((AStart <= BStart) && (AEnd >= BEnd))
-
 // TRUE if A and B have overlapping intervals
 #define CHECK_OVERLAP(AStart, AEnd, BStart, BEnd)   \
   ((AEnd > AStart) && (BEnd > BStart) &&            \
@@ -562,7 +558,79 @@ GeneralTestCleanup (
 // ---------------------------------
 
 /**
+  Finds the end of the allowed read/write/execute range that contains Address.
+
+  Allowed ranges are non-protected images and non-existent GCD ranges. Non-protected
+  image ranges are rounded to whole pages exactly as the DXE core does in
+  ProtectUefiImage() when it leaves an image read/write/execute, because the image
+  record only stores the raw (unrounded) ImageSize.
+
+  @param[in]  Address           Address that must be covered.
+  @param[out] AllowedEnd        End (exclusive) of the allowed range covering Address.
+
+  @retval TRUE                  Address is inside an allowed range.
+  @retval FALSE                 Address is not inside any allowed range.
+**/
+STATIC
+BOOLEAN
+FindAllowedRwxRangeEnd (
+  IN  UINT64  Address,
+  OUT UINT64  *AllowedEnd
+  )
+{
+  LIST_ENTRY              *NonProtectedImageLink;
+  IMAGE_RANGE_DESCRIPTOR  *NonProtectedImage;
+  UINTN                   MemorySpaceMapIndex;
+  UINT64                  RangeStart;
+  UINT64                  RangeEnd;
+
+  if (mNonProtectedImageList != NULL) {
+    for (NonProtectedImageLink = mNonProtectedImageList->Link.ForwardLink;
+         NonProtectedImageLink != &mNonProtectedImageList->Link;
+         NonProtectedImageLink = NonProtectedImageLink->ForwardLink)
+    {
+      NonProtectedImage = CR (NonProtectedImageLink, IMAGE_RANGE_DESCRIPTOR, Link, IMAGE_RANGE_DESCRIPTOR_SIGNATURE);
+      RangeStart        = NonProtectedImage->Base & ~((UINT64)EFI_PAGE_MASK);
+      if ((NonProtectedImage->Length > (MAX_UINT64 - EFI_PAGE_MASK)) ||
+          EFI_ERROR (SafeUint64Add (RangeStart, ALIGN_VALUE (NonProtectedImage->Length, (UINT64)EFI_PAGE_SIZE), &RangeEnd)))
+      {
+        continue;
+      }
+
+      if ((Address >= RangeStart) && (Address < RangeEnd)) {
+        *AllowedEnd = RangeEnd;
+        return TRUE;
+      }
+    }
+  }
+
+  if (mMemorySpaceMap != NULL) {
+    for (MemorySpaceMapIndex = 0; MemorySpaceMapIndex < mMemorySpaceMapCount; MemorySpaceMapIndex++) {
+      if (mMemorySpaceMap[MemorySpaceMapIndex].GcdMemoryType != EfiGcdMemoryTypeNonExistent) {
+        continue;
+      }
+
+      RangeStart = mMemorySpaceMap[MemorySpaceMapIndex].BaseAddress;
+      if (EFI_ERROR (SafeUint64Add (RangeStart, mMemorySpaceMap[MemorySpaceMapIndex].Length, &RangeEnd))) {
+        RangeEnd = MAX_UINT64;
+      }
+
+      if ((Address >= RangeStart) && (Address < RangeEnd)) {
+        *AllowedEnd = RangeEnd;
+        return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
   Checks if a region is allowed to be read/write/execute based on the non protected image list
+
+  The page table map coalesces adjacent pages with identical attributes, so one
+  read/write/execute run may span several adjacent non-protected images. The run is
+  allowed only if every byte of it is covered by the union of allowed ranges.
 
   @param[in] Address            Start address of the region
   @param[in] Length             Length of the region
@@ -577,48 +645,28 @@ CanRegionBeRWX (
   IN UINT64  Length
   )
 {
-  LIST_ENTRY              *NonProtectedImageLink;
-  IMAGE_RANGE_DESCRIPTOR  *NonProtectedImage;
-  UINTN                   MemorySpaceMapIndex;
+  UINT64  Cursor;
+  UINT64  RegionEnd;
+  UINT64  AllowedEnd;
 
   if (mNonProtectedImageList == NULL) {
     return FALSE;
   }
 
-  if (mNonProtectedImageList != NULL) {
-    for (NonProtectedImageLink = mNonProtectedImageList->Link.ForwardLink;
-         NonProtectedImageLink != &mNonProtectedImageList->Link;
-         NonProtectedImageLink = NonProtectedImageLink->ForwardLink)
-    {
-      NonProtectedImage = CR (NonProtectedImageLink, IMAGE_RANGE_DESCRIPTOR, Link, IMAGE_RANGE_DESCRIPTOR_SIGNATURE);
-      if (CHECK_SUBSUMPTION (
-            NonProtectedImage->Base,
-            NonProtectedImage->Base + NonProtectedImage->Length,
-            Address,
-            Address + Length
-            ))
-      {
-        return TRUE;
-      }
-    }
+  if ((Length == 0) || EFI_ERROR (SafeUint64Add (Address, Length, &RegionEnd))) {
+    return FALSE;
   }
 
-  if (mMemorySpaceMap != NULL) {
-    for (MemorySpaceMapIndex = 0; MemorySpaceMapIndex < mMemorySpaceMapCount; MemorySpaceMapIndex++) {
-      if (CHECK_SUBSUMPTION (
-            mMemorySpaceMap[MemorySpaceMapIndex].BaseAddress,
-            mMemorySpaceMap[MemorySpaceMapIndex].BaseAddress + mMemorySpaceMap[MemorySpaceMapIndex].Length,
-            Address,
-            Address + Length
-            ) &&
-          (mMemorySpaceMap[MemorySpaceMapIndex].GcdMemoryType == EfiGcdMemoryTypeNonExistent))
-      {
-        return TRUE;
-      }
+  Cursor = Address;
+  while (Cursor < RegionEnd) {
+    if (!FindAllowedRwxRangeEnd (Cursor, &AllowedEnd) || (AllowedEnd <= Cursor)) {
+      return FALSE;
     }
+
+    Cursor = AllowedEnd;
   }
 
-  return FALSE;
+  return TRUE;
 }
 
 /**
