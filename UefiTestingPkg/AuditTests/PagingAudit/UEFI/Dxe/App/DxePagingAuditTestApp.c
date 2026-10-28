@@ -14,6 +14,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/SimpleFileSystem.h>
 #include <Protocol/MemoryProtectionDebug.h>
 #include <Protocol/MemoryAttribute.h>
+#include <Protocol/MmAccess.h>
 
 #include <Library/DxeServicesTableLib.h>
 #include <Library/FlatPageTableLib.h>
@@ -24,10 +25,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_NAME     "Paging Audit Test"
 #define UNIT_TEST_APP_VERSION  "2"
 #define MAX_CHARS_TO_READ      4
-
-// TRUE if A interval subsumes B interval
-#define CHECK_SUBSUMPTION(AStart, AEnd, BStart, BEnd) \
-  ((AStart <= BStart) && (AEnd >= BEnd))
 
 // TRUE if A and B have overlapping intervals
 #define CHECK_OVERLAP(AStart, AEnd, BStart, BEnd)   \
@@ -562,7 +559,79 @@ GeneralTestCleanup (
 // ---------------------------------
 
 /**
+  Finds the end of the allowed read/write/execute range that contains Address.
+
+  Allowed ranges are non-protected images and non-existent GCD ranges. Non-protected
+  image ranges are rounded to whole pages exactly as the DXE core does in
+  ProtectUefiImage() when it leaves an image read/write/execute, because the image
+  record only stores the raw (unrounded) ImageSize.
+
+  @param[in]  Address           Address that must be covered.
+  @param[out] AllowedEnd        End (exclusive) of the allowed range covering Address.
+
+  @retval TRUE                  Address is inside an allowed range.
+  @retval FALSE                 Address is not inside any allowed range.
+**/
+STATIC
+BOOLEAN
+FindAllowedRwxRangeEnd (
+  IN  UINT64  Address,
+  OUT UINT64  *AllowedEnd
+  )
+{
+  LIST_ENTRY              *NonProtectedImageLink;
+  IMAGE_RANGE_DESCRIPTOR  *NonProtectedImage;
+  UINTN                   MemorySpaceMapIndex;
+  UINT64                  RangeStart;
+  UINT64                  RangeEnd;
+
+  if (mNonProtectedImageList != NULL) {
+    for (NonProtectedImageLink = mNonProtectedImageList->Link.ForwardLink;
+         NonProtectedImageLink != &mNonProtectedImageList->Link;
+         NonProtectedImageLink = NonProtectedImageLink->ForwardLink)
+    {
+      NonProtectedImage = CR (NonProtectedImageLink, IMAGE_RANGE_DESCRIPTOR, Link, IMAGE_RANGE_DESCRIPTOR_SIGNATURE);
+      RangeStart        = NonProtectedImage->Base & ~((UINT64)EFI_PAGE_MASK);
+      if ((NonProtectedImage->Length > (MAX_UINT64 - EFI_PAGE_MASK)) ||
+          EFI_ERROR (SafeUint64Add (RangeStart, ALIGN_VALUE (NonProtectedImage->Length, (UINT64)EFI_PAGE_SIZE), &RangeEnd)))
+      {
+        continue;
+      }
+
+      if ((Address >= RangeStart) && (Address < RangeEnd)) {
+        *AllowedEnd = RangeEnd;
+        return TRUE;
+      }
+    }
+  }
+
+  if (mMemorySpaceMap != NULL) {
+    for (MemorySpaceMapIndex = 0; MemorySpaceMapIndex < mMemorySpaceMapCount; MemorySpaceMapIndex++) {
+      if (mMemorySpaceMap[MemorySpaceMapIndex].GcdMemoryType != EfiGcdMemoryTypeNonExistent) {
+        continue;
+      }
+
+      RangeStart = mMemorySpaceMap[MemorySpaceMapIndex].BaseAddress;
+      if (EFI_ERROR (SafeUint64Add (RangeStart, mMemorySpaceMap[MemorySpaceMapIndex].Length, &RangeEnd))) {
+        RangeEnd = MAX_UINT64;
+      }
+
+      if ((Address >= RangeStart) && (Address < RangeEnd)) {
+        *AllowedEnd = RangeEnd;
+        return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
   Checks if a region is allowed to be read/write/execute based on the non protected image list
+
+  The page table map coalesces adjacent pages with identical attributes, so one
+  read/write/execute run may span several adjacent non-protected images. The run is
+  allowed only if every byte of it is covered by the union of allowed ranges.
 
   @param[in] Address            Start address of the region
   @param[in] Length             Length of the region
@@ -577,48 +646,28 @@ CanRegionBeRWX (
   IN UINT64  Length
   )
 {
-  LIST_ENTRY              *NonProtectedImageLink;
-  IMAGE_RANGE_DESCRIPTOR  *NonProtectedImage;
-  UINTN                   MemorySpaceMapIndex;
+  UINT64  Cursor;
+  UINT64  RegionEnd;
+  UINT64  AllowedEnd;
 
   if (mNonProtectedImageList == NULL) {
     return FALSE;
   }
 
-  if (mNonProtectedImageList != NULL) {
-    for (NonProtectedImageLink = mNonProtectedImageList->Link.ForwardLink;
-         NonProtectedImageLink != &mNonProtectedImageList->Link;
-         NonProtectedImageLink = NonProtectedImageLink->ForwardLink)
-    {
-      NonProtectedImage = CR (NonProtectedImageLink, IMAGE_RANGE_DESCRIPTOR, Link, IMAGE_RANGE_DESCRIPTOR_SIGNATURE);
-      if (CHECK_SUBSUMPTION (
-            NonProtectedImage->Base,
-            NonProtectedImage->Base + NonProtectedImage->Length,
-            Address,
-            Address + Length
-            ))
-      {
-        return TRUE;
-      }
-    }
+  if ((Length == 0) || EFI_ERROR (SafeUint64Add (Address, Length, &RegionEnd))) {
+    return FALSE;
   }
 
-  if (mMemorySpaceMap != NULL) {
-    for (MemorySpaceMapIndex = 0; MemorySpaceMapIndex < mMemorySpaceMapCount; MemorySpaceMapIndex++) {
-      if (CHECK_SUBSUMPTION (
-            mMemorySpaceMap[MemorySpaceMapIndex].BaseAddress,
-            mMemorySpaceMap[MemorySpaceMapIndex].BaseAddress + mMemorySpaceMap[MemorySpaceMapIndex].Length,
-            Address,
-            Address + Length
-            ) &&
-          (mMemorySpaceMap[MemorySpaceMapIndex].GcdMemoryType == EfiGcdMemoryTypeNonExistent))
-      {
-        return TRUE;
-      }
+  Cursor = Address;
+  while (Cursor < RegionEnd) {
+    if (!FindAllowedRwxRangeEnd (Cursor, &AllowedEnd) || (AllowedEnd <= Cursor)) {
+      return FALSE;
     }
+
+    Cursor = AllowedEnd;
   }
 
-  return FALSE;
+  return TRUE;
 }
 
 /**
@@ -903,6 +952,108 @@ MmioIsXp (
 }
 
 /**
+  Retrieves the MMRAM ranges reported by EFI_MM_ACCESS_PROTOCOL.
+
+  SMM/MM drivers publish EFI_LOADED_IMAGE_PROTOCOL instances in the UEFI handle
+  database whose ImageBase points into MMRAM. MMRAM is not readable from DXE once
+  closed, so those images must be excluded from DXE image layout checks.
+
+  @param[out] MmramRanges       Pointer to receive the allocated MMRAM descriptor array.
+                                The caller must free it with FreePool().
+  @param[out] MmramRangeCount   Pointer to receive the number of descriptors.
+
+  @retval EFI_SUCCESS           The MMRAM ranges were returned.
+  @retval EFI_INVALID_PARAMETER An output pointer is NULL.
+  @retval EFI_NOT_FOUND         EFI_MM_ACCESS_PROTOCOL is not installed or reports no MMRAM.
+  @retval EFI_OUT_OF_RESOURCES  The descriptor buffer could not be allocated.
+  @retval other                 GetCapabilities() failed.
+**/
+STATIC
+EFI_STATUS
+GetMmramRanges (
+  OUT EFI_MMRAM_DESCRIPTOR  **MmramRanges,
+  OUT UINTN                 *MmramRangeCount
+  )
+{
+  EFI_STATUS              Status;
+  EFI_MM_ACCESS_PROTOCOL  *MmAccess;
+  UINTN                   MmramMapSize;
+  EFI_MMRAM_DESCRIPTOR    *MmramMap;
+
+  if ((MmramRanges == NULL) || (MmramRangeCount == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *MmramRanges     = NULL;
+  *MmramRangeCount = 0;
+
+  Status = gBS->LocateProtocol (&gEfiMmAccessProtocolGuid, NULL, (VOID **)&MmAccess);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  MmramMapSize = 0;
+  Status       = MmAccess->GetCapabilities (MmAccess, &MmramMapSize, NULL);
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    return EFI_ERROR (Status) ? Status : EFI_NOT_FOUND;
+  }
+
+  if ((MmramMapSize == 0) || ((MmramMapSize % sizeof (EFI_MMRAM_DESCRIPTOR)) != 0)) {
+    return EFI_NOT_FOUND;
+  }
+
+  MmramMap = AllocateZeroPool (MmramMapSize);
+  if (MmramMap == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  Status = MmAccess->GetCapabilities (MmAccess, &MmramMapSize, MmramMap);
+  if (EFI_ERROR (Status)) {
+    FreePool (MmramMap);
+    return Status;
+  }
+
+  *MmramRanges     = MmramMap;
+  *MmramRangeCount = MmramMapSize / sizeof (EFI_MMRAM_DESCRIPTOR);
+  return EFI_SUCCESS;
+}
+
+/**
+  Checks whether an address falls inside any of the supplied MMRAM ranges.
+
+  @param[in] Address            Address to check.
+  @param[in] MmramRanges        MMRAM descriptor array (may be NULL).
+  @param[in] MmramRangeCount    Number of descriptors in MmramRanges.
+
+  @retval TRUE   Address is inside MMRAM.
+  @retval FALSE  Address is not inside MMRAM, or no MMRAM ranges are known.
+**/
+STATIC
+BOOLEAN
+IsAddressInMmram (
+  IN EFI_PHYSICAL_ADDRESS        Address,
+  IN CONST EFI_MMRAM_DESCRIPTOR  *MmramRanges OPTIONAL,
+  IN UINTN                       MmramRangeCount
+  )
+{
+  UINTN  Index;
+
+  if (MmramRanges == NULL) {
+    return FALSE;
+  }
+
+  for (Index = 0; Index < MmramRangeCount; Index++) {
+    if ((Address >= MmramRanges[Index].PhysicalStart) &&
+        ((Address - MmramRanges[Index].PhysicalStart) < MmramRanges[Index].PhysicalSize))
+    {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
   Checks that loaded image sections containing code
   are EFI_MEMORY_RO and sections containing data
   are EFI_MEMORY_XP.
@@ -934,13 +1085,20 @@ ImageCodeSectionsRoDataSectionsXp (
   UINT64                               SectionStart;
   UINT64                               SectionEnd;
   CHAR8                                *PdbFileName;
+  EFI_MMRAM_DESCRIPTOR                 *MmramRanges;
+  UINTN                                MmramRangeCount;
+  UINTN                                HeaderEnd;
+  UINTN                                SectionTableOffset;
+  UINTN                                SectionTableSize;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
   UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
 
-  TestFailure = FALSE;
+  TestFailure     = FALSE;
+  MmramRanges     = NULL;
+  MmramRangeCount = 0;
 
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
@@ -955,6 +1113,11 @@ ImageCodeSectionsRoDataSectionsXp (
     UT_ASSERT_NOT_EQUAL (NoHandles, 0);
   }
 
+  Status = GetMmramRanges (&MmramRanges, &MmramRangeCount);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a MMRAM ranges unavailable (%r); MM images will not be excluded\n", __func__, Status));
+  }
+
   for (Index = 0; Index < NoHandles; Index++) {
     Status = gBS->HandleProtocol (
                     HandleBuffer[Index],
@@ -965,7 +1128,60 @@ ImageCodeSectionsRoDataSectionsXp (
       continue;
     }
 
+    // SMM/MM driver images live in MMRAM, which DXE cannot read once closed.
+    if (IsAddressInMmram ((EFI_PHYSICAL_ADDRESS)(UINTN)LoadedImage->ImageBase, MmramRanges, MmramRangeCount)) {
+      DEBUG ((
+        DEBUG_INFO,
+        "%a Skipping MM image in MMRAM at 0x%llx - 0x%llx\n",
+        __func__,
+        (UINTN)LoadedImage->ImageBase,
+        (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
+        ));
+      continue;
+    }
+
     // Check PE/COFF image
+    PdbFileName = NULL;
+    if ((LoadedImage->ImageBase == NULL) || (LoadedImage->ImageSize < sizeof (EFI_IMAGE_DOS_HEADER))) {
+      UT_LOG_ERROR (
+        "Loaded image at 0x%llx has an invalid base or size 0x%llx\n",
+        (UINTN)LoadedImage->ImageBase,
+        LoadedImage->ImageSize
+        );
+      TestFailure = TRUE;
+      continue;
+    }
+
+    DosHdr             = (EFI_IMAGE_DOS_HEADER *)(UINTN)LoadedImage->ImageBase;
+    PeCoffHeaderOffset = 0;
+    if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE) {
+      PeCoffHeaderOffset = DosHdr->e_lfanew;
+    }
+
+    Status = SafeUintnAdd ((UINTN)PeCoffHeaderOffset, sizeof (EFI_IMAGE_NT_HEADERS32), &HeaderEnd);
+    if (EFI_ERROR (Status) || (HeaderEnd > LoadedImage->ImageSize)) {
+      UT_LOG_ERROR (
+        "Image at 0x%llx - 0x%llx has an invalid PE header offset 0x%x\n",
+        (UINTN)LoadedImage->ImageBase,
+        (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize,
+        PeCoffHeaderOffset
+        );
+      TestFailure = TRUE;
+      continue;
+    }
+
+    Hdr.Pe32 = (EFI_IMAGE_NT_HEADERS32 *)((UINT8 *)(UINTN)LoadedImage->ImageBase + PeCoffHeaderOffset);
+
+    if (Hdr.Pe32->Signature != EFI_IMAGE_NT_SIGNATURE) {
+      UT_LOG_ERROR (
+        "Image at 0x%llx - 0x%llx does not have a valid PE header\n",
+        (UINTN)LoadedImage->ImageBase,
+        (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
+        );
+      TestFailure = TRUE;
+      continue;
+    }
+
     PdbFileName = PeCoffLoaderGetPdbPointer (LoadedImage->ImageBase);
     if (PdbFileName == NULL) {
       DEBUG ((
@@ -976,14 +1192,6 @@ ImageCodeSectionsRoDataSectionsXp (
         (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
         ));
     }
-
-    DosHdr             = (EFI_IMAGE_DOS_HEADER *)(UINTN)LoadedImage->ImageBase;
-    PeCoffHeaderOffset = 0;
-    if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE) {
-      PeCoffHeaderOffset = DosHdr->e_lfanew;
-    }
-
-    Hdr.Pe32 = (EFI_IMAGE_NT_HEADERS32 *)((UINT8 *)(UINTN)LoadedImage->ImageBase + PeCoffHeaderOffset);
 
     // Get SectionAlignment
     if (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
@@ -1003,17 +1211,35 @@ ImageCodeSectionsRoDataSectionsXp (
       continue;
     }
 
-    Section = (EFI_IMAGE_SECTION_HEADER *)(
-                                           (UINT8 *)(UINTN)LoadedImage->ImageBase +
-                                           PeCoffHeaderOffset +
-                                           sizeof (UINT32) +
-                                           sizeof (EFI_IMAGE_FILE_HEADER) +
-                                           Hdr.Pe32->FileHeader.SizeOfOptionalHeader
-                                           );
+    Status = SafeUintnAdd (
+               (UINTN)PeCoffHeaderOffset,
+               sizeof (UINT32) + sizeof (EFI_IMAGE_FILE_HEADER) + Hdr.Pe32->FileHeader.SizeOfOptionalHeader,
+               &SectionTableOffset
+               );
+    if (!EFI_ERROR (Status)) {
+      Status = SafeUintnMult (Hdr.Pe32->FileHeader.NumberOfSections, sizeof (EFI_IMAGE_SECTION_HEADER), &SectionTableSize);
+    }
+
+    if (!EFI_ERROR (Status)) {
+      Status = SafeUintnAdd (SectionTableOffset, SectionTableSize, &HeaderEnd);
+    }
+
+    if (EFI_ERROR (Status) || (HeaderEnd > LoadedImage->ImageSize)) {
+      UT_LOG_ERROR (
+        "Image %a: 0x%llx - 0x%llx section table is out of range\n",
+        PdbFileName,
+        (UINTN)LoadedImage->ImageBase,
+        (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
+        );
+      TestFailure = TRUE;
+      continue;
+    }
+
+    Section = (EFI_IMAGE_SECTION_HEADER *)((UINT8 *)(UINTN)LoadedImage->ImageBase + SectionTableOffset);
 
     for (Index2 = 0; Index2 < Hdr.Pe32->FileHeader.NumberOfSections; Index2++) {
       SectionStart = (UINT64)LoadedImage->ImageBase + Section[Index2].VirtualAddress;
-      SectionEnd   = SectionStart + ALIGN_VALUE (Section[Index2].SizeOfRawData, SectionAlignment);
+      SectionEnd   = SectionStart + ALIGN_VALUE ((UINT64)Section[Index2].SizeOfRawData, (UINT64)SectionAlignment);
 
       // Check if the section contains code and data
       if (((Section[Index2].Characteristics & EFI_IMAGE_SCN_CNT_CODE) != 0) &&
@@ -1072,6 +1298,9 @@ ImageCodeSectionsRoDataSectionsXp (
   }
 
   FreePool (HandleBuffer);
+  if (MmramRanges != NULL) {
+    FreePool (MmramRanges);
+  }
 
   UT_ASSERT_FALSE (TestFailure);
 

@@ -14,6 +14,7 @@ import argparse
 import logging
 import datetime
 import xml.etree.ElementTree as ET
+from ctypes import windll
 from xml.etree.ElementTree import Element
 from edk2toollib.os.uefivariablesupport import UefiVariable
 
@@ -70,12 +71,14 @@ def main():
         name = var.get("Name")
         guid = var.get("Guid")
         (ReadStatus, Data) = Uefi.GetUefiVar(name, guid)
-        (WriteSuccess, ErrorCode)= Uefi.SetUefiVar(name, guid)
+        WriteSuccess = Uefi.SetUefiVar(name, guid)
+        ErrorCode = 0 if WriteSuccess else windll.kernel32.GetLastError()
         if(WriteSuccess != 0):
             logging.info("Must Restore Var %s:%s" % (name, guid))
-            (RestoreSuccess, RestoreEC) = Uefi.SetUefiVar(name, guid, Data)
+            RestoreSuccess = Uefi.SetUefiVar(name, guid, Data)
+            RestoreEC = 0 if RestoreSuccess else windll.kernel32.GetLastError()
             if (RestoreSuccess == 0):
-                logging.critical("Restoring failed for Var %s:%s  0x%X  ErrorCode: 0x%X %s" % (name, guid, RestoreSuccess, RestoreEC))
+                logging.critical("Restoring failed for Var %s:%s  0x%X  ErrorCode: 0x%X" % (name, guid, RestoreSuccess, RestoreEC))
         #append
         #<FromOs>
         #<ReadStatus>0x0 Success</ReadStatus>
