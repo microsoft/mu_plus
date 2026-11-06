@@ -15,7 +15,6 @@
 #include <Library/DebugLib.h>
 #include <Library/SmmServicesTableLib.h>
 
-STATIC BOOLEAN                   mInitialized = FALSE;
 STATIC ADVANCED_LOGGER_PROTOCOL  *mSmmLoggerProtocol;
 
 /**
@@ -33,32 +32,25 @@ SmmInitializeLoggerInfo (
     return;
   }
 
-  if (!mInitialized) {
-    //
-    // Locate the Logger Information block.
-    //
+  Status = gSmst->SmmLocateProtocol (
+                    &gAdvancedLoggerProtocolGuid,
+                    NULL,
+                    (VOID **)&mSmmLoggerProtocol
+                    );
 
-    mInitialized = TRUE;                // Only one attempt at getting the logger info block.
-
-    Status = gSmst->SmmLocateProtocol (
-                      &gAdvancedLoggerProtocolGuid,
-                      NULL,
-                      (VOID **)&mSmmLoggerProtocol
-                      );
-
-    if (EFI_ERROR (Status)) {
-      mSmmLoggerProtocol = NULL;
-    } else {
+  if (EFI_ERROR (Status)) {
+    mSmmLoggerProtocol = NULL;
+  } else if (mSmmLoggerProtocol != NULL) {
+    if ((mSmmLoggerProtocol->Signature != ADVANCED_LOGGER_PROTOCOL_SIGNATURE) ||
+        (mSmmLoggerProtocol->Version != ADVANCED_LOGGER_PROTOCOL_VERSION))
+    {
       ASSERT (mSmmLoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
       ASSERT (mSmmLoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
+      mSmmLoggerProtocol = NULL;
     }
-
-    //
-    // If mSmmLoggerProtocol is NULL at this point, there is no Advanced Logger for SMM modules.
-    //
-
-    DEBUG ((DEBUG_INFO, "%a: SmmLoggerProtocol=%p, code=%r\n", __func__, mSmmLoggerProtocol, Status));
   }
+
+  DEBUG ((DEBUG_INFO, "%a: SmmLoggerProtocol=%p, code=%r\n", __func__, mSmmLoggerProtocol, Status));
 }
 
 /**
@@ -77,8 +69,6 @@ AdvancedLoggerWrite (
   IN        UINTN  NumberOfBytes
   )
 {
-  SmmInitializeLoggerInfo ();
-
   if (mSmmLoggerProtocol != NULL) {
     mSmmLoggerProtocol->AdvancedLoggerWriteProtocol (mSmmLoggerProtocol, ErrorLevel, Buffer, NumberOfBytes);
   }
@@ -86,7 +76,7 @@ AdvancedLoggerWrite (
 
 /**
   The constructor function initializes Logger Information pointer to ensure that the
-  pointer is initialized in DXE - either by the constructor, or the first DEBUG message.
+  pointer is initialized by the constructor.
 
   @param  ImageHandle   The firmware allocated handle for the EFI image.
   @param  SystemTable   A pointer to the EFI System Table.
@@ -101,6 +91,7 @@ SmmAdvancedLoggerLibConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  mSmmLoggerProtocol = NULL;
   SmmInitializeLoggerInfo ();
 
   return EFI_SUCCESS;

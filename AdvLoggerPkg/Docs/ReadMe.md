@@ -48,6 +48,16 @@ The following libraries are used with AdvancedLogger:
 
 ## Platform notes
 
+### General
+
+The DXE, Runtime, and SMM versions of the `AdvancedLoggerLib` locate the Advanced Logger Protocol in their constructor.
+The protocol is produced by the DXE Core instance, if Advanced Logger is configured there. One note is that some
+libraries do not correctly list DebugLib in their INF's `LibraryClasses` section and so may have their constructor run
+before `AdvancedLoggerLib's` constructor. If a print occurs in that library's constructor, it will not be captured in
+the log. The library will just safely return until its constructor has run. In order to capture those logs, the library
+without the proper library dependency declaration must add `DebugLib` to its INF (which will then pick up
+`AdvancedLoggerLib` due its library dependency).
+
 ### IA32/X64
 
 The SEC version of the Advanced Logger uses the temporary RAM block. This block is fixed in size

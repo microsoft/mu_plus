@@ -93,27 +93,6 @@ AdvancedLoggerGetLoggerInfo (
   VOID
   )
 {
-  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
-  EFI_STATUS                Status;
-
-  if ((mLoggerInfo == NULL) && (mBS != NULL)) {
-    Status = mBS->LocateProtocol (
-                    &gAdvancedLoggerProtocolGuid,
-                    NULL,
-                    (VOID **)&LoggerProtocol
-                    );
-    if (!EFI_ERROR (Status) && (LoggerProtocol != NULL)) {
-      ASSERT (LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
-      ASSERT (LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
-
-      mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-
-      if (mLoggerInfo != NULL) {
-        mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
-      }
-    }
-  }
-
   if (!ValidateInfoBlock ()) {
     mLoggerInfo = NULL;
   }
@@ -213,16 +192,29 @@ DxeRuntimeAdvancedLoggerLibConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS  Status;
+  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
+  EFI_STATUS                Status;
 
-  //
-  // Cache BootServices pointer as AdvLogger calls may be made before
-  // the constructor runs.
-  //
-  mBS = SystemTable->BootServices;
-  AdvancedLoggerGetLoggerInfo ();
+  mBS         = SystemTable->BootServices;
+  mLoggerInfo = NULL;
+  Status      = mBS->LocateProtocol (
+                       &gAdvancedLoggerProtocolGuid,
+                       NULL,
+                       (VOID **)&LoggerProtocol
+                       );
+  if (!EFI_ERROR (Status) && (LoggerProtocol != NULL)) {
+    if ((LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE) &&
+        (LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION))
+    {
+      mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+      if (mLoggerInfo != NULL) {
+        mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
+      }
+    }
+  }
 
   ASSERT (mLoggerInfo != NULL);
+  AdvancedLoggerGetLoggerInfo ();
 
   if (mLoggerInfo != 0) {
     //

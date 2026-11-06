@@ -9,7 +9,6 @@
 #include <Library/GoogleTestLib.h>
 #include <GoogleTest/Library/MockUefiBootServicesTableLib.h>
 #include <GoogleTest/Protocol/MockAdvancedLogger.h>
-// #include <GoogleTest/Protocol/MockDebugPort.h> // Waiting on mu_basecre DebugPortProtocol mock
 
 extern "C" {
   #include <Uefi.h>
@@ -17,8 +16,7 @@ extern "C" {
   #include <Library/DebugLib.h>
   #include <PiDxe.h>
   #include <AdvancedLoggerInternal.h>
-  #include <Protocol/DebugPort.h> // Waiting on mu_basecre DebugPortProtocol mock
-  #include "../../AdvancedLoggerCommon.h"
+  #include "../AdvancedLoggerLib.c"
 }
 
 using namespace testing;
@@ -42,6 +40,7 @@ protected:
   SetUp (
     ) override
   {
+    mLoggerProtocol        = nullptr;
     NumberOfBytes          = sizeof (OutputBuf);
     Buffer                 = OutputBuf;
     DebugLevel             = DEBUG_ERROR;
@@ -49,23 +48,31 @@ protected:
     gALProtocol->Version   = ADVANCED_LOGGER_PROTOCOL_VERSION;
     snprintf (Buffer, sizeof (OutputBuf), "MyUnitTestLog");
   }
+
+  void
+  ExpectLoggerLookup (
+    )
+  {
+    EXPECT_CALL (
+      gBSMock,
+      gBS_LocateProtocol (
+        BufferEq (&gAdvancedLoggerProtocolGuid, sizeof (EFI_GUID)),
+        Eq (nullptr),
+        NotNull ()
+        )
+      )
+      .WillOnce (
+         DoAll (
+           SetArgPointee<2> (ByRef (gALProtocol)),
+           Return (EFI_SUCCESS)
+           )
+         );
+    EXPECT_EQ (DxeAdvancedLoggerLibConstructor (nullptr, nullptr), EFI_SUCCESS);
+  }
 };
 
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteSuccess) {
-  EXPECT_CALL (
-    gBSMock,
-    gBS_LocateProtocol (
-      BufferEq (&gAdvancedLoggerProtocolGuid, sizeof (EFI_GUID)),
-      Eq (nullptr), // Registration Key
-      NotNull ()    // Protocol Pointer OUT
-      )
-    )
-    .WillOnce (
-       DoAll (
-         SetArgPointee<2> (ByRef (gALProtocol)),
-         Return (EFI_SUCCESS)
-         )
-       );
+  ExpectLoggerLookup ();
 
   EXPECT_CALL (
     AdvLoggerProtocolMock,
@@ -84,6 +91,7 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteSuccess) {
 }
 
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteMultiple) {
+  ExpectLoggerLookup ();
   //
   // First call to AdvancedLoggerWrite
   //
@@ -124,6 +132,7 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteMultiple) {
 
 /* Passing an invalid buffer - should be caught/handled by the protocol */
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteInvalidBuffer) {
+  ExpectLoggerLookup ();
   Buffer = nullptr;
   UINTN  numBytesZero = 0;
 
@@ -145,6 +154,7 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteInvalidBuffer) {
 
 /* Attempting to write 0 bytes - should be caught/handled by the protocol */
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteZeroBytes) {
+  ExpectLoggerLookup ();
   UINTN  NumberOfBytesZero = 0;
 
   EXPECT_CALL (
@@ -163,45 +173,34 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteZeroBytes) {
   AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytesZero);
 }
 
-/* Waiting on edk2 PR to add DebugPortProtocolMock
-// Passing a mismatched signature. Asserts are disabled so execution will continue
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteFailMismatchedSignature) {
   gALProtocol->Signature = SIGNATURE_32 ('T', 'E', 'S', 'T');
-
-  EXPECT_CALL (
-    gBSMock,
-    gBS_LocateProtocol (
-      _,            // Guid
-      Eq (nullptr), // Registration Key
-      NotNull ()    // Protocol Pointer OUT
-      )
-    )
-    .WillOnce (
-       DoAll (
-         SetArgPointee<2> (ByRef (gALProtocol)),
-         Return (EFI_SUCCESS)
-         )
-       );
-
-  EXPECT_CALL (
-    gBSMock,
-    gBS_LocateProtocol (
-      BufferEq (&gEfiDebugPortProtocolGuid, sizeof (EFI_GUID)),
-      Eq (nullptr), // Registration Key
-      NotNull ()    // Protocol Pointer OUT
-      )
-    )
-    .WillOnce (
-       Return (EFI_SUCCESS)
-       );
-
+  ExpectLoggerLookup ();
   AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 }
-*/
 
-/* Waiting on edk2 PR to add DebugPortProtocolMock
+TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteFailMismatchedVersion) {
+  gALProtocol->Version = 0;
+  ExpectLoggerLookup ();
+  AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
+}
+
+TEST_F (AdvancedLoggerWriteTest, MissingProtocolDoesNotFallBack) {
+  EXPECT_CALL (
+    gBSMock,
+    gBS_LocateProtocol (
+      BufferEq (&gAdvancedLoggerProtocolGuid, sizeof (EFI_GUID)),
+      Eq (nullptr),
+      NotNull ()
+      )
+    ).WillOnce (Return (EFI_NOT_FOUND));
+
+  EXPECT_EQ (DxeAdvancedLoggerLibConstructor (nullptr, nullptr), EFI_SUCCESS);
+  AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
+  AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
+}
+
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerProtocolInvalidParam) {
-  mInitialized = FALSE;
   EXPECT_CALL (
     gBSMock,
     gBS_LocateProtocol (
@@ -214,24 +213,14 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerProtocolInvalidParam) {
        Return (EFI_INVALID_PARAMETER)
        );
 
-
-  EXPECT_CALL (
-    gEfiDebugPortProtocolMock,
-    gDP_Write (
-      Pointer (gALProtocol),
-      Eq (DEBUG_ERROR),
-      Eq (NumberOfBytes),
-      BufferEq (Buffer, NumberOfBytes)
-      )
-    )
-    .WillOnce (
-       Return ()
-       );
-
-
+  EXPECT_EQ (DxeAdvancedLoggerLibConstructor (nullptr, nullptr), EFI_SUCCESS);
+  AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
   AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 }
-*/
+TEST_F (AdvancedLoggerWriteTest, WriteBeforeConstructorDoesNotLocateProtocol) {
+  AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
+}
+
 int
 main (
   int   argc,

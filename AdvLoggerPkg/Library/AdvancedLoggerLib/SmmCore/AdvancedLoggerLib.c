@@ -24,9 +24,8 @@
 #include "../AdvancedLoggerCommon.h"
 
 STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo;
-STATIC UINT32                mBufferSize  = 0;
-STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress  = 0;
-STATIC BOOLEAN               mInitialized = FALSE;
+STATIC UINT32                mBufferSize = 0;
+STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress = 0;
 
 VOID
 EFIAPI
@@ -128,35 +127,24 @@ SmmInitializeLoggerInfo (
   ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
   EFI_STATUS                Status;
 
-  if (!mInitialized) {
-    //
-    // Locate the Logger Information block.
-    //
-    if (gBS == NULL) {
-      return;
+  mLoggerInfo = NULL;
+  if (gBS == NULL) {
+    return;
+  }
+
+  Status = gBS->LocateProtocol (
+                  &gAdvancedLoggerProtocolGuid,
+                  NULL,
+                  (VOID **)&LoggerProtocol
+                  );
+  if (!EFI_ERROR (Status) && (LoggerProtocol != NULL) &&
+      (LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE) &&
+      (LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION))
+  {
+    mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+    if (mLoggerInfo != NULL) {
+      mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
     }
-
-    mInitialized = TRUE;                // Only one attempt at getting the logger info block.
-
-    Status = gBS->LocateProtocol (
-                    &gAdvancedLoggerProtocolGuid,
-                    NULL,
-                    (VOID **)&LoggerProtocol
-                    );
-    ASSERT_EFI_ERROR (Status);
-    if (!EFI_ERROR (Status)) {
-      mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-      ASSERT (mLoggerInfo != NULL);
-      if (mLoggerInfo != NULL) {
-        mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
-      }
-    }
-
-    //
-    // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
-    //
-
-    DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __func__, mLoggerInfo, Status));
   }
 
   if (!ValidateInfoBlock ()) {
@@ -174,7 +162,9 @@ AdvancedLoggerGetLoggerInfo (
   VOID
   )
 {
-  SmmInitializeLoggerInfo ();
+  if (!ValidateInfoBlock ()) {
+    mLoggerInfo = NULL;
+  }
 
   return mLoggerInfo;
 }
@@ -198,7 +188,7 @@ AdvancedLoggerGetPhase (
 
 /**
   The constructor function initializes Logger Information pointer to ensure that the
-  pointer is initialized in DXE - either by the constructor, or the first DEBUG message.
+  pointer is initialized in DXE by the constructor.
   It is also responsible for publishing the Smm Advanced Logger protocol for SMM drivers.
 
   @param  ImageHandle   The firmware allocated handle for the EFI image.
