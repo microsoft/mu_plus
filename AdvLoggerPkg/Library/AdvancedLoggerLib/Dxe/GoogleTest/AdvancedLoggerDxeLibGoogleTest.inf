@@ -21,9 +21,7 @@
 #
 
 [Sources]
-  ../AdvancedLoggerLib.c # Source for extern mInitialized
   AdvancedLoggerDxeLibGoogleTest.cpp
-  # MdePkg/Test/Mock/Library/GoogleTest/Protocol/MockDebugPort.cpp # Waiting on MockDebugPort
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -39,7 +37,6 @@
 
 [Protocols]
   gAdvancedLoggerProtocolGuid   ## CONSUMES
-  gEfiDebugPortProtocolGuid     ## SOMETIMES_CONSUMES
 
 [Pcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## SOMETIMES_CONSUMES
