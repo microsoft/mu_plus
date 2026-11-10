@@ -71,8 +71,9 @@ InitializeMtrrMask (
   @return Variable MTRR count
 
 **/
+static
 UINT32
-GetVariableMtrrCount (
+AdvancedLoggerGetVariableMtrrCount (
   VOID
   )
 {
@@ -137,7 +138,7 @@ AllocateRamForSEC (
   // Find an empty MTRR and add the CAR range for the in memory buffer
   //
   InitializeMtrrMask (&MtrrValidBitsMask, &MtrrValidAddressMask);
-  VariableMtrrCount = GetVariableMtrrCount ();
+  VariableMtrrCount = AdvancedLoggerGetVariableMtrrCount ();
 
   Status = RETURN_NOT_FOUND;
   for (Index = 0; Index < VariableMtrrCount; Index++) {
@@ -252,7 +253,7 @@ FreeRamForSEC (
 
   InitializeMtrrMask (&MtrrValidBitsMask, &MtrrValidAddressMask);
 
-  VariableMtrrCount = GetVariableMtrrCount ();
+  VariableMtrrCount = AdvancedLoggerGetVariableMtrrCount ();
 
   // Zero out the borrowed MTRR
 
