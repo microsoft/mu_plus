@@ -1640,9 +1640,9 @@ DumpPagingInfo (
 
   mMemoryInfoDatabaseAllocSize += StringLength;
   StringLength                  = 0;
-
-  // Allocate the memory info database buffer with 20% extra space
-  mMemoryInfoDatabaseBuffer = AllocateZeroPool (mMemoryInfoDatabaseAllocSize + (mMemoryInfoDatabaseAllocSize / 5));
+  // Include the 20% reserve in the capacity used by the append bounds check.
+  mMemoryInfoDatabaseAllocSize += mMemoryInfoDatabaseAllocSize / 5;
+  mMemoryInfoDatabaseBuffer     = AllocateZeroPool (mMemoryInfoDatabaseAllocSize);
 
   if (mMemoryInfoDatabaseBuffer == NULL) {
     DEBUG ((DEBUG_ERROR, "%a - Error allocating memory info database buffer\n", __func__));
