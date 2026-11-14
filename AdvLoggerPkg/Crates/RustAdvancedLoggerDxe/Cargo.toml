@@ -10,7 +10,7 @@ path = "src/lib.rs"
 
 [dependencies]
 r-efi = { workspace = true }
-patina = { workspace = true }
+patina = { workspace = true, features = ["alloc"] }
 
 [dev-dependencies]
 patina = { workspace = true, features = ["mockall"] }

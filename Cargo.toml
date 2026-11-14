@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 
 members = [
   "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe",
@@ -16,11 +16,11 @@ HidIo = { path = "HidPkg/Crates/HidIo" }
 hidparser = { version = "1" }
 HiiKeyboardLayout = { path = "HidPkg/Crates/HiiKeyboardLayout" }
 memoffset = "0.9.0"
-mockall = {version = "0.14.0"}
+mockall = { version = "0.15.0" }
 MuTelemetryHelperLib = { path = "MsWheaPkg/Crates/MuTelemetryHelperLib" }
 num-derive = { version = "0.5", default-features = false }
 num-traits = { version = "0.2", default-features = false }
-patina = { version = "23" }
+patina = { version = "24" }
 r-efi = "^7"
 RustAdvancedLoggerDxe = { path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe" }
 RustBootServicesAllocatorDxe = { path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe" }

@@ -5,7 +5,7 @@
 [package]
 name = "UefiHidDxe"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["Microsoft"]
 
 [[bin]]
@@ -14,11 +14,11 @@ path = "src/main.rs"
 test = false
 
 [dependencies]
-HidIo = {workspace=true}
-hidparser = {workspace=true}
-HiiKeyboardLayout = {workspace=true}
-memoffset = {workspace=true}
-r-efi = {workspace=true}
-rustversion = {workspace=true}
-RustBootServicesAllocatorDxe = {workspace=true}
-RustAdvancedLoggerDxe = {workspace=true}
+HidIo = { workspace = true }
+hidparser = { workspace = true }
+HiiKeyboardLayout = { workspace = true }
+memoffset = { workspace = true }
+r-efi = { workspace = true }
+rustversion = { workspace = true }
+RustBootServicesAllocatorDxe = { workspace = true }
+RustAdvancedLoggerDxe = { workspace = true }

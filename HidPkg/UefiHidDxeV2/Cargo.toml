@@ -17,16 +17,16 @@ name = "UefiHidDxeV2"
 path = "src/main.rs"
 
 [dependencies]
-HidIo = {workspace=true}
-hidparser = {workspace=true}
-HiiKeyboardLayout = {workspace=true}
-patina = {workspace=true}
-r-efi = {workspace=true}
-RustAdvancedLoggerDxe = {workspace=true}
-scroll = {workspace=true}
+HidIo = { workspace = true }
+hidparser = { workspace = true }
+HiiKeyboardLayout = { workspace = true }
+patina = { workspace = true }
+r-efi = { workspace = true }
+RustAdvancedLoggerDxe = { workspace = true }
+scroll = { workspace = true }
 
 [target.'cfg(target_os = "uefi")'.dependencies]
-RustBootServicesAllocatorDxe = {workspace=true}
+RustBootServicesAllocatorDxe = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }
