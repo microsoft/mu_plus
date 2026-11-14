@@ -16,9 +16,9 @@ use r_efi::{
     protocols::{device_path, driver_binding},
 };
 
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_INFO};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_INFO, debugln};
 
-use crate::{hid, BOOT_SERVICES};
+use crate::{BOOT_SERVICES, hid};
 
 /// Initialize and install driver binding for this driver.
 ///

@@ -17,7 +17,7 @@ extern crate alloc;
 use driver_binding::initialize_driver_binding;
 use r_efi::{efi, system};
 
-use rust_advanced_logger_dxe::{debugln, init_debug, DEBUG_ERROR};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, debugln, init_debug};
 use rust_boot_services_allocator_dxe::GLOBAL_ALLOCATOR;
 
 mod driver_binding;
@@ -30,7 +30,7 @@ static mut BOOT_SERVICES: *mut system::BootServices = core::ptr::null_mut();
 static mut RUNTIME_SERVICES: *mut system::RuntimeServices = core::ptr::null_mut();
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "efiapi" fn efi_main(image_handle: efi::Handle, system_table: *const system::SystemTable) -> efi::Status {
     // Safety: This block is unsafe because it assumes that system_table and (*system_table).boot_services are correct,
     // and because it mutates/accesses the global BOOT_SERVICES static.

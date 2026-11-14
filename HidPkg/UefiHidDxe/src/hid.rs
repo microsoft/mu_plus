@@ -12,9 +12,9 @@ use core::{ffi::c_void, slice::from_raw_parts};
 use alloc::{boxed::Box, vec};
 
 use r_efi::{efi, protocols::driver_binding, system};
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_WARN};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_WARN, debugln};
 
-use crate::{keyboard, keyboard::KeyboardContext, pointer, pointer::PointerContext, BOOT_SERVICES};
+use crate::{BOOT_SERVICES, keyboard, keyboard::KeyboardContext, pointer, pointer::PointerContext};
 
 pub struct HidContext {
     pub hid_io: *mut hid_io::protocol::Protocol,
