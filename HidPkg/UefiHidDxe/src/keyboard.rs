@@ -17,8 +17,8 @@ use alloc::{
     vec::Vec,
 };
 use hidparser::{
-    report_data_types::{ReportId, Usage},
     ArrayField, ReportDescriptor, ReportField, VariableField,
+    report_data_types::{ReportId, Usage},
 };
 use hii_keyboard_layout::HiiKeyboardLayout;
 use memoffset::{offset_of, raw_field};
@@ -30,12 +30,12 @@ use r_efi::{
     },
     system,
 };
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_WARN};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_WARN, debugln};
 
 use crate::{
+    BOOT_SERVICES,
     hid::HidContext,
     key_queue::{self, OrdKeyData},
-    BOOT_SERVICES,
 };
 
 // usages supported by this module
@@ -413,11 +413,7 @@ impl KeyboardHandler {
         // take back the context raw pointer
         drop(unsafe { Box::from_raw(keyboard_context) });
 
-        if overall_status.is_error() {
-            Err(overall_status)
-        } else {
-            Ok(())
-        }
+        if overall_status.is_error() { Err(overall_status) } else { Ok(()) }
     }
 
     // helper routine to handle variable keyboard input report fields
@@ -999,10 +995,10 @@ pub(crate) fn install_default_layout(boot_services: &mut system::BootServices) -
 
     if status.is_error() {
         debugln!(
-      DEBUG_ERROR,
-      "keyboard::install_default_layout: Could not locate hii_database protocol to install keyboard layout: {:x?}",
-      status
-    );
+            DEBUG_ERROR,
+            "keyboard::install_default_layout: Could not locate hii_database protocol to install keyboard layout: {:x?}",
+            status
+        );
         Err(status)?;
     }
 

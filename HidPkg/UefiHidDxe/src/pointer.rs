@@ -14,8 +14,8 @@ use alloc::{
 };
 use core::ffi::c_void;
 use hidparser::{
-    report_data_types::{ReportId, Usage},
     ReportDescriptor, ReportField, VariableField,
+    report_data_types::{ReportId, Usage},
 };
 use memoffset::{offset_of, raw_field};
 use r_efi::{
@@ -23,9 +23,9 @@ use r_efi::{
     protocols::{absolute_pointer, driver_binding},
     system,
 };
-use rust_advanced_logger_dxe::{debugln, DEBUG_INFO, DEBUG_WARN};
+use rust_advanced_logger_dxe::{DEBUG_INFO, DEBUG_WARN, debugln};
 
-use crate::{hid::HidContext, BOOT_SERVICES};
+use crate::{BOOT_SERVICES, hid::HidContext};
 
 // Usages supported by this driver.
 const GENERIC_DESKTOP_X: u32 = 0x00010030;
@@ -387,11 +387,7 @@ impl PointerHandler {
         drop(unsafe { Box::from_raw(context.absolute_pointer.mode) });
         drop(context);
 
-        if overall_status.is_error() {
-            Err(overall_status)
-        } else {
-            Ok(())
-        }
+        if overall_status.is_error() { Err(overall_status) } else { Ok(()) }
     }
 }
 

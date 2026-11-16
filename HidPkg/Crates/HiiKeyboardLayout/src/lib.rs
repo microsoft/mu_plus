@@ -40,7 +40,7 @@ use r_efi::{
     hii::{self, PACKAGE_END},
     protocols::hii_database::*,
 };
-use scroll::{ctx, Pread, Pwrite};
+use scroll::{Pread, Pwrite, ctx};
 
 /// GUID for default keyboard layout.
 pub const DEFAULT_KEYBOARD_LAYOUT_GUID: efi::Guid =
@@ -77,28 +77,34 @@ pub struct HiiKeyboardLayout {
     pub descriptions: Vec<HiiKeyboardDescription>,
 }
 
-/// HII Key descriptor
-/// Refer to UEFI spec version 2.10 section 34.10.10 which defines the key descriptor structure.
-#[derive(Debug, Pread, Pwrite, PartialEq, Eq, Clone, Copy)]
-#[repr(C)]
-pub struct HiiKeyDescriptor {
-    /// Describes the physical key on the keyboard.
-    pub key: EfiKey,
-    /// Unicode character for the key (note: UEFI only supports UCS-2 encoding).
-    pub unicode: u16,
-    /// Unicode character for the key with the shift key being held down.
-    pub shifted_unicode: u16,
-    /// Unicode character for the key with the Alt-GR being held down.
-    pub alt_gr_unicode: u16,
-    /// Unicode character for the key with the Alt-GR and shift keys being held down.
-    pub shifted_alt_gr_unicode: u16,
-    /// Modifier keys are defined to allow for special functionality that is not necessarily accomplished by a printable
-    /// character. Many of these modifier keys are flags to toggle certain state bits on and off inside of a keyboard
-    /// driver. See [`r_efi::protocols::hii_database`] for modifier definitions.
-    pub modifier: u16,
-    /// Indicates what modifiers affect this key. See [`r_efi::protocols::hii_database`] for "affected by" definitions.
-    pub affected_attribute: u16,
+// Allow redundant field names in the Pread derive.
+#[allow(clippy::redundant_field_names)]
+mod descriptor {
+    /// HII Key descriptor
+    /// Refer to UEFI spec version 2.10 section 34.10.10 which defines the key descriptor structure.
+    #[derive(Debug, scroll::Pread, scroll::Pwrite, PartialEq, Eq, Clone, Copy)]
+    #[repr(C)]
+    pub struct HiiKeyDescriptor {
+        /// Describes the physical key on the keyboard.
+        pub key: super::EfiKey,
+        /// Unicode character for the key (note: UEFI only supports UCS-2 encoding).
+        pub unicode: u16,
+        /// Unicode character for the key with the shift key being held down.
+        pub shifted_unicode: u16,
+        /// Unicode character for the key with the Alt-GR being held down.
+        pub alt_gr_unicode: u16,
+        /// Unicode character for the key with the Alt-GR and shift keys being held down.
+        pub shifted_alt_gr_unicode: u16,
+        /// Modifier keys are defined to allow for special functionality that is not necessarily accomplished by a printable
+        /// character. Many of these modifier keys are flags to toggle certain state bits on and off inside of a keyboard
+        /// driver. See [`r_efi::protocols::hii_database`] for modifier definitions.
+        pub modifier: u16,
+        /// Indicates what modifiers affect this key. See [`r_efi::protocols::hii_database`] for "affected by" definitions.
+        pub affected_attribute: u16,
+    }
 }
+
+pub use descriptor::HiiKeyDescriptor;
 
 /// Non-Spacing HII Key Descriptor variant. Used for "non-spacing" keys.
 /// Refer to discussion in UEFI spec version 2.10 section 33.2.4.3 for information on "non-spacing" keys and how they
@@ -659,8 +665,8 @@ mod tests {
     use scroll::{Pread, Pwrite};
 
     use crate::{
-        get_default_keyboard_pkg, EfiKey, HiiKey, HiiKeyDescriptor, HiiKeyboardPkg, HiiKeyboardPkgList,
-        HiiNsKeyDescriptor,
+        EfiKey, HiiKey, HiiKeyDescriptor, HiiKeyboardPkg, HiiKeyboardPkgList, HiiNsKeyDescriptor,
+        get_default_keyboard_pkg,
     };
 
     macro_rules! test_collateral {

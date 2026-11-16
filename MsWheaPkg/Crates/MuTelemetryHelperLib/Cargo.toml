@@ -1,3 +1,7 @@
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
 [package]
 name = "MuTelemetryHelperLib"
 version = "0.1.0"
@@ -9,14 +13,14 @@ path = "src/lib.rs"
 
 [dependencies]
 r-efi = { workspace = true }
-patina = { workspace = true }
+patina = { workspace = true, features = ["alloc"] }
 
 [dev-dependencies]
 mockall = { workspace = true }
 patina = { workspace = true, features = ["mockall"] }
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
 
 [package.metadata.cargo-machete]
 ignored = ["mockall"]

@@ -34,16 +34,19 @@
 //!
 #![cfg_attr(target_os = "uefi", no_std)]
 
+#[cfg(not(coverage))]
+use patina::uefi::boot_services::StandardBootServices;
 use patina::{
     BinaryGuid, Guid, guid,
     pi::{
         protocol::status_code::{EfiStatusCodeType, EfiStatusCodeValue, StatusCodeProtocol},
         status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR},
     },
-    uefi::boot_services::{BootServices, StandardBootServices},
+    uefi::boot_services::BootServices,
 };
 use r_efi::efi;
 
+#[cfg(not(coverage))]
 static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
 
 /// Matches gMsWheaRSCDataTypeGuid in MsWheaPkg\MsWheaPkg.dec
@@ -96,7 +99,7 @@ struct MsWheaRscInternalErrorData {
 ///   @param\[in\]  library_id    This should identify the library that is emitting this event.
 ///   @param\[in\]  ihv_id        This should identify the Ihv related to this event if applicable. For example,
 ///                             this would typically be used for TPM and SOC specific events.
-#[cfg(not(tarpaulin_include))]
+#[cfg(not(coverage))]
 pub fn log_telemetry(
     is_fatal: bool,
     class_id: EfiStatusCodeValue,
@@ -153,7 +156,7 @@ fn log_telemetry_internal<B: BootServices>(
     )
 }
 
-#[cfg(not(tarpaulin_include))]
+#[cfg(not(coverage))]
 pub fn init_telemetry(efi_boot_services: *mut efi::BootServices) {
     BOOT_SERVICES.init(efi_boot_services)
 }
