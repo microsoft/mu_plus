@@ -16,6 +16,20 @@ MU_PKCS5_PASSWORD_HASH_PROTOCOL  mPkcs5PwHashProtocol;
 /**
 Pkcs5 wrapper function - This is basically a pass thru to the BaseCryptLib .
 
+@param This             Pointer to the MU_PKCS5_PASSWORD_HASH_PROTOCOL instance.
+@param PasswordSize     Size of the password in bytes.
+@param Password         Pointer to the password.
+@param SaltSize         Size of the salt in bytes.
+@param Salt             Pointer to the salt.
+@param IterationCount   Number of iterations for the hash.
+@param DigestSize       Size of the digest in bytes.
+@param OutputSize       Size of the output buffer in bytes.
+@param Output           Pointer to the output buffer.
+
+@retval EFI_SUCCESS             The password was hashed successfully.
+@retval EFI_INVALID_PARAMETER   The This pointer is invalid.
+@retval EFI_ABORTED             The hashing operation failed.
+
 
 **/
 EFI_STATUS
@@ -46,7 +60,7 @@ HashUsingPkcs5 (
            DigestSize,                              // DigestSize
            OutputSize,                              // OutputSize
            Output
-           );
+           )? EFI_SUCCESS : EFI_ABORTED;
 }
 
 /**
