@@ -32,21 +32,29 @@ HashUsingPkcs5 (
   OUT       UINT8                            *Output
   )
 {
+  BOOLEAN  HashSuccess;
+
   if (This != &mPkcs5PwHashProtocol) {
     DEBUG ((DEBUG_ERROR, "%a - Invalid This pointer\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
-  return Pkcs5HashPassword (
-           PasswordSize,                            // Size
-           Password,                                // Password
-           SaltSize,                                // SaltSize
-           Salt,                                    // Salt
-           IterationCount,                          // IterationCount
-           DigestSize,                              // DigestSize
-           OutputSize,                              // OutputSize
-           Output
-           );
+  HashSuccess = Pkcs5HashPassword (
+                  PasswordSize,              // Size
+                  Password,                  // Password
+                  SaltSize,                  // SaltSize
+                  Salt,                      // Salt
+                  IterationCount,            // IterationCount
+                  DigestSize,                // DigestSize
+                  OutputSize,                // OutputSize
+                  Output
+                  );
+  if (!HashSuccess) {
+    DEBUG ((DEBUG_ERROR, "%a - Pkcs5HashPassword failed\n", __FUNCTION__));
+    return EFI_ABORTED;
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
