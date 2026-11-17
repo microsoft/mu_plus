@@ -31,6 +31,14 @@ typedef struct {
   EFI_MAC_ADDRESS    PermanentAddress;
 } MAC_EMULATION_SNP_NOTIFY_CONTEXT;
 
+typedef struct {
+  LIST_ENTRY                          Link;
+  EFI_HANDLE                          Handle;
+  EFI_SIMPLE_NETWORK_PROTOCOL         *Snp;
+  EFI_SIMPLE_NETWORK_INITIALIZE       OriginalInitialize;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT    *MacContext;
+} MAC_EMULATION_SNP_CONTEXT;
+
 /**
   Performs sanity checks to ensure an snp can support mac emulation, and ensures that multiple interfaces are not programmed.
 
@@ -48,18 +56,6 @@ SnpSupportsMacEmuCheck (
   );
 
 /**
-  Iterates through all available SNPs available and finds the first instance which meets the criteria specified by match function
-
-  @param[in] MatchFunctionContext - The snp context created by this driver's entry point
-  @retval  NULL - no matching SNP was found, or invalid input parameter
-  @retval  NON-NULL - a pointer to the first matching SNP
-**/
-EFI_SIMPLE_NETWORK_PROTOCOL *
-FindMatchingSnp (
-  IN MAC_EMULATION_SNP_NOTIFY_CONTEXT  *MatchFunctionContext
-  );
-
-/**
   Sets the provided SNP's station address using the context information provided
 
   @param[in] Snp - Non-NULL pointer to an SNP which supports station address programming
@@ -74,8 +70,7 @@ SetSnpMacViaContext (
   );
 
 /**
-  Callback that is invoked when an SNP instance is Initialized. Checks the newly installed SNP registrations (if any)
-  and updates the MAC address if a supported adapter is found.
+  Wrap Initialize on installed SNP instances before they are used.
 
   @param[in]  Event   - The EFI_EVENT for this notify.
   @param[in]  Context - An instance of MAC_EMULATION_SNP_NOTIFY_CONTEXT.
@@ -86,6 +81,23 @@ EFIAPI
 SimpleNetworkProtocolNotify (
   IN EFI_EVENT  Event,
   IN VOID       *Context
+  );
+
+/**
+  Initialize SNP and apply MAC emulation before returning to its caller.
+
+  @param[in] This               The SNP interface being initialized.
+  @param[in] ExtraRxBufferSize  Additional receive buffer size.
+  @param[in] ExtraTxBufferSize  Additional transmit buffer size.
+
+  @return The status from the original Initialize method.
+**/
+EFI_STATUS
+EFIAPI
+MacEmulationSnpInitialize (
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN UINTN                        ExtraRxBufferSize OPTIONAL,
+  IN UINTN                        ExtraTxBufferSize OPTIONAL
   );
 
 /**
