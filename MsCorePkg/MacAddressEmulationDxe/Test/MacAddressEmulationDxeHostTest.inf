@@ -21,8 +21,6 @@
   MacAddressEmulationDxeHostTestCommon.h
   SnpSupportsMacEmuCheckTest.c
   SnpSupportsMacEmuCheckTest.h
-  FindMatchingSnpTest.c
-  FindMatchingSnpTest.h
   SimpleNetworkProtocolNotifyTest.c
   SimpleNetworkProtocolNotifyTest.h
   EntryPointTest.c
@@ -43,9 +41,6 @@
   MemoryAllocationLib
   UefiBootServicesTableLib
   UnitTestLib
-
-[Guids]
-  gSnpNetworkInitializedEventGuid
 
 [Protocols]
   gEfiSimpleNetworkProtocolGuid
