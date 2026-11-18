@@ -993,6 +993,9 @@ CheckWatchListCallback (
         if ((FALSE == pList->bNeedsMousePointer) && (TRUE == mSWM.bDisplayingMousePointer)) {
           DEBUG ((DEBUG_INFO, "INFO [SWM]: Hiding mouse pointer.\r\n"));
           HideMousePointer ();
+        } else if ((TRUE == pList->bNeedsMousePointer) && (FALSE == mSWM.bMousePointerEnabled) && (FALSE == mSWM.bDisplayingMousePointer)) {
+          DEBUG ((DEBUG_INFO, "INFO [SWM]: Enabling mouse pointer.\r\n"));
+          mSWM.SWMProtocol.EnableMousePointer(&mSWM.SWMProtocol, TRUE);
         } else if ((TRUE == pList->bNeedsMousePointer) && (TRUE == mSWM.bMousePointerEnabled) && (FALSE == mSWM.bDisplayingMousePointer)) {
           DEBUG ((DEBUG_INFO, "INFO [SWM]: Showing mouse pointer.\r\n"));
           ShowMousePointer ();
