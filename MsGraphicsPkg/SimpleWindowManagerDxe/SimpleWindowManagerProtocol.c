@@ -10,6 +10,27 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "WindowManager.h"
 
 /**
+  Forwards rendering-engine paint requests through the client's persistent event.
+
+  @param[in] Event    Client paint event.
+  @param[in] Context  Window manager client.
+
+**/
+static VOID
+EFIAPI
+ClientPaintNotify (
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
+{
+  WINMGR_CLIENT  *Client = (WINMGR_CLIENT *)Context;
+
+  if ((Client->SurfacePaintEvent != NULL) && !EFI_ERROR (gBS->CheckEvent (Client->SurfacePaintEvent))) {
+    gBS->SignalEvent (Event);
+  }
+}
+
+/**
     Resets the aggregate pointer event state queue and providers.
 
     @param[in] This                 Pointer to the instance of this driver.
@@ -150,6 +171,7 @@ Exit:
     @retval EFI_SUCCESS             Successfully registered the client.
     @retval EFI_ALREADY_STARTED     Client already registered.
     @retval EFI_OUT_OF_RESOURCES    Insufficient resources to register the client.
+    @retval EFI_NOT_READY           Rendering engine or GOP not ready for client registration.
 
 **/
 EFI_STATUS
@@ -170,6 +192,10 @@ SWMRegisterClient (
   WINMGR_CLIENT  *NewClient;
   WINMGR_CLIENT  *pPrev;
   EFI_TPL        PreviousTPL = 0;
+
+  if ((PaintEvent != NULL) && (mRenderingEngine == NULL)) {
+    return EFI_NOT_READY;
+  }
 
   DEBUG ((DEBUG_INFO, "INFO [SWM]: Registering new client (ImageHandle=0x%x).\r\n", (UINTN)ImageHandle));
 
@@ -230,6 +256,10 @@ SWMRegisterClient (
                   (VOID *)NewClient,
                   &NewClient->ClientAbsPtr.WaitForInput
                   );
+  if (EFI_ERROR (Status)) {
+    FreePool (NewClient);
+    goto Exit;
+  }
 
   CopyMem (&NewClient->WindowFrame, FrameRect, sizeof (SWM_RECT));
 
@@ -244,14 +274,32 @@ SWMRegisterClient (
                                  mRenderingEngine,
                                  ImageHandle,
                                  *FrameRect,
-                                 PaintEvent
+                                 &NewClient->SurfacePaintEvent
                                  );
 
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to create rendering engine surface, Status: %r\r\n", Status));
+      gBS->CloseEvent (NewClient->ClientAbsPtr.WaitForInput);
       FreePool (NewClient);
       goto Exit;
     }
+
+    Status = gBS->CreateEvent (
+                    EVT_NOTIFY_WAIT,
+                    TPL_CALLBACK,
+                    ClientPaintNotify,
+                    NewClient,
+                    &NewClient->PaintEvent
+                    );
+    if (EFI_ERROR (Status)) {
+      gBS->CloseEvent (NewClient->SurfacePaintEvent);
+      mRenderingEngine->DeleteSurface (mRenderingEngine, ImageHandle);
+      gBS->CloseEvent (NewClient->ClientAbsPtr.WaitForInput);
+      FreePool (NewClient);
+      goto Exit;
+    }
+
+    *PaintEvent = NewClient->PaintEvent;
   }
 
   // Raise the TPL to avoid getting interrupted while we access shared data structures.
@@ -360,7 +408,8 @@ SWMUnregisterClient (
     if (pList->ImageHandle == ImageHandle) {
       // Delete the rendering engine surface used for this client window.
       //
-      if (pList->HasDisplaySurface) {
+      if (pList->SurfacePaintEvent != NULL) {
+        gBS->CloseEvent (pList->SurfacePaintEvent);
         Status = mRenderingEngine->DeleteSurface (
                                      mRenderingEngine,
                                      ImageHandle
@@ -369,6 +418,10 @@ SWMUnregisterClient (
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to delete rendering engine surface, Status: %r\r\n", Status));
         }
+      }
+
+      if (pList->PaintEvent != NULL) {
+        gBS->CloseEvent (pList->PaintEvent);
       }
 
       // Unlink the current client node and free it.
@@ -439,6 +492,7 @@ SWMUnregisterClient (
 
     @retval EFI_SUCCESS             Successfully changed active state.
     @retval EFI_INVALID_PARAMETER   Failed to find client.
+    @retval EFI_NOT_READY           Rendering engine or GOP is not ready for client activation.
 
 **/
 EFI_STATUS
@@ -466,6 +520,11 @@ SWMActivateWindow (
       Status        = EFI_SUCCESS;
 
       if (TRUE == pList->HasDisplaySurface) {
+        if (mRenderingEngine == NULL) {
+          Status = EFI_NOT_READY;
+          break;
+        }
+
         // Activate the rendering engine surface used for this client window.
         //
         Status = mRenderingEngine->ActivateSurface (
@@ -500,6 +559,7 @@ SWMActivateWindow (
     @param[in]  FrameRect    Window frame rectangle (bounding rectangle).
 
     @retval EFI_SUCCESS      Successfully set the window frame.
+    @retval EFI_NOT_READY    Rendering engine or GOP is not ready for setting the window frame.
 
 **/
 EFI_STATUS
@@ -536,6 +596,11 @@ SWMSetWindowFrame (
       // If the client has a display surface, resize it based on the new size specified.
       //
       if (TRUE == pList->HasDisplaySurface) {
+        if (mRenderingEngine == NULL) {
+          Status = EFI_NOT_READY;
+          break;
+        }
+
         Status = mRenderingEngine->ResizeSurface (
                                      mRenderingEngine,
                                      ImageHandle,
@@ -591,6 +656,7 @@ SWMSetWindowFrame (
     @retval EFI_SUCCESS           BltBuffer was drawn to the graphics screen.
     @retval EFI_INVALID_PARAMETER BltOperation is not valid.
     @retval EFI_DEVICE_ERROR      The device had an error and could not complete the request.
+    @retval EFI_NOT_READY         Rendering engine or GOP is not ready.
 
 **/
 EFI_STATUS
@@ -610,6 +676,10 @@ SWMBltWindow (
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
+
+  if ((mGop == NULL) || (mRenderingEngine == NULL)) {
+    return EFI_NOT_READY;
+  }
 
   // Denote the start of surface updating.
   //
@@ -705,6 +775,7 @@ SWMBltWindow (
     @retval EFI_OUT_OF_RESOURCES    Unable to allocate an output buffer for RowInfoArray or Blt.
     @retval EFI_INVALID_PARAMETER   The String or Blt was NULL.
     @retval EFI_INVALID_PARAMETER   Flags were invalid combination.
+    @retval EFI_NOT_READY           Rendering engine or GOP is not ready.
 
 **/
 EFI_STATUS
@@ -724,6 +795,10 @@ SWMStringToWindow (
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
+
+  if ((mGop == NULL) || (mRenderingEngine == NULL)) {
+    return EFI_NOT_READY;
+  }
 
   // Denote the start of surface updating.
   //

@@ -86,6 +86,7 @@ EFI_HANDLE  mImageHandle;
 
 // Common structures and protocols
 EFI_GRAPHICS_OUTPUT_PROTOCOL       *mGop;
+STATIC EFI_HANDLE                  mGopHandle = NULL;
 EFI_HII_FONT_PROTOCOL              *mFont;
 MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *mSWMProtocol;
 
@@ -198,6 +199,8 @@ OSKDriverBindingStart (
 {
   EFI_STATUS       Status = EFI_SUCCESS;
   OSK_DEVICE_PATH  OskDevicePath;
+  EFI_HANDLE       *Handles;
+  UINTN            HandleCount;
 
   // Check if the incoming handle is the same handle as what you installed your device path on
   if (Controller != mControllerHandle) {
@@ -231,16 +234,18 @@ OSKDriverBindingStart (
     goto ErrorExit;
   }
 
-  // Determine if the Graphics Output Protocol is available
+  // Determine if the Graphics Output Protocol is available.
   //
-  Status = gBS->LocateProtocol (
-                  &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
-                  (VOID **)&mGop
-                  );
+  Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiGraphicsOutputProtocolGuid, NULL, &HandleCount, &Handles);
+  if (!EFI_ERROR (Status)) {
+    mGopHandle = Handles[0];
+    FreePool (Handles);
+    Status = gBS->HandleProtocol (mGopHandle, &gEfiGraphicsOutputProtocolGuid, (VOID **)&mGop);
+  }
 
   if (EFI_ERROR (Status)) {
-    mGop = NULL;
+    mGop       = NULL;
+    mGopHandle = NULL;
     DEBUG ((DEBUG_ERROR, "[OSK]: Failed to find GOP protocol (%r).\r\n", Status));
     goto ErrorExit;
   }
@@ -253,6 +258,7 @@ OSKDriverBindingStart (
     if (mKeyRepeatTimerEvent != NULL) {
       // you would be here if the driver init failed
       gBS->CloseEvent (mKeyRepeatTimerEvent);
+      mKeyRepeatTimerEvent = NULL;
       // if we got this far the protocol got installed, lets try to uninstall it
       gBS->UninstallMultipleProtocolInterfaces (
              Controller,
@@ -264,18 +270,11 @@ OSKDriverBindingStart (
              NULL,
              NULL
              );
-
-      if (mCheckDisplayModeTimerEvent != NULL) {
-        gBS->CloseEvent (mCheckDisplayModeTimerEvent);
-      }
     }
 
-    if (mOSK.SimpleTextIn.WaitForKey != NULL) {
-      gBS->CloseEvent (mOSK.SimpleTextIn.WaitForKey);
-    }
-
-    if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL) {
-      gBS->CloseEvent (mOSK.SimpleTextInEx.WaitForKeyEx);
+    if (mCheckDisplayModeTimerEvent != NULL) {
+      gBS->CloseEvent (mCheckDisplayModeTimerEvent);
+      mCheckDisplayModeTimerEvent = NULL;
     }
 
     goto ErrorExit;
@@ -338,21 +337,23 @@ OSKDriverBindingStop (
     return EFI_UNSUPPORTED;
   }
 
-  if (mOSK.SimpleTextIn.WaitForKey != NULL) {
-    gBS->CloseEvent (mOSK.SimpleTextIn.WaitForKey);
-  }
-
-  if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL) {
-    gBS->CloseEvent (mOSK.SimpleTextInEx.WaitForKeyEx);
-  }
-
+  // WaitForKey events and the SWM client registration are kept for the next Start.
   if (mKeyRepeatTimerEvent != NULL) {
     gBS->CloseEvent (mKeyRepeatTimerEvent);
+    mKeyRepeatTimerEvent = NULL;
   }
 
   if (mCheckDisplayModeTimerEvent != NULL) {
     gBS->CloseEvent (mCheckDisplayModeTimerEvent);
+    mCheckDisplayModeTimerEvent = NULL;
   }
+
+  gBS->CloseProtocol (
+         ControllerHandle,
+         &gEfiDevicePathProtocolGuid,
+         This->DriverBindingHandle,
+         ControllerHandle
+         );
 
   return EFI_SUCCESS;
 }
@@ -3073,6 +3074,13 @@ OSKCheckDisplayModeTimerCallback (
   IN VOID       *Context
   )
 {
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *Gop;
+
+  // The GOP can be torn down before this driver is stopped.
+  if (EFI_ERROR (gBS->HandleProtocol (mGopHandle, &gEfiGraphicsOutputProtocolGuid, (VOID **)&Gop)) || (Gop != mGop)) {
+    return;
+  }
+
   // Check whether the display mode has changed since we last computed screen asset locations.
   //
   if ((mOSK.ScreenResolutionWidth  != mGop->Mode->Info->HorizontalResolution) ||
@@ -3201,6 +3209,11 @@ OSKDriverInit (
                            &mOSKPointerProtocol,
                            &mOSKPaintEvent
                            );
+
+  // A restart after Stop reuses the registration and paint event from the first Start.
+  if ((Status == EFI_ALREADY_STARTED) && (mOSKPaintEvent != NULL)) {
+    Status = EFI_SUCCESS;
+  }
 
   ASSERT_EFI_ERROR (Status);
   if (EFI_ERROR (Status)) {

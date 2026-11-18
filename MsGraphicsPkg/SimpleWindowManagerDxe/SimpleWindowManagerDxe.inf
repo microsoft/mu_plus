@@ -50,6 +50,7 @@
   gMsTouchPanelGuid
 
 [Protocols]
+  gEfiDriverBindingProtocolGuid     # PRODUCES
   gEfiGraphicsOutputProtocolGuid    # CONSUMES
   gEfiAbsolutePointerProtocolGuid   # CONSUMES
   gEfiDevicePathProtocolGuid        # CONSUMES
