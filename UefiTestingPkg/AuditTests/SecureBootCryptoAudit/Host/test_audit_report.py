@@ -1,17 +1,253 @@
 import copy
+import hashlib
 import io
 import json
+import struct
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
+import zlib
 from contextlib import redirect_stderr
 from pathlib import Path
 from unittest.mock import patch
 
-from Host.GenerateMarkdownReport import generate_report, main
+from Host.AuditReport import extract_audit_run_identity, extract_report, generate_report, main
+from Host.InspectJournal import JOURNAL_FORMAT, JOURNAL_SIGNATURE, JOURNAL_VERSION
+from Host.test_ecit_evidence import (
+    evidence_text,
+    representative_results,
+    v2_evidence_text,
+)
 
 
-class GenerateMarkdownReportTests(unittest.TestCase):
+class AuditReportTests(unittest.TestCase):
+    def test_audit_run_requires_mode_from_version_012(self) -> None:
+        identity = (
+            "[AUDIT_RUN] app=SecureBootCryptoAuditApp version={version} arch=X64 "
+            "firmware_vendor=EDK_II firmware_vendor_truncated=FALSE "
+            "firmware_revision=0x00010000 uefi_revision=0x00020046 "
+            "fixture=secure-boot-key-audit-v6 "
+            "manifest_sha256="
+            "b07ac802e30515d42b956e5fbfdd48f2974d63e6e36f21e7d06ac56313ff44db"
+        )
+        for version in ("0.10", "0.11", "0.12", "0.12.0", "0.13", "0.100", "1.0", "0.invalid"):
+            for mode in ("", "CAPABILITY_GATED", "ROBUSTNESS_PROBE_ALL", "INVALID"):
+                with self.subTest(version=version, mode=mode):
+                    record = identity.format(version=version)
+                    if mode:
+                        record += f" mode={mode}"
+                    root = ET.fromstring(f"<testcase><system-out>{record}</system-out></testcase>")
+                    if version == "0.invalid":
+                        with self.assertRaisesRegex(ValueError, "invalid AUDIT_RUN version"):
+                            extract_audit_run_identity(root)
+                    elif mode == "INVALID":
+                        with self.assertRaisesRegex(ValueError, "invalid AUDIT_RUN mode"):
+                            extract_audit_run_identity(root)
+                    elif not mode and version not in {"0.10", "0.11"}:
+                        with self.assertRaisesRegex(ValueError, "mode is required"):
+                            extract_audit_run_identity(root)
+                    else:
+                        self.assertEqual(
+                            extract_audit_run_identity(root),
+                            record.replace("[AUDIT_RUN] ", "AUDIT_RUN ", 1),
+                        )
+
+    def _write_junit(self, contents: str) -> Path:
+        temporary_directory = tempfile.TemporaryDirectory(dir=Path(__file__).parent)
+        self.addCleanup(temporary_directory.cleanup)
+        path = Path(temporary_directory.name) / "result.xml"
+        path.write_text(contents, encoding="utf-8")
+        return path
+
+    def test_legacy_fallback_extracts_records_without_log_prefixes(self) -> None:
+        junit = self._write_junit(
+            """<?xml version="1.0"?>
+<testsuites>
+  <testsuite tests="1" failures="0" errors="0" skipped="0">
+    <testcase classname="EcitCorrelationReport">
+      <system-out>[INFO] [ECIT_SCENARIO_SUMMARY] rows=1 verified=1
+[INFO] [ECIT_TABLE] ECIT Secure Boot Audit Validation
+[INFO] [ECIT_TABLE]  1  X.509 certificate SUCCESS VERIFIED
+[INFO] [ECIT_SUMMARY] verdict=PASS advertised_claims=1 verified=1
+[INFO] unrelated output</system-out>
+    </testcase>
+  </testsuite>
+</testsuites>
+"""
+        )
+
+        self.assertEqual(
+            extract_report(junit),
+            [
+                "UNIT_TEST_SUMMARY tests=1 failures=0 errors=0 skipped=0",
+                "rows=1 verified=1",
+                "ECIT Secure Boot Audit Validation",
+                " 1  X.509 certificate SUCCESS VERIFIED",
+                "verdict=PASS advertised_claims=1 verified=1",
+            ],
+        )
+
+    def test_structured_evidence_takes_precedence_over_legacy_records(self) -> None:
+        junit = self._write_junit(
+            f"""<?xml version="1.0"?>
+<testsuites>
+  <testsuite tests="1" failures="0" errors="0" skipped="0">
+    <testcase classname="EcitCorrelationReport">
+      <system-out>{evidence_text()}
+[INFO] [ECIT_TABLE] stale legacy table</system-out>
+    </testcase>
+  </testsuite>
+</testsuites>
+"""
+        )
+
+        report = extract_report(junit)
+        self.assertEqual(
+            report[0],
+            "UNIT_TEST_SUMMARY tests=1 failures=0 errors=0 skipped=0",
+        )
+        self.assertEqual(report[1], "ECIT Secure Boot Audit Validation")
+        self.assertNotIn("stale legacy table", report)
+
+    def _v2_junit(self) -> Path:
+        testcases = []
+        for result in representative_results().values():
+            if result.coverage in {
+                "NOT_TESTED",
+                "NOT_ADVERTISED",
+                "NOT_INDEPENDENTLY_VERIFIABLE",
+            }:
+                outcome = "<skipped />"
+            elif result.coverage in {"OVER_REPORTED", "INCONCLUSIVE"}:
+                outcome = "<failure />"
+            else:
+                outcome = ""
+            testcases.append(
+                f'<testcase classname="EcitClaim" name="{result.name}">'
+                f"{outcome}<system-out>[INFO] [ECIT_CLAIM] "
+                f"name={result.name} claim={result.claim} "
+                f"observation={result.observation} "
+                f"validation={result.coverage} status=0x{result.status:x}"
+                "</system-out></testcase>"
+            )
+        testcases.append(
+            '<testcase classname="AuditRunIdentity">'
+            "<system-out>[INFO] [AUDIT_RUN] "
+            "app=SecureBootCryptoAuditApp version=0.10 arch=X64 "
+            "firmware_vendor=EDK_II firmware_vendor_truncated=FALSE "
+            "firmware_revision=0x00010000 uefi_revision=0x00020070 "
+            "fixture=secure-boot-key-audit-v6 "
+            "manifest_sha256="
+            "b07ac802e30515d42b956e5fbfdd48f2974d63e6e36f21e7d06ac56313ff44db"
+            "</system-out></testcase>"
+        )
+        testcases.append(
+            '<testcase classname="EcitCorrelationReport">'
+            f"<system-out>{v2_evidence_text()}</system-out></testcase>"
+        )
+        junit = self._write_junit(
+            '<?xml version="1.0"?><testsuites><testsuite '
+            'tests="49" failures="39" errors="0" skipped="5">'
+            f"{''.join(testcases)}</testsuite></testsuites>"
+        )
+        return junit
+
+    def test_v2_combines_native_claims_with_metadata(self) -> None:
+        junit = self._v2_junit()
+        report = extract_report(junit)
+
+        self.assertEqual(
+            report[0],
+            "UNIT_TEST_SUMMARY tests=49 failures=39 errors=0 skipped=5",
+        )
+        self.assertEqual(
+            report[1],
+            "AUDIT_RUN app=SecureBootCryptoAuditApp version=0.10 arch=X64 "
+            "firmware_vendor=EDK_II firmware_vendor_truncated=FALSE "
+            "firmware_revision=0x00010000 uefi_revision=0x00020070 "
+            "fixture=secure-boot-key-audit-v6 "
+            "manifest_sha256="
+            "b07ac802e30515d42b956e5fbfdd48f2974d63e6e36f21e7d06ac56313ff44db",
+        )
+        self.assertIn(
+            "verdict=PASS advertised_claims=3 verified=3 not_tested=0 "
+            "unverifiable=0 over_reported=0 unadvertised_success=0 "
+            "inconclusive=0 verified_absent=0",
+            report,
+        )
+
+    def test_markdown_uses_structured_evidence_and_reads_xml_once(self) -> None:
+        junit = self._v2_junit()
+        with patch(
+            "Host.AuditReport.ET.parse", wraps=ET.parse
+        ) as parse, patch(
+            "Host.AuditReport.render_evidence", return_value=["changed text layout"]
+        ) as render:
+            report = generate_report(junit)
+        parse.assert_called_once_with(junit)
+        render.assert_not_called()
+        self.assertIn("49 tests; 39 failures; 0 errors; 5 skipped", report)
+        self.assertIn("3 verified of 3 advertised rows; 0 not tested", report)
+        self.assertIn("| **Total** | **3** | **3** | **0** | **0** | **0** |", report)
+        self.assertNotIn("223 advertised rows", report)
+        self.assertNotIn("66 native tests", report)
+
+    def test_rejects_malformed_audit_run_identity(self) -> None:
+        junit = self._write_junit(
+            """<?xml version="1.0"?>
+<testsuites><testsuite tests="2" failures="0" errors="0" skipped="0">
+  <testcase classname="AuditRunIdentity">
+    <system-out>[INFO] [AUDIT_RUN] app=SecureBootCryptoAuditApp</system-out>
+  </testcase>
+  <testcase classname="EcitCorrelationReport">
+    <system-out>[INFO] [ECIT_TABLE] legacy</system-out>
+  </testcase>
+</testsuite></testsuites>
+"""
+        )
+
+        with self.assertRaisesRegex(ValueError, "invalid AUDIT_RUN fields"):
+            extract_report(junit)
+
+    def test_rejects_junit_without_correlation_test(self) -> None:
+        junit = self._write_junit(
+            """<?xml version="1.0"?>
+<testsuites><testsuite tests="1" failures="0" errors="0" skipped="0"><testcase classname="Other" /></testsuite></testsuites>
+"""
+        )
+
+        with self.assertRaisesRegex(ValueError, "does not contain"):
+            extract_report(junit)
+
+    def test_rejects_unchecked_outcomes_and_aggregates_suites(self) -> None:
+        junit = self._write_junit(
+            '<testsuites><testsuite tests="1" failures="0" errors="0" skipped="0">'
+            '<testcase classname="EcitCorrelationReport"><system-out>'
+            '[ECIT_TABLE] legacy</system-out></testcase></testsuite></testsuites>'
+        )
+        original = junit.read_text()
+        for tag, field in (("failure", "failures"), ("error", "errors")):
+            with self.subTest(tag=tag):
+                root = ET.fromstring(original)
+                suite = ET.SubElement(
+                    root, "testsuite", tests="1", failures="0", errors="0", skipped="0"
+                )
+                testcase = ET.SubElement(suite, "testcase", classname="LaterOperation")
+                ET.SubElement(testcase, tag)
+                ET.ElementTree(root).write(junit)
+                with self.assertRaisesRegex(ValueError, field):
+                    extract_report(junit)
+
+                suite.set(field, "1")
+                ET.ElementTree(root).write(junit)
+                totals = "failures=1 errors=0" if tag == "failure" else "failures=0 errors=1"
+                self.assertEqual(
+                    extract_report(junit)[0],
+                    f"UNIT_TEST_SUMMARY tests=2 {totals} skipped=0",
+                )
+
+
+class MarkdownReportTests(unittest.TestCase):
     def test_rejects_current_run_without_mode(self) -> None:
         junit = self._junit()
         junit.write_text(junit.read_text().replace("version=0.10", "version=0.12"))
@@ -165,6 +401,26 @@ unadvertised_success=0 inconclusive=0 verified_absent=0</system-out>
         self.assertIn("1 of 2 advertised modeled revocation claims were verified", report)
         self.assertNotIn("All 14", report)
 
+    def test_profile_coverage_details_remain_in_report(self) -> None:
+        junit = self._junit()
+        root = ET.parse(junit).getroot()
+        suite = root.find("testsuite")
+        suite.set("tests", "4")
+        suite.set("skipped", "2")
+        testcase = ET.SubElement(
+            suite, "testcase", classname="EcitProfileCoverage", name="Image verification"
+        )
+        ET.SubElement(testcase, "skipped")
+        ET.SubElement(testcase, "system-out").text = (
+            "advertised=42 tested=3 not_tested=39 mismatches=0"
+        )
+        ET.ElementTree(root).write(junit)
+        report = generate_report(junit)
+        self.assertIn(
+            "3 of 42 advertised exact pairings were tested; 39 remain untested; "
+            "0 mismatches.", report
+        )
+
     def test_rejects_invalid_journal_invariants(self) -> None:
         junit = self._junit()
         invalid_values = {
@@ -310,20 +566,66 @@ unadvertised_success=0 inconclusive=0 verified_absent=0</system-out>
         junit = self._junit()
         evidence = self._journal()
         evidence["phase"] = "FAILED"
-        journal = self._write("journal.json", json.dumps(evidence))
+        output = junit.parent / "report.md"
+        for document, message in (
+            (evidence, "journal phase"),
+            (None, "journal JSON must be an object"),
+        ):
+            with self.subTest(document=document):
+                journal = self._write("journal.json", json.dumps(document))
+                args = [
+                    "AuditReport.py", str(junit), "--format", "markdown",
+                    "--journal-json", str(journal), "--output", str(output),
+                ]
+                with patch("sys.argv", args), redirect_stderr(io.StringIO()) as stderr:
+                    with self.assertRaises(SystemExit) as raised:
+                        main()
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn(message, stderr.getvalue())
+                self.assertFalse(output.exists())
+
+    def test_cli_validates_binary_journal_before_writing_markdown(self) -> None:
+        junit = self._junit()
+        manifest_data = json.dumps({"fixture_id": "secure-boot-key-audit-v6"}).encode()
+        manifest = junit.parent / "manifest.json"
+        manifest.write_bytes(manifest_data)
+        root = ET.parse(junit).getroot()
+        identity = root.find(".//testcase/system-out")
+        identity.text = identity.text.replace(
+            self._journal()["manifest_sha256"],
+            hashlib.sha256(manifest_data).hexdigest(),
+        )
+        ET.ElementTree(root).write(junit)
+        values = [
+            JOURNAL_SIGNATURE, JOURNAL_VERSION, struct.calcsize(JOURNAL_FORMAT),
+            0, 3, 2, 0, b"secure-boot-key-audit-v6".ljust(32, b"\0"),
+            hashlib.sha256(manifest_data).digest(), 1, 0, 0,
+            1, 0, 0, 1, 0, 0, 1, 0, 0,
+        ]
+        data = bytearray(struct.pack(JOURNAL_FORMAT, *values))
+        struct.pack_into("<I", data, 8, zlib.crc32(data) & 0xFFFFFFFF)
+        journal = junit.parent / "journal.bin"
+        journal.write_bytes(data)
         output = junit.parent / "report.md"
         args = [
-            "GenerateMarkdownReport.py", str(junit),
-            "--journal-json", str(journal), "--output", str(output),
+            "AuditReport.py", str(junit), "--format", "markdown",
+            "--journal", str(journal), "--manifest", str(manifest),
+            "--output", str(output),
         ]
+        with patch("sys.argv", args):
+            self.assertEqual(main(), 0)
+        self.assertIn("`PERSISTENTLY_VERIFIED` after 2 boots", output.read_text())
 
+        data[-1] ^= 1
+        journal.write_bytes(data)
+        invalid_output = junit.parent / "invalid.md"
+        args[-1] = str(invalid_output)
         with patch("sys.argv", args), redirect_stderr(io.StringIO()) as stderr:
             with self.assertRaises(SystemExit) as raised:
                 main()
-
         self.assertEqual(raised.exception.code, 2)
-        self.assertIn("journal phase", stderr.getvalue())
-        self.assertFalse(output.exists())
+        self.assertIn("CRC32", stderr.getvalue())
+        self.assertFalse(invalid_output.exists())
 
 
 if __name__ == "__main__":
