@@ -61,3 +61,9 @@
   ## GIC address for Die 2 : ((offset*2) + x) and so on.
   ## If these assumption don't apply to your platform, redeclaration of the PCD can break functionality
   gUefiTestingPkgTokenSpaceGuid.PcdGicPerPackageOffset|0x0|UINT64|0x00000004
+
+  ## Allow successful operations that are not advertised by ECIT.
+  gUefiTestingPkgTokenSpaceGuid.PcdSecureBootCryptoAuditAllowUnadvertisedSuccess|FALSE|BOOLEAN|0x00000005
+
+  ## Opt into destructive robustness probes for all fixture-backed profiles.
+  gUefiTestingPkgTokenSpaceGuid.PcdSecureBootCryptoAuditProbeAll|FALSE|BOOLEAN|0x00000006

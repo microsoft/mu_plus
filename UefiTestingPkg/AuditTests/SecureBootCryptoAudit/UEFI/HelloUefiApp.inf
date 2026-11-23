@@ -1,0 +1,24 @@
+## @file
+# Minimal image used by the Secure Boot image-verification audit.
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = HelloUefiApp
+  FILE_GUID                      = 88308AB0-D5CA-4EC8-97B6-297F4068D42B
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = HelloUefiAppEntry
+
+[Sources]
+  HelloUefiApp.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib

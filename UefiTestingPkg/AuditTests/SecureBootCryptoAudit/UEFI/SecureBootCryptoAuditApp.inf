@@ -1,0 +1,91 @@
+## @file
+# Secure Boot crypto audit application.
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SecureBootCryptoAuditApp
+  FILE_GUID                      = 7385D03A-AE30-47C7-B46C-B2724B50308B
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 0.11
+  ENTRY_POINT                    = SecureBootCryptoAuditAppEntry
+
+[Sources]
+  AuditRecovery.c
+  AuditRecovery.h
+  AuditScenario.c
+  AuditScenario.h
+  AuditTypes.h
+  CapabilityPath.c
+  CapabilityPath.h
+  EcitClaimRegistry.c
+  EcitClaimRegistry.h
+  EcitEvidence.c
+  EcitEvidence.h
+  EcitTable.c
+  EcitTable.h
+  SecureBootState.c
+  SecureBootState.h
+  SecureBootCryptoAuditApp.c
+
+[Sources.X64]
+  TestData.c
+
+[Sources.AARCH64]
+  TestDataAArch64.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SecurityPkg/SecurityPkg.dec
+  ShellPkg/ShellPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  UefiTestingPkg/UefiTestingPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  PcdLib
+  PeCoffLib
+  ShellLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+  UnitTestLib
+
+[FixedPcd]
+  gUefiTestingPkgTokenSpaceGuid.PcdSecureBootCryptoAuditAllowUnadvertisedSuccess
+  gUefiTestingPkgTokenSpaceGuid.PcdSecureBootCryptoAuditProbeAll
+
+[Guids]
+  gEfiCertSha1Guid
+  gEfiCertSha256Guid
+  gEfiCertSha384Guid
+  gEfiCertSha512Guid
+  gEfiCertX509Guid
+  gEfiCertX509Sha256Guid
+  gEfiCertX509Sha384Guid
+  gEfiCertX509Sha512Guid
+  gEfiCertV2Sha256Guid
+  gEfiCertV2Sha384Guid
+  gEfiCertV2Sha512Guid
+  gEfiCertV2X509Guid
+  gEfiCertV2X509Sha256Guid
+  gEfiCertV2X509Sha384Guid
+  gEfiCertV2X509Sha512Guid
+  gEfiCryptoIndicatorTableGuid
+  gEfiEcitFeatureSbDatabaseUpdateAuthorizationGuid
+  gEfiEcitFeatureSbDatabaseUpdateVerificationGuid
+  gEfiEcitFeatureSbImageAuthorizationGuid
+  gEfiEcitFeatureSbImageRevocationGuid
+  gEfiEcitFeatureSbImageVerificationGuid
+  gEfiEcitFeatureEsrtFirmwareUpdateGuid
+  gEfiEcitFeatureSystemFirmwareUpdateGuid
+  gEfiGlobalVariableGuid
+  gEfiImageSecurityDatabaseGuid
