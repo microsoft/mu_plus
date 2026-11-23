@@ -160,11 +160,15 @@ Exit:
   return Status;
 }
 
-/*
-Method to print the Unit Test run results
+/**
+  Write JUnit results, including tests that return failure without an assertion.
 
-@retval Success
-*/
+  @param[in] FrameworkHandle  The framework containing the test results.
+
+  @retval EFI_SUCCESS            The report was written.
+  @retval EFI_INVALID_PARAMETER  FrameworkHandle is NULL.
+  @retval Others                 The report could not be created or written.
+**/
 EFI_STATUS
 EFIAPI
 OutputUnitTestFrameworkReport (
@@ -235,20 +239,24 @@ OutputUnitTestFrameworkReport (
          (LIST_ENTRY *)Test != &(Suite->UTS.TestCaseList);
          Test = (UNIT_TEST_LIST_ENTRY *)GetNextNode (&(Suite->UTS.TestCaseList), (LIST_ENTRY *)Test))
     {
-      CHAR8    *Name       = NULL;
-      CHAR8    *ClassName  = NULL;
-      CHAR8    *Log        = NULL;
-      CHAR8    *FailureMsg = NULL;
-      BOOLEAN  Skipped     = FALSE;
+      CHAR8         *Name       = NULL;
+      CHAR8         *ClassName  = NULL;
+      CHAR8         *Log        = NULL;
+      CHAR8         *FailureMsg = NULL;
+      BOOLEAN       Skipped     = FALSE;
+      FAILURE_TYPE  FailureType = Test->UT.FailureType;
 
       TotalTests++;
+
+      if ((Test->UT.Result == UNIT_TEST_ERROR_TEST_FAILED) && (FailureType == FAILURETYPE_NOFAILURE)) {
+        FailureType = FAILURETYPE_OTHER;
+      }
 
       if (Test->UT.Result == UNIT_TEST_ERROR_PREREQUISITE_NOT_MET) {
         Skipped = TRUE;
         TotalSkips++;
       } else {
-        // only count failures if there is a failuretype and no skip
-        if (Test->UT.FailureType != FAILURETYPE_NOFAILURE) {
+        if (FailureType != FAILURETYPE_NOFAILURE) {
           TotalFailures++;
         }
       }
@@ -256,10 +264,11 @@ OutputUnitTestFrameworkReport (
       Name       = Test->UT.Description;
       ClassName  = Test->UT.Name;
       Log        = Test->UT.Log;
-      FailureMsg = Test->UT.FailureMessage;
+      FailureMsg = ((FailureType == FAILURETYPE_OTHER) && (Test->UT.FailureType == FAILURETYPE_NOFAILURE)) ?
+                   "Test returned UNIT_TEST_ERROR_TEST_FAILED without an assertion." : Test->UT.FailureMessage;
 
       // TODO:  need to handle timing.  Right now its hard coded to 1 second.
-      New_TestCaseInSuite (SuiteNode, Name, ClassName, 1, Log, FailureMsg, GetStringForFailureType (Test->UT.FailureType), Skipped);
+      New_TestCaseInSuite (SuiteNode, Name, ClassName, 1, Log, FailureMsg, GetStringForFailureType (FailureType), Skipped);
     } // End Test iteration
 
     Status = AddTestSuiteStats (SuiteNode, TotalTests, TotalFailures, TotalSkips, TotalErrors);
