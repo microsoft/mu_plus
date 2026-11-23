@@ -337,8 +337,7 @@ ErrorRecordHeaderTest (
 {
   EFI_ERROR_SECTION_DESCRIPTOR  *SectionHeader;
   PARAMS_CONTEXT                *CurrentSection;
-  UNIT_TEST_STATUS              Status = UNIT_TEST_ERROR_TEST_FAILED;
-  BASIC_TEST_CONTEXT            *Btc   = (BASIC_TEST_CONTEXT *)Context;
+  BASIC_TEST_CONTEXT            *Btc = (BASIC_TEST_CONTEXT *)Context;
 
   Err = AllocateZeroPool (Btc->Size);
 
@@ -362,7 +361,7 @@ ErrorRecordHeaderTest (
   FreePool (Err);
   Err = NULL;
 
-  return Status;
+  return UNIT_TEST_PASSED;
 }
 
 /// ================================================================================================
