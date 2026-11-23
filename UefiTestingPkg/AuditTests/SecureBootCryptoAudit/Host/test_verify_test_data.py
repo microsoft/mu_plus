@@ -71,6 +71,61 @@ class GenerateTestDataDefaultsTests(unittest.TestCase):
             repo_root / "Build" / "UefiTestingPkg" / "DEBUG_GCC" / "AARCH64" / "HelloUefiApp.efi",
         )
 
+    def test_generated_authenticode_envelopes_verify_independently(self) -> None:
+        unsigned = bytearray(512)
+        unsigned[:2] = b"MZ"
+        struct.pack_into("<I", unsigned, 0x3C, 64)
+        unsigned[64:68] = b"PE\0\0"
+        struct.pack_into("<H", unsigned, 68, 0x8664)
+        struct.pack_into("<H", unsigned, 84, 240)
+        struct.pack_into("<H", unsigned, 88, 0x20B)
+        for make_certificate, digest, digest_oid, signature_oid in (
+            (
+                GenerateTestData.generate_rsa_certificate, hashlib.sha256,
+                VerifyTestData.SHA256_OID, VerifyTestData.SHA256_WITH_RSA_OID,
+            ),
+            (
+                GenerateTestData.generate_ecdsa_certificate, hashlib.sha256,
+                VerifyTestData.SHA256_OID, VerifyTestData.ECDSA_WITH_SHA256_OID,
+            ),
+            (
+                GenerateTestData.generate_mldsa_certificate, hashlib.sha512,
+                VerifyTestData.SHA512_OID, VerifyTestData.ML_DSA_87_OID,
+            ),
+        ):
+            with self.subTest(algorithm=signature_oid):
+                key, certificate = make_certificate("Envelope test")
+                signature, _attributes = GenerateTestData.authenticode_signature(
+                    key, certificate,
+                    GenerateTestData.authenticode_digest(unsigned, digest),
+                )
+                image = GenerateTestData.apply_authenticode_signature(unsigned, signature)
+                entry = VerifyTestData.win_certificate_contents(image)[0]
+                content_info, _ = VerifyTestData.der_decode(
+                    entry, asn1Spec=VerifyTestData.rfc2315.ContentInfo()
+                )
+                signed_data, _ = VerifyTestData.der_decode(
+                    content_info["content"], asn1Spec=VerifyTestData.rfc2315.SignedData()
+                )
+                parameters = signed_data["signerInfos"][0]["digestEncryptionAlgorithm"]["parameters"]
+                if signature_oid == VerifyTestData.SHA256_WITH_RSA_OID:
+                    self.assertEqual(bytes(parameters), b"\x05\x00")
+                else:
+                    self.assertFalse(parameters.hasValue())
+                verified = VerifyTestData.verify_authenticode_entry(
+                    image, entry, digest_oid, signature_oid
+                )
+                self.assertEqual(
+                    verified.public_bytes(VerifyTestData.serialization.Encoding.DER),
+                    certificate.public_bytes(VerifyTestData.serialization.Encoding.DER),
+                )
+                damaged = bytearray(image)
+                damaged[16] ^= 1
+                with self.assertRaises(VerificationError):
+                    VerifyTestData.verify_authenticode_entry(
+                        damaged, entry, digest_oid, signature_oid
+                    )
+
 
 class VerifyFixtureArchitectureTests(unittest.TestCase):
     """Verify every checked-in per-architecture fixture set."""

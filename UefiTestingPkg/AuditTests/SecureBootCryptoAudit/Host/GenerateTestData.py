@@ -849,13 +849,24 @@ def pkcs7_attribute(oid: str, value: bytes) -> rfc2315.Attribute:
     return attribute
 
 
-def mldsa_authenticode_signature(
-    private_key: mldsa.MLDSA87PrivateKey,
+def authenticode_signature(
+    private_key: rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey | mldsa.MLDSA87PrivateKey,
     certificate: x509.Certificate,
     image_digest: bytes,
 ) -> tuple[bytes, bytes]:
-    """Build an ML-DSA-87 Authenticode PKCS #7 signature."""
-    spc_indirect_data = build_spc_indirect_data(image_digest, SHA512_OID)
+    """Build a common envelope with explicit algorithm-specific signing."""
+    if isinstance(private_key, rsa.RSAPrivateKey):
+        digest_oid, signature_oid = SHA256_OID, SHA256_WITH_RSA_OID
+        hash_algorithm = hashlib.sha256
+    elif isinstance(private_key, ec.EllipticCurvePrivateKey):
+        digest_oid, signature_oid = SHA256_OID, ECDSA_WITH_SHA256_OID
+        hash_algorithm = hashlib.sha256
+    elif isinstance(private_key, mldsa.MLDSA87PrivateKey):
+        digest_oid, signature_oid = SHA512_OID, ML_DSA_87_OID
+        hash_algorithm = hashlib.sha512
+    else:
+        raise ValueError("Unsupported Authenticode signing key profile")
+    spc_indirect_data = build_spc_indirect_data(image_digest, digest_oid)
     signed_attributes = rfc2315.Attributes()
     signed_attributes[0] = pkcs7_attribute(
         CMS_CONTENT_TYPE_ATTRIBUTE_OID,
@@ -865,13 +876,26 @@ def mldsa_authenticode_signature(
         CMS_MESSAGE_DIGEST_ATTRIBUTE_OID,
         der_encode(
             univ.OctetString(
-                hashlib.sha512(der_sequence_contents(spc_indirect_data)).digest()
+                hash_algorithm(der_sequence_contents(spc_indirect_data)).digest()
             )
         ),
     )
     encoded_signed_attributes = der_encode(signed_attributes)
-    signature = private_key.sign(encoded_signed_attributes)
-    private_key.public_key().verify(signature, encoded_signed_attributes)
+    if isinstance(private_key, rsa.RSAPrivateKey):
+        signature = private_key.sign(
+            encoded_signed_attributes, padding.PKCS1v15(), hashes.SHA256()
+        )
+        private_key.public_key().verify(
+            signature, encoded_signed_attributes, padding.PKCS1v15(), hashes.SHA256()
+        )
+    elif isinstance(private_key, ec.EllipticCurvePrivateKey):
+        signature = private_key.sign(encoded_signed_attributes, ec.ECDSA(hashes.SHA256()))
+        private_key.public_key().verify(
+            signature, encoded_signed_attributes, ec.ECDSA(hashes.SHA256())
+        )
+    else:
+        signature = private_key.sign(encoded_signed_attributes)
+        private_key.public_key().verify(signature, encoded_signed_attributes)
 
     certificate_der = certificate.public_bytes(Encoding.DER)
     certificate_asn1, trailing = der_decode(
@@ -879,11 +903,11 @@ def mldsa_authenticode_signature(
         asn1Spec=rfc2459.Certificate(),
     )
     if trailing:
-        raise ValueError("Unexpected trailing data in ML-DSA certificate")
+        raise ValueError("Unexpected trailing data in Authenticode certificate")
 
     signed_data = rfc2315.SignedData()
     signed_data["version"] = 1
-    signed_data["digestAlgorithms"][0]["algorithm"] = univ.ObjectIdentifier(SHA512_OID)
+    signed_data["digestAlgorithms"][0]["algorithm"] = univ.ObjectIdentifier(digest_oid)
     signed_data["digestAlgorithms"][0]["parameters"] = univ.Null("")
     signed_data["contentInfo"]["contentType"] = univ.ObjectIdentifier(
         SPC_INDIRECT_DATA_OID
@@ -899,162 +923,15 @@ def mldsa_authenticode_signature(
     signer_info["issuerAndSerialNumber"]["serialNumber"] = certificate_asn1[
         "tbsCertificate"
     ]["serialNumber"]
-    signer_info["digestAlgorithm"]["algorithm"] = univ.ObjectIdentifier(SHA512_OID)
+    signer_info["digestAlgorithm"]["algorithm"] = univ.ObjectIdentifier(digest_oid)
     signer_info["digestAlgorithm"]["parameters"] = univ.Null("")
     for index, attribute in enumerate(signed_attributes):
         signer_info["authenticatedAttributes"][index] = attribute
     signer_info["digestEncryptionAlgorithm"]["algorithm"] = univ.ObjectIdentifier(
-        ML_DSA_87_OID
+        signature_oid
     )
-    signer_info["encryptedDigest"] = signature
-    signed_data["signerInfos"][0] = signer_info
-
-    content_info = rfc2315.ContentInfo()
-    content_info["contentType"] = univ.ObjectIdentifier(CMS_SIGNED_DATA_OID)
-    content_info["content"] = univ.Any(der_encode(signed_data))
-    return der_encode(content_info), encoded_signed_attributes
-
-
-def rsa_authenticode_signature(
-    private_key: rsa.RSAPrivateKey,
-    certificate: x509.Certificate,
-    image_digest: bytes,
-) -> tuple[bytes, bytes]:
-    """Build an RSA-2048/SHA-256 Authenticode PKCS #7 signature."""
-    spc_indirect_data = build_spc_indirect_data(image_digest, SHA256_OID)
-    signed_attributes = rfc2315.Attributes()
-    signed_attributes[0] = pkcs7_attribute(
-        CMS_CONTENT_TYPE_ATTRIBUTE_OID,
-        der_encode(univ.ObjectIdentifier(SPC_INDIRECT_DATA_OID)),
-    )
-    signed_attributes[1] = pkcs7_attribute(
-        CMS_MESSAGE_DIGEST_ATTRIBUTE_OID,
-        der_encode(
-            univ.OctetString(
-                hashlib.sha256(der_sequence_contents(spc_indirect_data)).digest()
-            )
-        ),
-    )
-    encoded_signed_attributes = der_encode(signed_attributes)
-    signature = private_key.sign(
-        encoded_signed_attributes,
-        padding.PKCS1v15(),
-        hashes.SHA256(),
-    )
-    private_key.public_key().verify(
-        signature,
-        encoded_signed_attributes,
-        padding.PKCS1v15(),
-        hashes.SHA256(),
-    )
-
-    certificate_der = certificate.public_bytes(Encoding.DER)
-    certificate_asn1, trailing = der_decode(
-        certificate_der,
-        asn1Spec=rfc2459.Certificate(),
-    )
-    if trailing:
-        raise ValueError("Unexpected trailing data in RSA certificate")
-
-    signed_data = rfc2315.SignedData()
-    signed_data["version"] = 1
-    signed_data["digestAlgorithms"][0]["algorithm"] = univ.ObjectIdentifier(SHA256_OID)
-    signed_data["digestAlgorithms"][0]["parameters"] = univ.Null("")
-    signed_data["contentInfo"]["contentType"] = univ.ObjectIdentifier(
-        SPC_INDIRECT_DATA_OID
-    )
-    signed_data["contentInfo"]["content"] = univ.Any(spc_indirect_data)
-    signed_data["certificates"][0]["certificate"] = certificate_asn1
-
-    signer_info = rfc2315.SignerInfo()
-    signer_info["version"] = 1
-    signer_info["issuerAndSerialNumber"]["issuer"] = certificate_asn1["tbsCertificate"][
-        "issuer"
-    ]
-    signer_info["issuerAndSerialNumber"]["serialNumber"] = certificate_asn1[
-        "tbsCertificate"
-    ]["serialNumber"]
-    signer_info["digestAlgorithm"]["algorithm"] = univ.ObjectIdentifier(SHA256_OID)
-    signer_info["digestAlgorithm"]["parameters"] = univ.Null("")
-    for index, attribute in enumerate(signed_attributes):
-        signer_info["authenticatedAttributes"][index] = attribute
-    signer_info["digestEncryptionAlgorithm"]["algorithm"] = univ.ObjectIdentifier(
-        SHA256_WITH_RSA_OID
-    )
-    signer_info["digestEncryptionAlgorithm"]["parameters"] = univ.Null("")
-    signer_info["encryptedDigest"] = signature
-    signed_data["signerInfos"][0] = signer_info
-
-    content_info = rfc2315.ContentInfo()
-    content_info["contentType"] = univ.ObjectIdentifier(CMS_SIGNED_DATA_OID)
-    content_info["content"] = univ.Any(der_encode(signed_data))
-    return der_encode(content_info), encoded_signed_attributes
-
-
-def ecdsa_authenticode_signature(
-    private_key: ec.EllipticCurvePrivateKey,
-    certificate: x509.Certificate,
-    image_digest: bytes,
-) -> tuple[bytes, bytes]:
-    """Build an ECDSA P-256/SHA-256 Authenticode PKCS #7 signature."""
-    spc_indirect_data = build_spc_indirect_data(image_digest, SHA256_OID)
-    signed_attributes = rfc2315.Attributes()
-    signed_attributes[0] = pkcs7_attribute(
-        CMS_CONTENT_TYPE_ATTRIBUTE_OID,
-        der_encode(univ.ObjectIdentifier(SPC_INDIRECT_DATA_OID)),
-    )
-    signed_attributes[1] = pkcs7_attribute(
-        CMS_MESSAGE_DIGEST_ATTRIBUTE_OID,
-        der_encode(
-            univ.OctetString(
-                hashlib.sha256(der_sequence_contents(spc_indirect_data)).digest()
-            )
-        ),
-    )
-    encoded_signed_attributes = der_encode(signed_attributes)
-    signature = private_key.sign(
-        encoded_signed_attributes,
-        ec.ECDSA(hashes.SHA256()),
-    )
-    private_key.public_key().verify(
-        signature,
-        encoded_signed_attributes,
-        ec.ECDSA(hashes.SHA256()),
-    )
-
-    certificate_der = certificate.public_bytes(Encoding.DER)
-    certificate_asn1, trailing = der_decode(
-        certificate_der,
-        asn1Spec=rfc2459.Certificate(),
-    )
-    if trailing:
-        raise ValueError("Unexpected trailing data in ECDSA certificate")
-
-    signed_data = rfc2315.SignedData()
-    signed_data["version"] = 1
-    signed_data["digestAlgorithms"][0]["algorithm"] = univ.ObjectIdentifier(SHA256_OID)
-    signed_data["digestAlgorithms"][0]["parameters"] = univ.Null("")
-    signed_data["contentInfo"]["contentType"] = univ.ObjectIdentifier(
-        SPC_INDIRECT_DATA_OID
-    )
-    signed_data["contentInfo"]["content"] = univ.Any(spc_indirect_data)
-    signed_data["certificates"][0]["certificate"] = certificate_asn1
-
-    signer_info = rfc2315.SignerInfo()
-    signer_info["version"] = 1
-    signer_info["issuerAndSerialNumber"]["issuer"] = certificate_asn1["tbsCertificate"][
-        "issuer"
-    ]
-    signer_info["issuerAndSerialNumber"]["serialNumber"] = certificate_asn1[
-        "tbsCertificate"
-    ]["serialNumber"]
-    signer_info["digestAlgorithm"]["algorithm"] = univ.ObjectIdentifier(SHA256_OID)
-    signer_info["digestAlgorithm"]["parameters"] = univ.Null("")
-    for index, attribute in enumerate(signed_attributes):
-        signer_info["authenticatedAttributes"][index] = attribute
-    signer_info["digestEncryptionAlgorithm"]["algorithm"] = univ.ObjectIdentifier(
-        ECDSA_WITH_SHA256_OID
-    )
+    if isinstance(private_key, rsa.RSAPrivateKey):
+        signer_info["digestEncryptionAlgorithm"]["parameters"] = univ.Null("")
     signer_info["encryptedDigest"] = signature
     signed_data["signerInfos"][0] = signer_info
 
@@ -1240,17 +1117,17 @@ def generate(
         "sha384": authenticode_digest(unsigned_image, hashlib.sha384),
         "sha512": image_digest_sha512,
     }
-    mldsa_signature, _ = mldsa_authenticode_signature(
+    mldsa_signature, _ = authenticode_signature(
         key_image_mldsa,
         certificate_image_mldsa,
         image_digest_sha512,
     )
-    rsa_signature, _ = rsa_authenticode_signature(
+    rsa_signature, _ = authenticode_signature(
         key_image_rsa,
         certificate_image_rsa,
         image_digest_sha256,
     )
-    ecdsa_signature, _ = ecdsa_authenticode_signature(
+    ecdsa_signature, _ = authenticode_signature(
         key_image_ecdsa,
         certificate_image_ecdsa,
         image_digest_sha256,
