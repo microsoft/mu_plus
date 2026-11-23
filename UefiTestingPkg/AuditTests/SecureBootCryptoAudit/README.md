@@ -236,16 +236,10 @@ From the `SecureBootCryptoAudit` directory, replace the example evidence path:
 ```bash
 evidence="${HOME}/audit-evidence/machine-name-YYYY-MM-DD"
 
-python3 Host/PrintEcitReport.py \
-  "$evidence/SecureBootCryptoAuditApp_JUNIT.XML"
-
-python3 Host/InspectJournal.py \
-  "$evidence/SecureBootCryptoAuditJournal.bin" |
-  tee "$evidence/journal.json"
-
-python3 Host/GenerateMarkdownReport.py \
+python3 Host/AuditReport.py \
   "$evidence/SecureBootCryptoAuditApp_JUNIT.XML" \
-  --journal-json "$evidence/journal.json" \
+  --format markdown \
+  --journal "$evidence/SecureBootCryptoAuditJournal.bin" \
   --target-name "machine-name" \
   --output "$evidence/SecureBootCryptoAuditReport.md"
 ```
@@ -261,32 +255,37 @@ errors. The journal must decode with:
 "state_name": "ABSENT" for pk, db, and dbx
 ```
 
-`PrintEcitReport.py` validates the structured evidence, reconstructs the
+`AuditReport.py` validates the structured evidence, reconstructs the
 advertised atomic and derived-profile rows, checks the firmware control totals,
-and prints the ECIT table and `ECIT_SUMMARY`. A malformed, truncated, or
+and derives the ECIT table and coverage summary. A malformed, truncated, or
 internally inconsistent contract is a report error rather than a partial
 result. `PASS_WITH_LIMITATIONS` means the exercised advertisements worked but
 some advertised profiles remain untested; it is not equivalent to complete
 advertised coverage.
 
-`GenerateMarkdownReport.py` produces a reviewable report with run identity,
+The default output is a text ECIT table. `--format markdown` produces a report
+with run identity,
 the current findings, per-feature ECIT totals, and a result row for every
-operational, profile-coverage, and modeled-claim testcase. Pass
-`--journal-json` only with the output of `InspectJournal.py`, which validates
-the binary journal's CRC and binding to the supplied manifest. The Markdown
-generator additionally requires its fixture ID and manifest SHA-256 to match
+operational, profile-coverage, and modeled-claim testcase. `--journal` reads and
+validates the binary journal directly, including its CRC and manifest binding.
+The default manifest is selected from the JUnit architecture; `--manifest`
+can supply an explicit manifest. The tool additionally requires its fixture
+ID and manifest SHA-256 to match
 JUnit's `[AUDIT_RUN]`, journal version 3, `PERSISTENTLY_VERIFIED`, exactly two
 boots, a successful prior result, and the clean Setup Mode baseline
 (`SetupMode=1`, `SecureBoot=0`, absent PK/`db`/`dbx` with zero size and
 attributes). It recomputes JUnit totals from testcase outcomes and rejects
 missing or inconsistent suite totals and conflicting testcase outcomes.
 Invalid evidence is an error; no report is written. Without a journal, the
-report makes no journal-based recovery claim.
+report makes no journal-based recovery claim. `InspectJournal.py` remains a
+standalone diagnostic utility; `--journal-json` accepts its previously decoded
+output for compatibility. Prefer the binary input so integrity is checked as
+part of report generation.
 
 The journal proves the clean baseline at the reboot checkpoint, before later
 destructive scenarios. It does not prove final cleanup or restoration of the
 original platform configuration. Preserve failed testcase diagnostics and
-independently verify post-audit restoration. Both report tools validate and
+independently verify post-audit restoration. Both output formats validate and
 aggregate JUnit totals; the format-sweep finding counts actual modeled native
 claim results rather than assuming a fixed number of advertised formats.
 Host evidence parsing preserves repeated contextual feature entries, unions
@@ -368,10 +367,10 @@ or inconclusive results fail. Two profile-coverage tests skip while advertised
 digest/signature combinations remain unmodeled.
 
 The correlation testcase writes compact `[ECIT_V2]` advertisement and derived
-profile metadata into its JUnit log. `PrintEcitReport.py` validates that
+profile metadata into its JUnit log. `AuditReport.py` validates that
 metadata, merges it with the native `EcitClaim` testcase outcomes, and builds
 the human-readable table; the firmware does not format or duplicate the result
-table. Read the generated `ECIT_SUMMARY` after the native results because
+table. Read the generated coverage summary after the native results because
 passing modeled claims do not mean every advertised ECIT combination was
 exercised.
 
@@ -425,7 +424,7 @@ The same run produced 66 native JUnit testcases: 62 passed, two modeled V1
 SHA-1 signature-list claims skipped because they were not advertised, and two
 profile-coverage cases skipped because advertised digest/signature pairings
 remain untested. It had zero failures and zero errors. Run
-`Host/PrintEcitReport.py` to obtain the complete per-claim table instead of
+`Host/AuditReport.py` to obtain the complete per-claim table instead of
 treating this example as a fixed allowlist.
 
 The `AuditRunIdentity` testcase records one `[AUDIT_RUN]` line containing the
@@ -439,7 +438,7 @@ For each run, archive:
 
 - the complete JUnit XML;
 - the serial or console log;
-- the printed ECIT table and `ECIT_SUMMARY`;
+- the printed ECIT table and coverage summary;
 - the baseline and restored variable-store hashes for QEMU; and
 - `SecureBootCryptoAuditJournal.bin` for a physical run.
 
@@ -526,10 +525,9 @@ python3 Host/GenerateTestData.py              # X64 (default)
 python3 Host/GenerateTestData.py --arch AARCH64
 ```
 
-The X64 input defaults to the QemuQ35Pkg build output; the AARCH64 input
-defaults to `Build/UefiTestingPkg/DEBUG_GCC/AARCH64/HelloUefiApp.efi` from the
-QemuPkg CI build. The generator refuses an input whose PE machine type does
-not match `--arch`.
+Both inputs default to `Build/UefiTestingPkg/DEBUG_GCC/{arch}/HelloUefiApp.efi`.
+For a platform-wrapper build, use `--unsigned-image` to supply its output.
+The generator refuses an input whose PE machine type does not match `--arch`.
 
 For each architecture the generator writes:
 
@@ -592,12 +590,20 @@ firmware:
 ```bash
 python3 Host/VerifyTestData.py                # X64 (default)
 python3 Host/VerifyTestData.py --arch AARCH64
-python3 -m unittest -v \
-  Host.test_inspect_journal \
-  Host.test_print_ecit_report \
-  Host.test_generate_markdown_report \
-  Host.test_verify_test_data
+python3 -m unittest discover -s Host -v
 ```
+
+Fixture generation and verification require the repository Python dependencies
+and `cryptography>=49.0.0` for ML-DSA X.509 support. From this audit directory:
+
+```bash
+python3 -m pip install -r ../../../pip-requirements.txt "cryptography>=49.0.0"
+```
+
+The dedicated GitHub Actions workflow runs the same discovered Python suite
+on Linux and Windows, separately from the native C host tests. It verifies
+checked-in fixtures and generates test envelopes in memory; it does not
+regenerate the checked-in fixtures or run destructive firmware operations.
 
 The verifier does not import the generator or use its construction helpers. It
 parses the selected architecture's fixture source and independently checks:

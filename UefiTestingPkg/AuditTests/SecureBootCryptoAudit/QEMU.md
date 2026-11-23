@@ -265,18 +265,10 @@ the baseline hash.
 ## 8. Render and inspect the evidence
 
 ```bash
-python3 "$audit_dir/Host/PrintEcitReport.py" \
-  "$evidence/SecureBootCryptoAuditApp_JUNIT.XML" |
-  tee "$evidence/ecit-report.txt"
-
-python3 "$audit_dir/Host/InspectJournal.py" \
-  --arch "$arch" \
-  "$evidence/SecureBootCryptoAuditJournal.bin" |
-  tee "$evidence/journal.json"
-
-python3 "$audit_dir/Host/GenerateMarkdownReport.py" \
+python3 "$audit_dir/Host/AuditReport.py" \
   "$evidence/SecureBootCryptoAuditApp_JUNIT.XML" \
-  --journal-json "$evidence/journal.json" \
+  --format markdown \
+  --journal "$evidence/SecureBootCryptoAuditJournal.bin" \
   --restored-variable-store-sha256 "$restored_sha" \
   --target-name "$platform" \
   --output "$evidence/SecureBootCryptoAuditReport.md"
