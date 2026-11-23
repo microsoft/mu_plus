@@ -15,6 +15,15 @@
   BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
 
+!ifndef $(SECURE_BOOT_CRYPTO_AUDIT_ONLY)
+  DEFINE SECURE_BOOT_CRYPTO_AUDIT_ONLY = FALSE
+!endif
+
+[PcdsFixedAtBuild]
+!ifdef $(SECURE_BOOT_CRYPTO_AUDIT_PROBE_ALL)
+  gUefiTestingPkgTokenSpaceGuid.PcdSecureBootCryptoAuditProbeAll|$(SECURE_BOOT_CRYPTO_AUDIT_PROBE_ALL)
+!endif
+
 ## NOTE: Some of these library configurations are just for CI builds.
 #        If you would like to build these tests to run on your platform,
 #        you should substitute your LibraryClasses configuration.
@@ -119,6 +128,21 @@
 #       generated for it, but the binary will not be put into any firmware volume.
 #
 ###################################################################################################
+[Components.X64, Components.AARCH64]
+  UefiTestingPkg/AuditTests/SecureBootCryptoAudit/UEFI/HelloUefiApp.inf {
+    <LibraryClasses>
+      MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+  }
+  UefiTestingPkg/AuditTests/SecureBootCryptoAudit/UEFI/SecureBootCryptoAuditApp.inf {
+    <LibraryClasses>
+      MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+      PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
+      PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
+      UnitTestPersistenceLib|UnitTestFrameworkPkg/Library/UnitTestPersistenceLibSimpleFileSystem/UnitTestPersistenceLibSimpleFileSystem.inf
+      UnitTestResultReportLib|XmlSupportPkg/Library/UnitTestResultReportJUnitFormatLib/UnitTestResultReportLib.inf
+  }
+
+!if $(SECURE_BOOT_CRYPTO_AUDIT_ONLY) == FALSE
 [Components]
   UefiTestingPkg/AuditTests/BootAuditTest/UEFI/BootAuditTestApp.inf
   UefiTestingPkg/AuditTests/TpmEventLogAudit/TpmEventLogAuditTestApp.inf
@@ -156,6 +180,8 @@
   #       If needed on X86, should port (and test) the functions.
   UefiTestingPkg/FunctionalSystemTests/MpManagement/Driver/MpManagement.inf
   UefiTestingPkg/AuditTests/DMAProtectionAudit/UEFI/DMASmmuProtectionUnitTestApp.inf
+
+!endif
 
 [BuildOptions]
 #force deprecated interfaces off
