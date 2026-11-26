@@ -25,6 +25,42 @@ static EFI_EVENT                          gSwmRegisterEvent             = NULL;
 static VOID                               *gSwmRegistration;
 
 /**
+  Re-resolves the SWM and GOP protocols and refreshes the UI toolkit's cached pointers.
+
+  The pointers are cached when this library is constructed or when SWM registers, so they can be stale if
+  graphics was disconnected and reconnected since. This library is not a driver and has no controller to
+  manage, so it validates at each public entry point instead.
+
+  @retval TRUE   The protocols are present and the cached pointers were refreshed.
+  @retval FALSE  Graphics is not currently available.
+
+**/
+static
+BOOLEAN
+RefreshDialogProtocols (
+  VOID
+  )
+{
+  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *Swm;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL       *Gop;
+
+  if (EFI_ERROR (gBS->LocateProtocol (&gMsSWMProtocolGuid, NULL, (VOID **)&Swm)) ||
+      EFI_ERROR (gBS->LocateProtocol (&gEfiGraphicsOutputProtocolGuid, NULL, (VOID **)&Gop)))
+  {
+    return FALSE;
+  }
+
+  if (EFI_ERROR (InitializeUIToolKit (gImageHandle))) {
+    return FALSE;
+  }
+
+  gSwmProtocol = Swm;
+  gGop         = Gop;
+
+  return TRUE;
+}
+
+/**
  *  MessageBox.  Display a Message box
  *
  *
@@ -49,6 +85,10 @@ SwmDialogsMessageBox (
   )
 {
   if (gSwmProtocol == NULL) {
+    return EFI_ABORTED;
+  }
+
+  if (!RefreshDialogProtocols ()) {
     return EFI_ABORTED;
   }
 
@@ -93,6 +133,10 @@ SwmDialogsPasswordPrompt (
     return EFI_ABORTED;
   }
 
+  if (!RefreshDialogProtocols ()) {
+    return EFI_ABORTED;
+  }
+
   return PasswordDialogInternal (
            gSwmProtocol,
            pTitleBarText,
@@ -132,6 +176,10 @@ SwmDialogsSelectPrompt (
   )
 {
   if (gSwmProtocol == NULL) {
+    return EFI_ABORTED;
+  }
+
+  if (!RefreshDialogProtocols ()) {
     return EFI_ABORTED;
   }
 
@@ -184,6 +232,10 @@ SwmDialogsVerifyThumbprintPrompt (
     return EFI_ABORTED;
   }
 
+  if (!RefreshDialogProtocols ()) {
+    return EFI_ABORTED;
+  }
+
   return VerifyThumbprintInternal (
            gSwmProtocol,
            pTitleBarText,
@@ -211,7 +263,12 @@ EFIAPI
 SwmDialogsReady (
   )
 {
-  return (gSwmProtocol != NULL);
+  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *Swm;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL       *Gop;
+
+  return (gSwmProtocol != NULL) &&
+         !EFI_ERROR (gBS->LocateProtocol (&gMsSWMProtocolGuid, NULL, (VOID **)&Swm)) &&
+         !EFI_ERROR (gBS->LocateProtocol (&gEfiGraphicsOutputProtocolGuid, NULL, (VOID **)&Gop));
 }
 
 /**
