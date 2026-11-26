@@ -30,6 +30,11 @@
 #include "../MacAddressEmulationDxe.h"
 
 extern EFI_BOOT_SERVICES  mBootServices;
+extern EFI_TPL            mCurrentTpl;
+extern VOID               (*mPendingCallback)(
+  VOID
+  );
+extern LIST_ENTRY  mSnpContexts;
 
 /**
   @brief  Stub LocateHandleBuffer function

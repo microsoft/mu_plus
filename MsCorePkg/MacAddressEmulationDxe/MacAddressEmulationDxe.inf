@@ -40,9 +40,6 @@
   UefiBootServicesTableLib
   UefiLib
 
-[Guids]
-  gSnpNetworkInitializedEventGuid
-
 [Protocols]
   gEfiSimpleNetworkProtocolGuid
 

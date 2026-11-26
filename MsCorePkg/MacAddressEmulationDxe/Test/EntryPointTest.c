@@ -47,7 +47,7 @@ MacAddressEmulationEntry_ReturnsError_IfMacEmulationDisabled (
 }
 
 int
-CheckEfiNamedEventListenInputs (
+CheckProtocolNotifyInputs (
   const LargestIntegralType  value,
   const LargestIntegralType  check_value
   )
@@ -60,6 +60,7 @@ CheckEfiNamedEventListenInputs (
   assert_true (Expected->Assigned == Actual->Assigned);
   assert_memory_equal (&Actual->EmulationAddress, &Expected->EmulationAddress, NET_ETHER_ADDR_LEN);
 
+  FreePool (Actual);
   return 1;
 }
 
@@ -95,12 +96,12 @@ MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulat
   SetMem (&AddressToEmulate, NET_ETHER_ADDR_LEN, 0xEE);
 
   will_return (GetMacEmulationAddress, &AddressToEmulate);
-  will_return (GetMacEmulationAddress, TRUE);
+  will_return (GetMacEmulationAddress, EFI_SUCCESS);
 
   will_return (PlatformMacEmulationEnable, EFI_SUCCESS);
 
-  expect_check (EfiNamedEventListen, NotifyContext, CheckEfiNamedEventListenInputs, &ExpectedContext);
-  will_return (EfiNamedEventListen, EFI_SUCCESS);
+  expect_check (EfiCreateProtocolNotifyEvent, NotifyContext, CheckProtocolNotifyInputs, &ExpectedContext);
+  will_return (EfiCreateProtocolNotifyEvent, (EFI_EVENT)(UINTN)1);
 
   // Act
   Status = MacAddressEmulationEntry (NULL, NULL);

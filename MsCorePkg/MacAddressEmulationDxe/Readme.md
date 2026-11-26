@@ -21,6 +21,9 @@ To use this feature, platforms must do the following:
 ### Notes on platform implementation
 
 - `GetMacEmulationAddress` and `PlatformMacEmulationEnable` are called during driver entrypoint.
-- `PlatformMacEmulationSnpCheck` is called during a callback at TPL_NOTIFY, so any code here must be aware of this
-   restriction. It is not recommended to lower the TPL during this function if the network stack has already been
-   started as some packets may be transmitted before the mac is programmed to the emulated address.
+- The driver must load before network consumers initialize SNP. It wraps each installed SNP's `Initialize` method
+  and programs the emulated address synchronously after successful initialization, holding TPL_CALLBACK across both
+  operations. `PlatformMacEmulationSnpCheck` therefore runs at TPL_CALLBACK and must not lower the TPL.
+- MAC programming failures are logged without changing the original initialization result. Such failures can still
+  allow transmission with the original MAC address.
+- This prototype remains resident and retains wrapper contexts until boot services end.

@@ -9,7 +9,6 @@
 #include "MacAddressEmulationDxe.h"
 
 #include "SnpSupportsMacEmuCheckTest.h"
-#include "FindMatchingSnpTest.h"
 #include "SimpleNetworkProtocolNotifyTest.h"
 #include "EntryPointTest.h"
 
@@ -18,6 +17,10 @@
 
 EFI_RUNTIME_SERVICES  mMockRuntime;
 EFI_BOOT_SERVICES     mBootServices;
+EFI_TPL               mCurrentTpl = TPL_APPLICATION;
+VOID                  (*mPendingCallback)(
+  VOID
+  );
 
 EFI_STATUS
 EFIAPI
@@ -47,18 +50,22 @@ PlatformMacEmulationEnable (
   return (EFI_STATUS)mock ();
 }
 
-EFI_STATUS
+EFI_EVENT
 EFIAPI
-EfiNamedEventListen (
-  IN CONST EFI_GUID    *Name,
+EfiCreateProtocolNotifyEvent (
+  IN EFI_GUID          *ProtocolGuid,
   IN EFI_TPL           NotifyTpl,
   IN EFI_EVENT_NOTIFY  NotifyFunction,
-  IN CONST VOID        *NotifyContext   OPTIONAL,
-  OUT VOID             *Registration OPTIONAL
+  IN VOID              *NotifyContext OPTIONAL,
+  OUT VOID             **Registration
   )
 {
+  assert_ptr_equal (ProtocolGuid, &gEfiSimpleNetworkProtocolGuid);
+  assert_int_equal (NotifyTpl, TPL_NOTIFY);
+  assert_ptr_equal (NotifyFunction, SimpleNetworkProtocolNotify);
   check_expected_ptr (NotifyContext);
-  return (EFI_STATUS)mock ();
+  *Registration = NULL;
+  return (EFI_EVENT)mock ();
 }
 
 EFI_STATUS
@@ -94,6 +101,18 @@ RestoreTPL (
   IN EFI_TPL  OldTpl
   )
 {
+  assert_true (OldTpl <= mCurrentTpl);
+  mCurrentTpl = OldTpl;
+  if ((mCurrentTpl < TPL_CALLBACK) && (mPendingCallback != NULL)) {
+    VOID  (*Callback)(
+      VOID
+      );
+
+    Callback         = mPendingCallback;
+    mPendingCallback = NULL;
+    Callback ();
+  }
+
   return;
 }
 
@@ -103,7 +122,12 @@ RaiseTPL (
   IN EFI_TPL  NewTpl
   )
 {
-  return TPL_CALLBACK;
+  EFI_TPL  OldTpl;
+
+  assert_true (NewTpl >= mCurrentTpl);
+  OldTpl      = mCurrentTpl;
+  mCurrentTpl = NewTpl;
+  return OldTpl;
 }
 
 /**
@@ -144,7 +168,6 @@ UefiTestMain (
 
   if (!EFI_ERROR (Status)) {
     RegisterSnpSupportsMacEmuCheckTests (TestSuite);
-    RegisterFindMatchingSnpTests (TestSuite);
     RegisterSimpleNetworkProtocolNotifyTests (TestSuite);
     RegisterEntryPointTests (TestSuite);
 
