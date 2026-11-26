@@ -52,6 +52,22 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 STATIC EFI_HANDLE  mControllerHandle = NULL;
 
+// Handle of the Simple Window Manager controller (SRE's graphics handle) this driver is currently bound
+// to, and the child handle this driver creates on it to carry the ConIn device (Simple Text In/Ex).
+// Both are NULL when not bound.
+//
+STATIC EFI_HANDLE                mOskControllerHandle = NULL;
+STATIC EFI_HANDLE                mOskConInHandle      = NULL;
+STATIC EFI_DEVICE_PATH_PROTOCOL  *mOskChildDevicePath = NULL;
+
+// Notification for connecting to the Simple Window Manager as soon as it's available,
+// regardless of DXE dispatch/driver-binding registration order.
+//
+STATIC EFI_EVENT  mSwmRegisterEvent = NULL;
+STATIC VOID       *mSwmRegistration = NULL;
+
+STATIC EFI_EVENT  mOskPreExitBootServicesEvent = NULL;
+
 //
 // Onscreen Keyboard Vendor Device Path
 //
@@ -118,18 +134,15 @@ OSKDriverInit (
   );
 
 /**
-Checks to see if the incoming handle has a OSK device path installed on it.
-The handle information was saved at the driver entry point
+  Checks whether the controller publishes the Simple Window Manager protocol that this driver binds to
+  in order to provide the on-screen keyboard's ConIn device.
 
-@param  This                 Protocol instance pointer.
-@param  ControllerHandle     Handle of device to test.
-@param  RemainingDevicePath  Optional parameter use to pick a specific child
-device to start.
+  @param[in]  This                 Protocol instance pointer.
+  @param[in]  Controller           Handle of device to test.
+  @param[in]  RemainingDevicePath  Ignored.
 
-@retval EFI_SUCCESS          This driver supports this device.
-@retval EFI_UNSUPPORTED      Debug Port device is not supported.
-@retval EFI_OUT_OF_RESOURCES Fails to allocate memory for device.
-@retval others               Some error occurs.
+  @retval EFI_SUCCESS          This driver supports this device.
+  @retval EFI_UNSUPPORTED      Controller isn't one we'll manage.
 
 **/
 EFI_STATUS
@@ -141,233 +154,43 @@ OSKDriverBindingSupported (
   )
 {
   EFI_STATUS  Status;
+  VOID        *Interface;
 
-  OSK_DEVICE_PATH  OskDevicePath;
-
-  // Check if the incoming handle is the same handle as what you installed your device path on
-  if (Controller != mControllerHandle) {
+  // Skip ourselves and our own child handle.
+  //
+  if ((Controller == mImageHandle) || (Controller == mControllerHandle) || (Controller == mOskConInHandle)) {
     return EFI_UNSUPPORTED;
   }
 
+  // Only one controller is supported. A parent that went away without notification is released by Start.
   //
-  // Try to Bind to Device Path Protocol.
-  //
-  Status = gBS->OpenProtocol (
-                  Controller,
-                  &gEfiDevicePathProtocolGuid,
-                  (VOID **)&OskDevicePath,
-                  This->DriverBindingHandle,
-                  Controller,
-                  EFI_OPEN_PROTOCOL_BY_DRIVER
-                  );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  gBS->CloseProtocol (
-         Controller,
-         &gEfiDevicePathProtocolGuid,
-         This->DriverBindingHandle,
-         Controller
-         );
-
-  return EFI_SUCCESS;
-}
-
-/**
-Binds exclusively to Onscreen keyboard device path on the controller handle, produces OSK
-protocol.
-
-@param  This                 Protocol instance pointer.
-@param  ControllerHandle     Handle of device to bind driver to.
-@param  RemainingDevicePath  Optional parameter use to pick a specific child
-device to start.
-
-@retval EFI_SUCCESS          This driver is added to ControllerHandle.
-@retval EFI_OUT_OF_RESOURCES Fails to allocate memory for device.
-@retval others               Some error occurs.
-
-**/
-EFI_STATUS
-EFIAPI
-OSKDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
-  IN EFI_HANDLE                   Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
-  )
-{
-  EFI_STATUS       Status = EFI_SUCCESS;
-  OSK_DEVICE_PATH  OskDevicePath;
-
-  // Check if the incoming handle is the same handle as what you installed your device path on
-  if (Controller != mControllerHandle) {
+  if ((mOskControllerHandle != NULL) && (Controller != mOskControllerHandle)) {
     return EFI_UNSUPPORTED;
   }
 
   Status = gBS->OpenProtocol (
                   Controller,
-                  &gEfiDevicePathProtocolGuid,
-                  (VOID **)&OskDevicePath,
-                  This->DriverBindingHandle,
-                  Controller,
-                  EFI_OPEN_PROTOCOL_BY_DRIVER
-                  );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "[OSK]: Device Path already opened (%r).\r\n", Status));
-    return Status;
-  }
-
-  // Determine if the Simple Window Manager protocol is available
-  //
-  Status = gBS->LocateProtocol (
                   &gMsSWMProtocolGuid,
-                  NULL,
-                  (VOID **)&mSWMProtocol
+                  &Interface,
+                  This->DriverBindingHandle,
+                  Controller,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
-
   if (EFI_ERROR (Status)) {
-    mSWMProtocol = NULL;
-    DEBUG ((DEBUG_WARN, "[OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
-    goto ErrorExit;
+    return Status;
   }
 
-  // Determine if the Graphics Output Protocol is available
+  // The child's device path extends the parent's so the ConIn device is addressable by device path.
   //
-  Status = gBS->LocateProtocol (
-                  &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
-                  (VOID **)&mGop
-                  );
-
-  if (EFI_ERROR (Status)) {
-    mGop = NULL;
-    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to find GOP protocol (%r).\r\n", Status));
-    goto ErrorExit;
-  }
-
-  // Initialize OSK
-  Status = OSKDriverInit ();
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[OSK]: Init OSK Failed (%r).\r\n", Status));
-
-    if (mKeyRepeatTimerEvent != NULL) {
-      // you would be here if the driver init failed
-      gBS->CloseEvent (mKeyRepeatTimerEvent);
-      // if we got this far the protocol got installed, lets try to uninstall it
-      gBS->UninstallMultipleProtocolInterfaces (
-             Controller,
-             &gEfiSimpleTextInProtocolGuid,
-             (VOID **)&mOSK.SimpleTextIn,
-             &gEfiSimpleTextInputExProtocolGuid,
-             (VOID **)&mOSK.SimpleTextInEx,
-             &gEfiConsoleInDeviceGuid,
-             NULL,
-             NULL
-             );
-
-      if (mCheckDisplayModeTimerEvent != NULL) {
-        gBS->CloseEvent (mCheckDisplayModeTimerEvent);
-      }
-    }
-
-    if (mOSK.SimpleTextIn.WaitForKey != NULL) {
-      gBS->CloseEvent (mOSK.SimpleTextIn.WaitForKey);
-    }
-
-    if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL) {
-      gBS->CloseEvent (mOSK.SimpleTextInEx.WaitForKeyEx);
-    }
-
-    goto ErrorExit;
-  }
-
-  // everything successful
-  DEBUG ((DEBUG_INFO, "[OSK]: Init OSK Successful (%r).\r\n", Status));
-  goto Exit;
-
-ErrorExit:
-  gBS->CloseProtocol (
-         Controller,
-         &gEfiDevicePathProtocolGuid,
-         This->DriverBindingHandle,
-         Controller
-         );
-
-Exit:
-  return Status;
+  return gBS->OpenProtocol (
+                Controller,
+                &gEfiDevicePathProtocolGuid,
+                NULL,
+                This->DriverBindingHandle,
+                Controller,
+                EFI_OPEN_PROTOCOL_TEST_PROTOCOL
+                );
 }
-
-/**
-Stop this driver on ControllerHandle by removing OSK SimpleTextIn SimpleTextInEx protocol on
-the ControllerHandle.
-
-@param  This              Protocol instance pointer.
-@param  ControllerHandle  Handle of device to stop driver on
-@param  NumberOfChildren  Number of Handles in ChildHandleBuffer. If number of
-children is zero stop the entire bus driver.
-@param  ChildHandleBuffer List of Child Handles to Stop.
-
-@retval EFI_SUCCESS       This driver is removed ControllerHandle.
-@retval other             This driver was not removed from this device.
-
-**/
-EFI_STATUS
-EFIAPI
-OSKDriverBindingStop (
-  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
-  IN EFI_HANDLE                   ControllerHandle,
-  IN UINTN                        NumberOfChildren,
-  IN EFI_HANDLE                   *ChildHandleBuffer OPTIONAL
-  )
-{
-  EFI_STATUS  Status;
-
-  DEBUG ((DEBUG_INFO, "[OSK]: DriverBindingStop. \r\n"));
-  Status = gBS->UninstallMultipleProtocolInterfaces (
-                  ControllerHandle,
-                  &gEfiSimpleTextInProtocolGuid,
-                  (VOID **)&mOSK.SimpleTextIn,
-                  &gEfiSimpleTextInputExProtocolGuid,
-                  (VOID **)&mOSK.SimpleTextInEx,
-                  &gEfiConsoleInDeviceGuid,
-                  NULL,
-                  NULL
-                  );
-
-  if (EFI_ERROR (Status)) {
-    return EFI_UNSUPPORTED;
-  }
-
-  if (mOSK.SimpleTextIn.WaitForKey != NULL) {
-    gBS->CloseEvent (mOSK.SimpleTextIn.WaitForKey);
-  }
-
-  if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL) {
-    gBS->CloseEvent (mOSK.SimpleTextInEx.WaitForKeyEx);
-  }
-
-  if (mKeyRepeatTimerEvent != NULL) {
-    gBS->CloseEvent (mKeyRepeatTimerEvent);
-  }
-
-  if (mCheckDisplayModeTimerEvent != NULL) {
-    gBS->CloseEvent (mCheckDisplayModeTimerEvent);
-  }
-
-  return EFI_SUCCESS;
-}
-
-///
-/// Driver Binding Protocol instance
-///
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_DRIVER_BINDING_PROTOCOL  gOSKDriverBinding = {
-  OSKDriverBindingSupported,
-  OSKDriverBindingStart,
-  OSKDriverBindingStop,
-  0x01,
-  NULL,
-  NULL
-};
 
 /**
 Allocates working buffers for managing screen assets.
@@ -3073,6 +2896,13 @@ OSKCheckDisplayModeTimerCallback (
   IN VOID       *Context
   )
 {
+  // The timer is cancelled and closed in OSKDriverBindingStop before mGop is cleared, so this should
+  // always be valid; the check is defensive.
+  //
+  if (mGop == NULL) {
+    return;
+  }
+
   // Check whether the display mode has changed since we last computed screen asset locations.
   //
   if ((mOSK.ScreenResolutionWidth  != mGop->Mode->Info->HorizontalResolution) ||
@@ -3101,12 +2931,321 @@ OSKCheckDisplayModeTimerCallback (
 }
 
 /**
-Main entry point for this driver.
+  Removes the ConIn child protocols, including its console marker if still present.
 
-@param ImageHandle     Image handle this driver.
-@param SystemTable     Pointer to SystemTable.
+  Console platform teardown may already have removed the marker. Remove it first
+  when present so stopping consumers of Simple Text Input cannot remove it midway
+  through the multi-protocol uninstall.
 
-@retval EFI_SUCCESS    This function always complete successfully.
+  @retval EFI_SUCCESS The child protocols were removed.
+  @retval Others      A protocol query or uninstall failed.
+
+**/
+STATIC
+EFI_STATUS
+UninstallOskConInChildProtocols (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  VOID        *ConsoleInDevice;
+
+  Status = gBS->HandleProtocol (mOskConInHandle, &gEfiConsoleInDeviceGuid, &ConsoleInDevice);
+  if (!EFI_ERROR (Status)) {
+    return gBS->UninstallMultipleProtocolInterfaces (
+                  mOskConInHandle,
+                  &gEfiConsoleInDeviceGuid,
+                  NULL,
+                  &gEfiDevicePathProtocolGuid,
+                  mOskChildDevicePath,
+                  &gEfiSimpleTextInProtocolGuid,
+                  (VOID **)&mOSK.SimpleTextIn,
+                  &gEfiSimpleTextInputExProtocolGuid,
+                  (VOID **)&mOSK.SimpleTextInEx,
+                  NULL
+                  );
+  }
+
+  if (Status != EFI_UNSUPPORTED) {
+    return Status;
+  }
+
+  return gBS->UninstallMultipleProtocolInterfaces (
+                mOskConInHandle,
+                &gEfiDevicePathProtocolGuid,
+                mOskChildDevicePath,
+                &gEfiSimpleTextInProtocolGuid,
+                (VOID **)&mOSK.SimpleTextIn,
+                &gEfiSimpleTextInputExProtocolGuid,
+                (VOID **)&mOSK.SimpleTextInEx,
+                NULL
+                );
+}
+
+/**
+  Stops this driver on Controller: unregisters from the Simple Window Manager, releases the periodic
+  timers and working buffers, and destroys the ConIn child handle.
+
+  @param[in]  This              Protocol instance pointer.
+  @param[in]  Controller        Handle of the Simple Window Manager controller being released.
+  @param[in]  NumberOfChildren  Ignored. Everything is released on the first call.
+  @param[in]  ChildHandleBuffer Ignored.
+
+  @retval EFI_SUCCESS       This driver was stopped (or was not started).
+  @retval other             The ConIn child handle couldn't be destroyed. Nothing was released.
+
+**/
+EFI_STATUS
+EFIAPI
+OSKDriverBindingStop (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN UINTN                        NumberOfChildren,
+  IN EFI_HANDLE                   *ChildHandleBuffer OPTIONAL
+  )
+{
+  EFI_STATUS  Status;
+
+  DEBUG ((DEBUG_INFO, "[OSK]: DriverBindingStop (Controller=0x%x).\r\n", (UINTN)Controller));
+
+  if (mOskControllerHandle == NULL) {
+    return EFI_SUCCESS;
+  }
+
+  // Dismiss any on-screen presentation and stop the periodic timers before releasing SWM and the GOP.
+  //
+  ShowKeyboardIcon (FALSE);
+  ShowKeyboard (FALSE);
+
+  if (mKeyRepeatTimerEvent != NULL) {
+    gBS->SetTimer (mKeyRepeatTimerEvent, TimerCancel, 0);
+    gBS->CloseEvent (mKeyRepeatTimerEvent);
+    mKeyRepeatTimerEvent = NULL;
+  }
+
+  if (mCheckDisplayModeTimerEvent != NULL) {
+    gBS->SetTimer (mCheckDisplayModeTimerEvent, TimerCancel, 0);
+    gBS->CloseEvent (mCheckDisplayModeTimerEvent);
+    mCheckDisplayModeTimerEvent = NULL;
+  }
+
+  if ((mSWMProtocol != NULL) && (mOSKPaintEvent != NULL)) {
+    mSWMProtocol->UnregisterClient (mSWMProtocol, mImageHandle);
+  }
+
+  mOSKPointerProtocol = NULL;
+  mOSKPaintEvent      = NULL;
+
+  if (mOskConInHandle != NULL) {
+    gBS->CloseProtocol (Controller, &gMsSWMProtocolGuid, This->DriverBindingHandle, mOskConInHandle);
+
+    Status = UninstallOskConInChildProtocols ();
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[OSK]: Failed to uninstall the ConIn child handle protocols (%r).\r\n", Status));
+      return Status;
+    }
+
+    FreePool (mOskChildDevicePath);
+    mOskChildDevicePath = NULL;
+    mOskConInHandle     = NULL;
+  }
+
+  gBS->CloseProtocol (Controller, &gMsSWMProtocolGuid, This->DriverBindingHandle, Controller);
+
+  if (mOSK.pBackBuffer != NULL) {
+    FreePool (mOSK.pBackBuffer);
+    mOSK.pBackBuffer = NULL;
+  }
+
+  if (mOSK.pKeyTextBltBuffer != NULL) {
+    FreePool (mOSK.pKeyTextBltBuffer);
+    mOSK.pKeyTextBltBuffer = NULL;
+  }
+
+  mSWMProtocol         = NULL;
+  mGop                 = NULL;
+  mOskControllerHandle = NULL;
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Binds to the Simple Window Manager controller and publishes a ConIn device (Simple Text In/Ex) on a
+  child handle so consumers (e.g., ConSplitter) attach to the child rather than the controller directly.
+
+  @param[in]  This                 Protocol instance pointer.
+  @param[in]  Controller           Handle of the Simple Window Manager controller to bind to.
+  @param[in]  RemainingDevicePath  Ignored.
+
+  @retval EFI_SUCCESS          This driver is added to Controller.
+  @retval EFI_ALREADY_STARTED  This driver is already bound to Controller.
+  @retval EFI_OUT_OF_RESOURCES Fails to allocate memory for the child device path.
+  @retval others               Some error occurs.
+
+**/
+EFI_STATUS
+EFIAPI
+OSKDriverBindingStart (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
+  )
+{
+  EFI_STATUS                Status;
+  EFI_DEVICE_PATH_PROTOCOL  *ParentDevicePath;
+  VENDOR_DEVICE_PATH        OskNode;
+
+  if (mOskControllerHandle != NULL) {
+    return (Controller == mOskControllerHandle) ? EFI_ALREADY_STARTED : EFI_UNSUPPORTED;
+  }
+
+  DEBUG ((DEBUG_INFO, "[OSK]: Driver start (Controller=0x%x).\r\n", (UINTN)Controller));
+
+  Status = gBS->OpenProtocol (
+                  Controller,
+                  &gMsSWMProtocolGuid,
+                  (VOID **)&mSWMProtocol,
+                  This->DriverBindingHandle,
+                  Controller,
+                  EFI_OPEN_PROTOCOL_BY_DRIVER
+                  );
+  if (EFI_ERROR (Status)) {
+    mSWMProtocol = NULL;
+    DEBUG ((DEBUG_WARN, "[OSK]: Failed to open Simple Window Manager protocol (%r).\r\n", Status));
+    return Status;
+  }
+
+  Status = gBS->HandleProtocol (Controller, &gEfiGraphicsOutputProtocolGuid, (VOID **)&mGop);
+  if (EFI_ERROR (Status)) {
+    mGop = NULL;
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to find GOP protocol (%r).\r\n", Status));
+    goto ErrorCloseSwm;
+  }
+
+  // The child's device path extends the controller's so console selection by device path still matches.
+  //
+  Status = gBS->HandleProtocol (Controller, &gEfiDevicePathProtocolGuid, (VOID **)&ParentDevicePath);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[OSK]: Controller has no device path (%r).\r\n", Status));
+    goto ErrorCloseSwm;
+  }
+
+  ZeroMem (&OskNode, sizeof (OskNode));
+  OskNode.Header.Type    = HARDWARE_DEVICE_PATH;
+  OskNode.Header.SubType = HW_VENDOR_DP;
+  SetDevicePathNodeLength (&OskNode.Header, sizeof (OskNode));
+  CopyGuid (&OskNode.Guid, &gOSKDevicePathGuid);
+
+  mOskChildDevicePath = AppendDevicePathNode (ParentDevicePath, &OskNode.Header);
+  if (mOskChildDevicePath == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto ErrorCloseSwm;
+  }
+
+  // Install Simple Text Input and Simple Text Extended protocol handlers.
+  //
+  mOSK.SimpleTextIn.Reset         = OSKResetInputDevice;
+  mOSK.SimpleTextIn.ReadKeyStroke = OSKReadKeyStroke;
+
+  mOSK.SimpleTextInEx.Reset               = OSKResetInputDeviceEx;
+  mOSK.SimpleTextInEx.ReadKeyStrokeEx     = OSKReadKeyStrokeEx;
+  mOSK.SimpleTextInEx.SetState            = OSKSetState;
+  mOSK.SimpleTextInEx.RegisterKeyNotify   = OSKRegisterKeyNotify;
+  mOSK.SimpleTextInEx.UnregisterKeyNotify = OSKUnregisterKeyNotify;
+
+  mOskConInHandle = NULL;
+  Status          = gBS->InstallMultipleProtocolInterfaces (
+                           &mOskConInHandle,
+                           &gEfiDevicePathProtocolGuid,
+                           mOskChildDevicePath,
+                           &gEfiSimpleTextInProtocolGuid,
+                           (VOID **)&mOSK.SimpleTextIn,
+                           &gEfiSimpleTextInputExProtocolGuid,
+                           (VOID **)&mOSK.SimpleTextInEx,
+                           &gEfiConsoleInDeviceGuid,
+                           NULL,
+                           NULL
+                           );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to install the ConIn child handle protocols (%r).\r\n", Status));
+    FreePool (mOskChildDevicePath);
+    mOskChildDevicePath = NULL;
+    mOskConInHandle     = NULL;
+    goto ErrorCloseSwm;
+  }
+
+  // Register the child on the SWM controller so the driver model stops it before SWM goes away.
+  //
+  Status = gBS->OpenProtocol (
+                  Controller,
+                  &gMsSWMProtocolGuid,
+                  (VOID **)&mSWMProtocol,
+                  This->DriverBindingHandle,
+                  mOskConInHandle,
+                  EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to register the ConIn child handle (%r).\r\n", Status));
+    goto ErrorDestroyChild;
+  }
+
+  mOskControllerHandle = Controller;
+
+  Status = OSKDriverInit ();
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[OSK]: Init OSK Failed (%r).\r\n", Status));
+    OSKDriverBindingStop (This, Controller, 0, NULL);
+    return Status;
+  }
+
+  DEBUG ((DEBUG_INFO, "[OSK]: Init OSK Successful.\r\n"));
+  return EFI_SUCCESS;
+
+ErrorDestroyChild:
+  gBS->UninstallMultipleProtocolInterfaces (
+         mOskConInHandle,
+         &gEfiDevicePathProtocolGuid,
+         mOskChildDevicePath,
+         &gEfiSimpleTextInProtocolGuid,
+         (VOID **)&mOSK.SimpleTextIn,
+         &gEfiSimpleTextInputExProtocolGuid,
+         (VOID **)&mOSK.SimpleTextInEx,
+         &gEfiConsoleInDeviceGuid,
+         NULL,
+         NULL
+         );
+  FreePool (mOskChildDevicePath);
+  mOskChildDevicePath = NULL;
+  mOskConInHandle     = NULL;
+
+ErrorCloseSwm:
+  gBS->CloseProtocol (Controller, &gMsSWMProtocolGuid, This->DriverBindingHandle, Controller);
+  mSWMProtocol = NULL;
+  mGop         = NULL;
+
+  return Status;
+}
+
+///
+/// Driver Binding Protocol instance
+///
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_DRIVER_BINDING_PROTOCOL  gOSKDriverBinding = {
+  OSKDriverBindingSupported,
+  OSKDriverBindingStart,
+  OSKDriverBindingStop,
+  0x01,
+  NULL,
+  NULL
+};
+
+/**
+  Completes on-screen keyboard initialization for a graphics/SWM binding: periodic timers, the Simple
+  Window Manager client registration, and the initial keyboard layout. Called from OSKDriverBindingStart
+  after mGop, mSWMProtocol, and the ConIn child handle are established.
+
+  @retval EFI_SUCCESS    Initialization completed successfully.
+  @retval others         Some error occurred; the caller unwinds via OSKDriverBindingStop.
 
 **/
 EFI_STATUS
@@ -3120,34 +3259,7 @@ OSKDriverInit (
 
   DEBUG ((DEBUG_INFO, "OSK Init \n"));
 
-  // Install Simple Text Input and Simple Text Extended protocol handlers
-  //
-  mOSK.SimpleTextIn.Reset         = OSKResetInputDevice;
-  mOSK.SimpleTextIn.ReadKeyStroke = OSKReadKeyStroke;
-
-  mOSK.SimpleTextInEx.Reset               = OSKResetInputDeviceEx;
-  mOSK.SimpleTextInEx.ReadKeyStrokeEx     = OSKReadKeyStrokeEx;
-  mOSK.SimpleTextInEx.SetState            = OSKSetState;
-  mOSK.SimpleTextInEx.RegisterKeyNotify   = OSKRegisterKeyNotify;
-  mOSK.SimpleTextInEx.UnregisterKeyNotify = OSKUnregisterKeyNotify;
-
   mOSK.pBackBuffer = NULL;
-
-  Status = gBS->InstallMultipleProtocolInterfaces (
-                  &mControllerHandle,
-                  &gEfiSimpleTextInProtocolGuid,      // 2. Simple Text In Protocol.
-                  (VOID **)&mOSK.SimpleTextIn,        //
-                  &gEfiSimpleTextInputExProtocolGuid, // 3. Simple Text In Ex Protocol.
-                  (VOID **)&mOSK.SimpleTextInEx,      //
-                  &gEfiConsoleInDeviceGuid,           // 4. Indicates that OSK is a ConIn device (picked up by Consplitter).
-                  NULL,                               //
-                  NULL
-                  );
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
-    goto Exit;
-  }
 
   // Create a periodic timer for key repeat
   //
@@ -3189,7 +3301,8 @@ OSKDriverInit (
     mGop->Mode->Info->VerticalResolution
     );
 
-  // Register with the Simple Window Manager to get pointer input events.
+  // Register with the Simple Window Manager to get pointer input events. This is a fresh registration
+  // every binding since OSKDriverBindingStop always unregisters before releasing SWM.
   //
   Status = mSWMProtocol->RegisterClient (
                            mSWMProtocol,
@@ -3202,7 +3315,6 @@ OSKDriverInit (
                            &mOSKPaintEvent
                            );
 
-  ASSERT_EFI_ERROR (Status);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[OSK]: Failed to register with the Simple Window Manager.  Status = %r\r\n", Status));
     goto Exit;
@@ -3244,8 +3356,6 @@ OSKDriverInit (
 
 Exit:
 
-  // TODO - Close Protocol on Absolute Pointer if an error occurs?
-
   return Status;
 }
 
@@ -3267,6 +3377,61 @@ OnPreExitBootServicesNotification (
   ShowKeyboardIcon (FALSE);
   ShowKeyboard (FALSE);
   gBS->CloseEvent (Event);
+  mOskPreExitBootServicesEvent = NULL;
+}
+
+/**
+  Starts binding to the first available Simple Window Manager controller.
+
+  @retval EFI_SUCCESS   A controller was connected (or this driver is already bound).
+  @retval Others        No controller was connected.
+
+**/
+static EFI_STATUS
+ConnectSwmController (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  EFI_HANDLE  *Handles;
+  UINTN       HandleCount;
+  UINTN       HandleIndex;
+
+  if (mOskControllerHandle != NULL) {
+    return EFI_SUCCESS;
+  }
+
+  Status = gBS->LocateHandleBuffer (ByProtocol, &gMsSWMProtocolGuid, NULL, &HandleCount, &Handles);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  for (HandleIndex = 0; HandleIndex < HandleCount; HandleIndex++) {
+    Status = gBS->ConnectController (Handles[HandleIndex], NULL, NULL, FALSE);
+    if (!EFI_ERROR (Status)) {
+      break;
+    }
+  }
+
+  FreePool (Handles);
+  return Status;
+}
+
+/**
+  Simple Window Manager protocol registration notification callback.
+
+  @param[in] Event      Event that signalled the callback.
+  @param[in] Context    Ignored.
+
+**/
+VOID
+EFIAPI
+SwmRegisteredCallback (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
+{
+  ConnectSwmController ();
 }
 
 EFI_STATUS
@@ -3275,11 +3440,58 @@ DriverUnload (
   IN EFI_HANDLE  ImageHandle
   )
 {
-  EFI_STATUS  Status = EFI_SUCCESS;
+  EFI_STATUS  Status;
 
-  // TODO - Needs to be implemented
+  if (mSwmRegisterEvent != NULL) {
+    gBS->CloseEvent (mSwmRegisterEvent);
+    mSwmRegisterEvent = NULL;
+  }
 
-  return Status;
+  if (mOskControllerHandle != NULL) {
+    Status = gBS->DisconnectController (mOskControllerHandle, ImageHandle, NULL);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
+
+  Status = gBS->UninstallMultipleProtocolInterfaces (
+                  ImageHandle,
+                  &gEfiDriverBindingProtocolGuid,
+                  &gOSKDriverBinding,
+                  NULL
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  if (mOskPreExitBootServicesEvent != NULL) {
+    gBS->CloseEvent (mOskPreExitBootServicesEvent);
+    mOskPreExitBootServicesEvent = NULL;
+  }
+
+  if (mOSK.SimpleTextIn.WaitForKey != NULL) {
+    gBS->CloseEvent (mOSK.SimpleTextIn.WaitForKey);
+    mOSK.SimpleTextIn.WaitForKey = NULL;
+  }
+
+  if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL) {
+    gBS->CloseEvent (mOSK.SimpleTextInEx.WaitForKeyEx);
+    mOSK.SimpleTextInEx.WaitForKeyEx = NULL;
+  }
+
+  if (mControllerHandle != NULL) {
+    gBS->UninstallMultipleProtocolInterfaces (
+           mControllerHandle,
+           &gEfiDevicePathProtocolGuid,
+           &mPlatformOSKDevice,
+           &gMsOSKProtocolGuid,
+           (VOID **)&mOSK.OSKProtocol,
+           NULL
+           );
+    mControllerHandle = NULL;
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -3300,7 +3512,6 @@ OSKDriverEntryPoint (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_EVENT   InitEvent;
   EFI_STATUS  Status;
 
   // Create Controller handle with the proper device path protocol
@@ -3391,6 +3602,35 @@ OSKDriverEntryPoint (
   //
   InitializeKeyboardContext ();
 
+  // Register for Simple Window Manager registration notifications and try an immediate connect, since
+  // SWM may already be bound by the time this driver's entry point runs (DXE dispatch order isn't fixed).
+  //
+  Status = gBS->CreateEvent (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  SwmRegisteredCallback,
+                  NULL,
+                  &mSwmRegisterEvent
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to create SWM registration event (%r).\r\n", Status));
+    goto Exit;
+  }
+
+  Status = gBS->RegisterProtocolNotify (
+                  &gMsSWMProtocolGuid,
+                  mSwmRegisterEvent,
+                  &mSwmRegistration
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to register for SWM registration notifications (%r).\r\n", Status));
+    goto Exit;
+  }
+
+  ConnectSwmController ();
+
   //
   // Register notify function to dismiss the keyboard and icon at PreExitBootServices.
   //
@@ -3400,7 +3640,7 @@ OSKDriverEntryPoint (
                   OnPreExitBootServicesNotification,
                   gImageHandle,
                   &gEfiEventBeforeExitBootServicesGuid,
-                  &InitEvent
+                  &mOskPreExitBootServicesEvent
                   );
 
   if (EFI_ERROR (Status)) {

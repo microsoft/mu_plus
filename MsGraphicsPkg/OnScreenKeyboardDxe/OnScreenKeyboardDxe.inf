@@ -35,6 +35,7 @@
   UefiDriverEntryPoint
   DebugLib
   BaseLib
+  DevicePathLib
   HiiLib
   MemoryAllocationLib
   DxeServicesTableLib
@@ -51,6 +52,8 @@
 
 
 [Protocols]
+  gEfiDevicePathProtocolGuid         # CONSUMES # PRODUCES
+  gEfiDriverBindingProtocolGuid      # PRODUCES
   gEfiGraphicsOutputProtocolGuid    # CONSUMES
   gEfiHiiFontProtocolGuid           # CONSUMES
   gMsSWMProtocolGuid                # CONSUMES
