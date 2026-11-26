@@ -1,0 +1,40 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+name: Secure Boot Crypto Audit Python Tests
+
+on:
+  pull_request:
+    branches: [main, 'release/**']
+    paths:
+      - 'UefiTestingPkg/AuditTests/SecureBootCryptoAudit/**'
+      - 'pip-requirements.txt'
+      - '.github/workflows/secureboot-crypto-audit-python.yml'
+  push:
+    branches: [main, 'release/**']
+    paths:
+      - 'UefiTestingPkg/AuditTests/SecureBootCryptoAudit/**'
+      - 'pip-requirements.txt'
+      - '.github/workflows/secureboot-crypto-audit-python.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        # ML-DSA X.509 certificate support requires cryptography 49.
+        run: python -m pip install -r pip-requirements.txt "cryptography>=49.0.0"
+      - name: Run all audit Python tests
+        working-directory: UefiTestingPkg/AuditTests/SecureBootCryptoAudit
+        run: python -m unittest discover -s Host -v

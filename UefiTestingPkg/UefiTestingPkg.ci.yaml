@@ -12,6 +12,13 @@
     "CompilerPlugin": {
         "DscPath": "UefiTestingPkg.dsc"
     },
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "Test/UefiTestingPkgHostTest.dsc"
+    },
+    "HostUnitTestDscCompleteCheck": {
+        "DscPath": "Test/UefiTestingPkgHostTest.dsc",
+        "IgnoreInf": []
+    },
 
     ## options defined ci/Plugin/CharEncodingCheck
     "CharEncodingCheck": {
