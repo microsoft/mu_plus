@@ -993,6 +993,13 @@ CheckWatchListCallback (
         if ((FALSE == pList->bNeedsMousePointer) && (TRUE == mSWM.bDisplayingMousePointer)) {
           DEBUG ((DEBUG_INFO, "INFO [SWM]: Hiding mouse pointer.\r\n"));
           HideMousePointer ();
+        } else if ((TRUE == pList->bNeedsMousePointer) && (FALSE == mSWM.bMousePointerEnabled) && (FALSE == mSWM.bDisplayingMousePointer)) {
+          Status = SWMEnableMousePointer (&mSWM.SWMProtocol, TRUE);
+          if (EFI_ERROR (Status)) {
+            DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to enable mouse pointer (%r)\r\n", Status));
+          } else {
+            DEBUG ((DEBUG_INFO, "INFO [SWM]: Enabling mouse pointer.\r\n"));
+          }
         } else if ((TRUE == pList->bNeedsMousePointer) && (TRUE == mSWM.bMousePointerEnabled) && (FALSE == mSWM.bDisplayingMousePointer)) {
           DEBUG ((DEBUG_INFO, "INFO [SWM]: Showing mouse pointer.\r\n"));
           ShowMousePointer ();
