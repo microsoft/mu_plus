@@ -1,7 +1,7 @@
 ## @file
 #
-# Implements a Graphics Software Compositor as a filter driver that connects to the
-# Intel GOP driver and produces its own GOP protocol.
+# Implements a Graphics Software Compositor as a filter driver. It owns the GOP produced by the display
+# driver, publishes a proxy GOP on a child handle, and hooks the parent GOP's Blt function.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -34,19 +34,18 @@
   UefiDriverEntryPoint
   DebugLib
   BaseLib
+  DevicePathLib
   MemoryAllocationLib
   DxeServicesTableLib
 
 [Protocols]
-  gEfiDevicePathProtocolGuid          # CONSUMES
+  gEfiDevicePathProtocolGuid          # CONSUMES, PRODUCES
+  gEfiDriverBindingProtocolGuid       # PRODUCES
   gMsSREProtocolGuid                  # PRODUCES
-  gEfiGraphicsOutputProtocolGuid      # PRODUCES
+  gEfiGraphicsOutputProtocolGuid      # CONSUMES, PRODUCES
 
 [Guids]
   gEfiEventBeforeExitBootServicesGuid
-
-[Pcd]
-  gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
 
 [Depex]
   TRUE

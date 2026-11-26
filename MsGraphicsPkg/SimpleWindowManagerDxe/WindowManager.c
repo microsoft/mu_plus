@@ -48,6 +48,9 @@ WINMGR_CONTEXT                 mSWM;
 EFI_EVENT                      mSWMWatchListTimerEvent;
 EFI_ABSOLUTE_POINTER_MODE      mAbsPointerMode;
 EFI_ABSOLUTE_POINTER_PROTOCOL  *mConsplitterAbsolutePointer = NULL;
+EFI_HANDLE                     mGraphicsController;
+BOOLEAN                        mSwmOneTimeInitDone;
+BOOLEAN                        mSwmInitializationFailed;
 
 // SWM driver binding protocol support
 EFI_DRIVER_BINDING_PROTOCOL  mSWMDriverBinding =
@@ -71,6 +74,12 @@ DriverCleanUp (
 static EFI_STATUS
 SelectMousePointer (
   VOID
+  );
+
+EFI_STATUS
+EFIAPI
+DriverInitStage2 (
+  IN EFI_HANDLE  ImageHandle
   );
 
 // ****** External definitions ******
@@ -253,6 +262,29 @@ Exit:
 }
 
 /**
+    Checks that the cached GOP is still installed on the graphics controller.
+
+    The GOP producer can remove its GOP without this driver being notified.
+
+    @retval TRUE    The GOP can be used.
+    @retval FALSE   The GOP is not available.
+
+**/
+BOOLEAN
+IsGopValid (
+  VOID
+  )
+{
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *Gop;
+
+  if ((mGop == NULL) || (mGraphicsController == NULL)) {
+    return FALSE;
+  }
+
+  return !EFI_ERROR (gBS->HandleProtocol (mGraphicsController, &gEfiGraphicsOutputProtocolGuid, (VOID **)&Gop)) && (Gop == mGop);
+}
+
+/**
     Moves the mouse pointer to the specified location and optionally restores screen contents under the pointer.
 
     @param  None
@@ -262,6 +294,7 @@ Exit:
 
     @retval EFI_SUCCESS                 Successfully allocated buffers.
     @retval EFI_OUT_OF_RESOURCES        Insufficient resources to complete the request.
+    @retval EFI_NOT_READY               Mouse pointer can't be moved because the rendering engine or GOP is not ready.
 
 **/
 static EFI_STATUS
@@ -275,6 +308,10 @@ MoveMousePointer (
 
   // If we aren't displaying the mouse pointer or if it's not enabled, don't show it.
   //
+  if (!IsGopValid () || (mRenderingEngine == NULL)) {
+    return EFI_NOT_READY;
+  }
+
   if (FALSE == mSWM.bMousePointerEnabled) {
     goto Exit;
   }
@@ -305,6 +342,8 @@ Exit:
     @param  None
 
     @retval EFI_SUCCESS             Successfully hid the pointer.
+    @retval EFI_NOT_READY           Mouse pointer can't be hidden because the rendering engine is not ready.
+
 
 **/
 EFI_STATUS
@@ -313,6 +352,10 @@ HideMousePointer (
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
+
+  if (mRenderingEngine == NULL) {
+    return EFI_NOT_READY;
+  }
 
   Status = mRenderingEngine->ShowMousePointer (
                                mRenderingEngine,
@@ -335,6 +378,8 @@ HideMousePointer (
 
     @retval EFI_SUCCESS             Successfully showing the pointer.
     @retval EFI_UNSUPPORTED         Mouse can't be shown because it's been disabled.
+    @retval EFI_NOT_READY           Mouse pointer can't be shown because the rendering engine is not ready.
+
 
 **/
 EFI_STATUS
@@ -343,6 +388,10 @@ ShowMousePointer (
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
+
+  if (mRenderingEngine == NULL) {
+    return EFI_NOT_READY;
+  }
 
   Status = mRenderingEngine->ShowMousePointer (
                                mRenderingEngine,
@@ -784,9 +833,17 @@ FreeAbsolutePointerInterfaceWatchList (
   //
   while (NULL != pList) {
     pNext = pList->pNext;
+    gBS->CloseProtocol (
+           pList->Controller,
+           &gEfiAbsolutePointerProtocolGuid,
+           mSWMDriverBinding.DriverBindingHandle,
+           pList->Controller
+           );
     FreePool (pList);
     pList = pNext;
   }
+
+  mSWM.AbsolutePointerProviders = NULL;
 
   // Restore the TPL.
   //
@@ -912,6 +969,10 @@ CheckWatchListCallback (
   WINMGR_CLIENT        *Client;
   UINTN                ScreenMaxX, ScreenMaxY;
 
+  if (!IsGopValid () || (mRenderingEngine == NULL)) {
+    return;
+  }
+
   // Get screen coordinate space maximums.
   //
   ScreenMaxX = mGop->Mode->Info->HorizontalResolution;
@@ -1020,7 +1081,7 @@ CheckWatchListCallback (
 }
 
 /**
-    Checks whether the specified controller exposes the Absolute Pointer interface that we will manage.
+    Checks whether the controller exposes graphics or an Absolute Pointer interface that we will manage.
 
     @param[in] This                 Pointer to the instance of this driver.
     @param[in] Controller           Handle to be checked for Absolute Pointer support.
@@ -1040,6 +1101,40 @@ SWMDriverSupported (
 {
   EFI_STATUS                     Status;
   EFI_ABSOLUTE_POINTER_PROTOCOL  *AbsolutePointer;
+  VOID                           *GraphicsProtocol;
+
+  if (mSwmInitializationFailed) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if ((mGraphicsController == NULL) || (Controller == mGraphicsController)) {
+    Status = gBS->HandleProtocol (Controller, &gMsSREProtocolGuid, &GraphicsProtocol);
+    if (!EFI_ERROR (Status)) {
+      Status = gBS->OpenProtocol (
+                      Controller,
+                      &gMsSREProtocolGuid,
+                      &GraphicsProtocol,
+                      This->DriverBindingHandle,
+                      Controller,
+                      EFI_OPEN_PROTOCOL_BY_DRIVER
+                      );
+      if (!EFI_ERROR (Status)) {
+        gBS->CloseProtocol (
+               Controller,
+               &gMsSREProtocolGuid,
+               This->DriverBindingHandle,
+               Controller
+               );
+      }
+
+      return Status;
+    }
+  }
+
+  // Without graphics initialization there is not a replacement Absolute Pointer for ConSplitter.
+  if (!mSwmOneTimeInitDone) {
+    return EFI_UNSUPPORTED;
+  }
 
   // Make sure the Simple Window Manager does not attempt to attach to itself (since it exposes an
   // Absolute Pointer protocol interface as well as aggregates Absolute Pointer protocol providers).
@@ -1083,7 +1178,7 @@ Exit:
 }
 
 /**
-    Start supporting specified controller exposing Absolute Pointer interface.
+    Starts supporting a graphics or Absolute Pointer controller.
 
     @param[in] This                 Pointer to the instance of this driver.
     @param[in] Controller           Handle of controller to be managed.
@@ -1102,10 +1197,149 @@ SWMDriverStart (
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
-  EFI_STATUS                Status             = EFI_SUCCESS;
-  BOOLEAN                   bNeedsMousePointer = FALSE;
-  VOID                      *DriverProtocol    = NULL;
-  EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
+  EFI_STATUS                    Status             = EFI_SUCCESS;
+  BOOLEAN                       bNeedsMousePointer = FALSE;
+  VOID                          *DriverProtocol    = NULL;
+  EFI_DEVICE_PATH_PROTOCOL      *DevicePath;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *Gop;
+  MS_RENDERING_ENGINE_PROTOCOL  *RenderingEngine;
+  EFI_TPL                       PreviousTPL;
+
+  if (mSwmInitializationFailed) {
+    return EFI_DEVICE_ERROR;
+  }
+
+  Status = gBS->HandleProtocol (Controller, &gMsSREProtocolGuid, (VOID **)&RenderingEngine);
+  if (!EFI_ERROR (Status)) {
+    if (mGraphicsController != NULL) {
+      return (Controller == mGraphicsController) ? EFI_ALREADY_STARTED : EFI_UNSUPPORTED;
+    }
+
+    Status = gBS->OpenProtocol (
+                    Controller,
+                    &gMsSREProtocolGuid,
+                    (VOID **)&RenderingEngine,
+                    This->DriverBindingHandle,
+                    Controller,
+                    EFI_OPEN_PROTOCOL_BY_DRIVER
+                    );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
+    Status = gBS->HandleProtocol (Controller, &gEfiGraphicsOutputProtocolGuid, (VOID **)&Gop);
+    if (EFI_ERROR (Status)) {
+      gBS->CloseProtocol (Controller, &gMsSREProtocolGuid, This->DriverBindingHandle, Controller);
+      return Status;
+    }
+
+    PreviousTPL         = gBS->RaiseTPL (TPL_NOTIFY);
+    mGraphicsController = Controller;
+    mGop                = Gop;
+    mRenderingEngine    = RenderingEngine;
+
+    // Publish the window manager service on the graphics controller handle for the lifetime of this
+    // binding. This keeps dependents (e.g., OSK) ordered by the driver model as they open this protocol
+    // BY_DRIVER on Controller, so they're stopped before it disappears on the next Stop().
+    //
+    mSWM.SWMProtocol.RegisterClient     = SWMRegisterClient;
+    mSWM.SWMProtocol.UnregisterClient   = SWMUnregisterClient;
+    mSWM.SWMProtocol.ActivateWindow     = SWMActivateWindow;
+    mSWM.SWMProtocol.SetWindowFrame     = SWMSetWindowFrame;
+    mSWM.SWMProtocol.BltWindow          = SWMBltWindow;
+    mSWM.SWMProtocol.StringToWindow     = SWMStringToWindow;
+    mSWM.SWMProtocol.EnableMousePointer = SWMEnableMousePointer;
+    mSWM.SWMProtocol.WaitForEvent       = SWMWaitForEvent;
+
+    Status = gBS->InstallMultipleProtocolInterfaces (
+                    &Controller,
+                    &gMsSWMProtocolGuid,
+                    (VOID **)&mSWM.SWMProtocol,
+                    NULL
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to install the Simple Window Manager protocol interface, Status: %r\r\n", Status));
+      goto GraphicsStartErrorNoSwmProtocol;
+    }
+
+    if (!mSwmOneTimeInitDone) {
+      Status = DriverInitStage2 (mImageHandle);
+      if (!EFI_ERROR (Status)) {
+        mSwmOneTimeInitDone = TRUE;
+      } else {
+        DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to complete stage two driver initialization (%r).\r\n", Status));
+        mSwmInitializationFailed = TRUE;
+        goto GraphicsStartError;
+      }
+    }
+
+    // Per-binding state: current screen dimensions, mouse pointer selection, and a fresh watchlist timer.
+    //
+    mSWM.ScreenWidth             = mGop->Mode->Info->HorizontalResolution;
+    mSWM.ScreenHeight            = mGop->Mode->Info->VerticalResolution;
+    mAbsPointerMode.AbsoluteMaxX = mSWM.ScreenWidth;
+    mAbsPointerMode.AbsoluteMaxY = mSWM.ScreenHeight;
+
+    InitializeWindowManagerContext ();
+
+    Status = SelectMousePointer ();
+    if (EFI_ERROR (Status)) {
+      goto GraphicsStartError;
+    }
+
+    Status = gBS->CreateEvent (
+                    EVT_TIMER | EVT_NOTIFY_SIGNAL,
+                    TPL_CALLBACK,
+                    CheckWatchListCallback,
+                    NULL,
+                    &mSWMWatchListTimerEvent
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to create timer callback event for the AP watchlist.  Status = %r\r\n", Status));
+      goto GraphicsStartError;
+    }
+
+    Status = gBS->SetTimer (mSWMWatchListTimerEvent, TimerPeriodic, PERIODIC_REFRESH_INTERVAL);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to start provider watchlist scanning timer.  Status = %r\r\n", Status));
+      goto GraphicsStartError;
+    }
+
+    gBS->RestoreTPL (PreviousTPL);
+    DEBUG ((DEBUG_INFO, "INFO [SWM]: Graphics start (Controller=%p): %r.\r\n", Controller, Status));
+    return Status;
+
+GraphicsStartError:
+
+    // The Simple Window Manager protocol interface was successfully installed, so SWMDriverStop (or
+    // DriverCleanUp, if one-time initialization is permanently unusable) can fully unwind it along with
+    // anything created above.
+    //
+    if (mSwmInitializationFailed) {
+      DriverCleanUp (mImageHandle);
+    } else {
+      SWMDriverStop (This, Controller, 0, NULL);
+    }
+
+    gBS->RestoreTPL (PreviousTPL);
+    DEBUG ((DEBUG_INFO, "INFO [SWM]: Graphics start (Controller=%p): %r.\r\n", Controller, Status));
+    return Status;
+
+GraphicsStartErrorNoSwmProtocol:
+
+    // Nothing beyond the GOP/SRE protocol open has happened yet, so undo that directly instead of
+    // going through SWMDriverStop (which expects the Simple Window Manager protocol to be installed).
+    //
+    mGop                = NULL;
+    mRenderingEngine    = NULL;
+    mGraphicsController = NULL;
+    gBS->CloseProtocol (Controller, &gMsSREProtocolGuid, This->DriverBindingHandle, Controller);
+    gBS->RestoreTPL (PreviousTPL);
+    DEBUG ((DEBUG_INFO, "INFO [SWM]: Graphics start (Controller=%p): %r.\r\n", Controller, Status));
+    return Status;
+  }
 
   DEBUG ((DEBUG_INFO, "INFO [SWM]: SWMDriverStart (Controller=0x%x).\r\n", (UINTN)Controller));
 
@@ -1212,7 +1446,50 @@ Exit:
 }
 
 /**
-    Stops supporting specified controller exposing Absolute Pointer interface.
+  Forces every driver that opened the Simple Window Manager protocol BY_DRIVER on the graphics
+  controller (e.g., OSK) to stop. This keeps teardown deterministic ahead of uninstalling the protocol,
+  instead of depending on the order the core happens to visit agents when Controller is disconnected.
+
+  @param[in] This         Pointer to the instance of this driver.
+  @param[in] Controller   Graphics controller handle publishing the Simple Window Manager protocol.
+
+**/
+static
+VOID
+DisconnectSwmServiceAgents (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller
+  )
+{
+  EFI_STATUS                           Status;
+  EFI_OPEN_PROTOCOL_INFORMATION_ENTRY  *EntryBuffer;
+  UINTN                                EntryCount;
+  UINTN                                Index;
+
+  Status = gBS->OpenProtocolInformation (
+                  Controller,
+                  &gMsSWMProtocolGuid,
+                  &EntryBuffer,
+                  &EntryCount
+                  );
+
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  for (Index = 0; Index < EntryCount; Index++) {
+    if ((EntryBuffer[Index].AgentHandle != This->DriverBindingHandle) &&
+        ((EntryBuffer[Index].Attributes & EFI_OPEN_PROTOCOL_BY_DRIVER) != 0))
+    {
+      gBS->DisconnectController (Controller, EntryBuffer[Index].AgentHandle, NULL);
+    }
+  }
+
+  FreePool (EntryBuffer);
+}
+
+/**
+    Stops supporting a graphics or Absolute Pointer controller.
 
     @param[in] This                 Pointer to the instance of this driver.
     @param[in] Controller           Handle of controller being managed.
@@ -1221,6 +1498,7 @@ Exit:
 
     @retval EFI_SUCCESS             Successfully stopped managing the specified controller.
     @retval EFI_NOT_FOUND           Unable to find the specified controller in the watchlist.
+    @retval EFI_DEVICE_ERROR        Failed to stop managing the specified controller.
 
 **/
 EFI_STATUS
@@ -1232,8 +1510,69 @@ SWMDriverStop (
   IN EFI_HANDLE                   *ChildHandleBuffer
   )
 {
-  EFI_STATUS  Status             = EFI_SUCCESS;
-  BOOLEAN     bNeedsMousePointer = FALSE;
+  EFI_STATUS     Status             = EFI_SUCCESS;
+  BOOLEAN        bNeedsMousePointer = FALSE;
+  EFI_TPL        PreviousTPL;
+  WINMGR_CLIENT  *Client;
+
+  if (Controller == mGraphicsController) {
+    if (NumberOfChildren != 0) {
+      return EFI_DEVICE_ERROR;
+    }
+
+    // Force every driver that opened the Simple Window Manager protocol BY_DRIVER (e.g., OSK) to stop
+    // before the protocol disappears below, rather than depending on the order the core happens to visit
+    // agents when Controller itself is disconnected.
+    //
+    DisconnectSwmServiceAgents (This, Controller);
+
+    PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+    if (mSWMWatchListTimerEvent != NULL) {
+      Status = gBS->SetTimer (mSWMWatchListTimerEvent, TimerCancel, 0);
+      if (EFI_ERROR (Status)) {
+        gBS->RestoreTPL (PreviousTPL);
+        return Status;
+      }
+
+      gBS->CloseEvent (mSWMWatchListTimerEvent);
+      mSWMWatchListTimerEvent = NULL;
+    }
+
+    HideMousePointer ();
+    mSWM.bDisplayingMousePointer = FALSE;
+
+    // This is defensive cleanup. Every client with a display surface (OSK, dialogs) is expected to
+    // have already unregistered using DisconnectSwmServiceAgents above. Anything left behind is cleaned
+    // up here so a later UnregisterClient doesn't dereference the rendering engine after it's gone.
+    //
+    for (Client = mSWM.Clients; Client != NULL; Client = Client->pNext) {
+      if (Client->SurfacePaintEvent != NULL) {
+        gBS->CloseEvent (Client->SurfacePaintEvent);
+        Client->SurfacePaintEvent = NULL;
+        mRenderingEngine->DeleteSurface (mRenderingEngine, Client->ImageHandle);
+      }
+    }
+
+    Status = gBS->UninstallMultipleProtocolInterfaces (
+                    Controller,
+                    &gMsSWMProtocolGuid,
+                    (VOID **)&mSWM.SWMProtocol,
+                    NULL
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to uninstall the Simple Window Manager protocol interface, Status: %r\r\n", Status));
+      gBS->RestoreTPL (PreviousTPL);
+      return Status;
+    }
+
+    mGop             = NULL;
+    mRenderingEngine = NULL;
+    gBS->CloseProtocol (Controller, &gMsSREProtocolGuid, This->DriverBindingHandle, Controller);
+    mGraphicsController = NULL;
+    gBS->RestoreTPL (PreviousTPL);
+    return EFI_SUCCESS;
+  }
 
   // Remove the protocol pointer from the watchlist.
   //
@@ -1269,7 +1608,12 @@ Exit:
 }
 
 /**
-  Second half of driver initialization
+  Performs one-time driver initialization the first time a graphics controller binds.
+
+  Work that must survive (or does not depend on) later graphics disconnect/reconnect cycles resides here
+  such as font/HII setup, the Absolute Pointer input aggregator, and the UI toolkit. State that is specific
+  to a single graphics binding (the window manager protocol, screen dimensions, and the watchlist timer) is
+  owned by the caller (SWMDriverStart/SWMDriverStop) instead.
 
   @param[in] ImageHandle    Image handle this driver.
 
@@ -1349,16 +1693,14 @@ DriverInitStage2 (
   mAbsPointerMode.AbsoluteMinX = 0;
   mAbsPointerMode.AbsoluteMinY = 0;
   mAbsPointerMode.AbsoluteMinZ = 0;
-  if (NULL != mGop) {
-    mAbsPointerMode.AbsoluteMaxX = mGop->Mode->Info->HorizontalResolution;
-    mAbsPointerMode.AbsoluteMaxY = mGop->Mode->Info->VerticalResolution;
-  } else {
-    mAbsPointerMode.AbsoluteMaxX = 32768;      // Just so they are not zero
-    mAbsPointerMode.AbsoluteMaxY = 32768;
-  }
-
   mAbsPointerMode.AbsoluteMaxZ = 0;
   mAbsPointerMode.Attributes   = 0;
+
+  // AbsoluteMaxX/Y track the current graphics mode and are (re)computed by the caller for every graphics
+  // binding. Initialized here only so they are not zero before the first binding completes.
+  //
+  mAbsPointerMode.AbsoluteMaxX = 0x8000;
+  mAbsPointerMode.AbsoluteMaxY = 0x8000;
 
   // Create a handle to use for the base Winmgr Client
   gBaseClientHandle = NULL;
@@ -1398,63 +1740,8 @@ DriverInitStage2 (
     goto Exit;
   }
 
-  // Install the Simple Window Manager Protocol.
-  //
-  mSWM.SWMProtocol.RegisterClient     = SWMRegisterClient;
-  mSWM.SWMProtocol.UnregisterClient   = SWMUnregisterClient;
-  mSWM.SWMProtocol.ActivateWindow     = SWMActivateWindow;
-  mSWM.SWMProtocol.SetWindowFrame     = SWMSetWindowFrame;
-  mSWM.SWMProtocol.BltWindow          = SWMBltWindow;
-  mSWM.SWMProtocol.StringToWindow     = SWMStringToWindow;
-  mSWM.SWMProtocol.EnableMousePointer = SWMEnableMousePointer;
-  mSWM.SWMProtocol.WaitForEvent       = SWMWaitForEvent;
-
-  Status = gBS->InstallMultipleProtocolInterfaces (
-                  &ImageHandle,
-                  &gMsSWMProtocolGuid,
-                  (VOID **)&mSWM.SWMProtocol,
-                  NULL
-                  );
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to install the Simple Window Manager protocol interface, Status: %r\r\n", Status));
-    goto Exit;
-  }
-
-  // Create a periodic timer event for checking the Absolute Pointer protocol watchlist.
-  //
-  Status = gBS->CreateEvent (
-                  EVT_TIMER | EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
-                  CheckWatchListCallback,
-                  NULL,
-                  &mSWMWatchListTimerEvent
-                  );
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to create timer callback event for re-enabling the mouse pointer.  Status = %r\r\n", Status));
-    goto Exit;
-  }
-
-  // Initialize the Simple Window Manager.
-  //
-  InitializeWindowManagerContext ();
-
-  // Start periodic timer for scanning AP watchlist.
-  //
-  Status = gBS->SetTimer (
-                  mSWMWatchListTimerEvent,
-                  TimerPeriodic,
-                  PERIODIC_REFRESH_INTERVAL
-                  );
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to start provider watchlist scanning timer.  Status = %r\r\n", Status));
-    goto Exit;
-  }
-
   // Initialize the Simple UI ToolKit (for dialog rendering, etc.).  Note that the SUIT has a dependency on the SWM protocol so this call
-  // needs to happen after we've called InstallMultipleProtocolInterfaces.
+  // needs to happen after the caller has installed the Simple Window Manager protocol interface.
   //
   Status = InitializeUIToolKit (ImageHandle);
 
@@ -1463,21 +1750,46 @@ DriverInitStage2 (
     goto Exit;
   }
 
-  // Install Driver Binding Protocol to catch Absolute Pointer providers
-  //
-  Status = EfiLibInstallDriverBindingComponentName2 (
-             ImageHandle,
-             gST,
-             &mSWMDriverBinding,
-             ImageHandle,
-             NULL,
-             NULL
-             );
-
-  ASSERT_EFI_ERROR (Status);
-
 Exit:
 
+  return Status;
+}
+
+/**
+  Starts graphics support on the first available Simple Rendering Engine controller.
+
+  @retval EFI_SUCCESS   Graphics support is started.
+  @retval Others        No controller was started. If mSwmInitializationFailed is TRUE, this is the
+                        stage two initialization status.
+
+**/
+static EFI_STATUS
+ConnectGraphicsController (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  EFI_HANDLE  *Handles;
+  UINTN       HandleCount;
+  UINTN       HandleIndex;
+
+  if (mGraphicsController != NULL) {
+    return EFI_SUCCESS;
+  }
+
+  Status = gBS->LocateHandleBuffer (ByProtocol, &gMsSREProtocolGuid, NULL, &HandleCount, &Handles);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  for (HandleIndex = 0; HandleIndex < HandleCount; HandleIndex++) {
+    Status = gBS->ConnectController (Handles[HandleIndex], NULL, NULL, FALSE);
+    if (!EFI_ERROR (Status) || mSwmInitializationFailed) {
+      break;
+    }
+  }
+
+  FreePool (Handles);
   return Status;
 }
 
@@ -1497,62 +1809,7 @@ GopRegisteredCallback (
   IN  VOID       *Context
   )
 {
-  EFI_STATUS  Status = EFI_SUCCESS;
-
-  // If we already found the Graphics Output Protocol we want, there's nothing to do.
-  //
-  if (NULL != mGop) {
-    goto Exit;
-  }
-
-  // Determine if the Graphics Output Protocol is available on the Console Out handle.
-  //
-  Status = gBS->LocateProtocol (
-                  &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
-                  (VOID **)&mGop
-                  );
-
-  if (EFI_ERROR (Status)) {
-    mGop = NULL;
-    goto Exit;
-  }
-
-  // Determine if the Simple Rendering Engine Protocol is available on the same Console Out handle.  The
-  // Rendering Engine driver provides both Graphics Output and Rendering Engine protocols.
-  //
-  Status = gBS->LocateProtocol (
-                  &gMsSREProtocolGuid,
-                  NULL,
-                  (VOID **)&mRenderingEngine
-                  );
-
-  if (EFI_ERROR (Status)) {
-    mGop = NULL;
-    goto Exit;
-  }
-
-  mAbsPointerMode.AbsoluteMaxX = mGop->Mode->Info->HorizontalResolution;
-  mAbsPointerMode.AbsoluteMaxY = mGop->Mode->Info->VerticalResolution;
-
-  // Now that we found the Graphics Output Protocol, complete the second half of driver initialization.
-  //
-  Status = DriverInitStage2 (mImageHandle);
-
-  // Unfortunately we can't return an error status from this routine or fail driver initialization but we can
-  // ensure that our own protocol isn't published by cleaning up.  This will also close the registration event
-  // that triggers the call to this callback function.
-  //
-  // ASSERT_EFI_ERROR (Status);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to complete stage two driver initialization (%r).\r\n", Status));
-    DriverCleanUp (mImageHandle);
-    goto Exit;
-  }
-
-Exit:
-
-  return;
+  ConnectGraphicsController ();
 }
 
 /**
@@ -1581,29 +1838,17 @@ DriverInit (
   // Acquire access to the current theme.
   mTheme = MsUiGetPlatformTheme ();
 
-  // Determine if the Graphics Output Protocol is available on the Console Out handle.
-  //
-  // NOTE: Since we use the Driver Binding Protocol to catch Absolute Pointer Protocol provider registrations
-  // and removals, our load order can't be based on Depex.  As such, we may load before GOP has been registered
-  // in which case we need to register for GOP registration notifications to perform the latter half of our driver
-  // initialization.  If we're lucky and GOP is available now, we can do it all here in one pass.
-  //
-  Status = gBS->HandleProtocol (
-                  gST->ConsoleOutHandle,
-                  &gEfiGraphicsOutputProtocolGuid,
-                  (VOID **)&mGop
-                  );
-
-  if (!EFI_ERROR (Status)) {
-    // Graphics Output Protocol is available now, complete driver initialization.
-    //
-    Status = DriverInitStage2 (ImageHandle);
+  Status = EfiLibInstallDriverBindingComponentName2 (
+             ImageHandle,
+             gST,
+             &mSWMDriverBinding,
+             ImageHandle,
+             NULL,
+             NULL
+             );
+  if (EFI_ERROR (Status)) {
     goto Exit;
   }
-
-  // Graphics Output Protocol isn't availble now. Register for Graphics Output Protocol registration notifications.
-  //
-  mGop = NULL;
 
   Status = gBS->CreateEvent (
                   EVT_NOTIFY_SIGNAL,
@@ -1619,7 +1864,7 @@ DriverInit (
   }
 
   Status = gBS->RegisterProtocolNotify (
-                  &gEfiGraphicsOutputProtocolGuid,
+                  &gMsSREProtocolGuid,
                   mGopRegisterEvent,
                   &mGopRegistration
                   );
@@ -1629,7 +1874,23 @@ DriverInit (
     goto Exit;
   }
 
+  // Only a stage two initialization failure is fatal. SRE may not be available yet.
+  Status = ConnectGraphicsController ();
+  if (!mSwmInitializationFailed) {
+    Status = EFI_SUCCESS;
+  }
+
 Exit:
+
+  if (EFI_ERROR (Status)) {
+    DriverCleanUp (ImageHandle);
+    gBS->UninstallMultipleProtocolInterfaces (
+           ImageHandle,
+           &gEfiDriverBindingProtocolGuid,
+           &mSWMDriverBinding,
+           NULL
+           );
+  }
 
   return Status;
 }
@@ -1647,66 +1908,58 @@ DriverCleanUp (
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
+  VOID        *Interface;
 
   // Close the Graphics Output Protocol registration notification event.
   //
   if (NULL != mGopRegisterEvent) {
-    Status = gBS->CloseEvent (mGopRegisterEvent);
+    Status            = gBS->CloseEvent (mGopRegisterEvent);
+    mGopRegisterEvent = NULL;
   }
 
-  // Cancel and clean-up watchlist timer.
-  //
-  if (NULL != mSWMWatchListTimerEvent) {
-    // Cancel the provider watchlist scanning timer.
-    //
-    Status = gBS->SetTimer (
-                    mSWMWatchListTimerEvent,
-                    TimerCancel,
-                    0
-                    );
-
+  if (mGraphicsController != NULL) {
+    Status = SWMDriverStop (&mSWMDriverBinding, mGraphicsController, 0, NULL);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to cancel provider watchlist scanning timer.  Status = %r\r\n", Status));
       goto Exit;
     }
-
-    // Close the timer event.
-    //
-    Status = gBS->CloseEvent (mSWMWatchListTimerEvent);
   }
 
-  // Clean up the provider watchlist.
-  //
+  // The watchlist timer and the Simple Window Manager protocol interface are owned by
+  // SWMDriverStart/SWMDriverStop (installed/removed on the graphics controller handle), so both are
+  // already released by SWMDriverStop above whenever graphics was bound.
+
+  if (!EFI_ERROR (gBS->HandleProtocol (ImageHandle, &gEfiAbsolutePointerProtocolGuid, &Interface))) {
+    Status = gBS->UninstallMultipleProtocolInterfaces (
+                    ImageHandle,
+                    &gEfiAbsolutePointerProtocolGuid,
+                    mSWM.UserAbsolutePointerProtocol,
+                    NULL
+                    );
+    if (EFI_ERROR (Status)) {
+      goto Exit;
+    }
+  }
+
   FreeAbsolutePointerInterfaceWatchList ();
-
-  // Uninstall the Simple Window Manager protocol.
-  //
-  Status = gBS->UninstallMultipleProtocolInterfaces (
-                  ImageHandle,
-                  &gMsSWMProtocolGuid,
-                  (VOID **)&mSWM.SWMProtocol,
-                  NULL
-                  );
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to uninstall the Simple Window Manager protocol interface, Status: %r\r\n", Status));
-    goto Exit;
-  }
 
   // Free all the client buffers.
   //
-  WINMGR_CLIENT  *pClient = mSWM.Clients;
-  WINMGR_CLIENT  *pNext   = NULL;
-
-  while (NULL != pClient) {
-    pNext = pClient->pNext;
-    FreePool (pClient);
-    pClient = pNext;
+  while (mSWM.Clients != NULL) {
+    SWMUnregisterClient (&mSWM.SWMProtocol, mSWM.Clients->ImageHandle);
   }
 
-  // Hide the mouse pointer and free blt buffers.
-  //
-  HideMousePointer ();
+  mSWM.UserAbsolutePointerProtocol = NULL;
+  mSwmOneTimeInitDone              = FALSE;
+
+  if (mSWMHiiHandle != NULL) {
+    HiiRemovePackages (mSWMHiiHandle);
+    mSWMHiiHandle = NULL;
+  }
+
+  if (gBaseClientHandle != NULL) {
+    gBS->UninstallMultipleProtocolInterfaces (gBaseClientHandle, &gBaseClientGuid, NULL, NULL);
+    gBaseClientHandle = NULL;
+  }
 
 Exit:
 
@@ -1730,6 +1983,15 @@ DriverUnload (
   EFI_STATUS  Status = EFI_SUCCESS;
 
   Status = DriverCleanUp (ImageHandle);
+
+  if (!EFI_ERROR (Status)) {
+    Status = gBS->UninstallMultipleProtocolInterfaces (
+                    ImageHandle,
+                    &gEfiDriverBindingProtocolGuid,
+                    &mSWMDriverBinding,
+                    NULL
+                    );
+  }
 
   return Status;
 }

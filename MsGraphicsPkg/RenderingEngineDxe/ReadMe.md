@@ -4,8 +4,9 @@
 
 The Rendering Engine is responsible for maintaining the supported windows, displaying popups,
 and restopring windows when popups are dismissed.
-The Rendering Engins is the only consumer of the MsGopOverrideProtocol and is the publisher of
-the "real" Efi Graphics Output protocol.
+The Rendering Engine opens the Graphics Output Protocol produced by the display driver, publishes a proxy
+Graphics Output Protocol and the Rendering Engine protocol on a child handle, and hooks the parent's Blt function
+so callers that use the parent directly also go through it. Console drivers attach to the child handle.
 
 ## Copyright
 

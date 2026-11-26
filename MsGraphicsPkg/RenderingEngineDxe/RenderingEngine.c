@@ -17,12 +17,17 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 // ****** Global variables ******
 //
 EFI_HANDLE                    mImageHandle;
-EFI_HANDLE                    mSREGopHandle;
+EFI_HANDLE                    mParentHandle;                // Handle of the parent GOP.
+EFI_HANDLE                    mSREGopHandle;                // SRE-owned child handle carrying the proxy GOP and the SRE protocol.
 EFI_GRAPHICS_OUTPUT_PROTOCOL  *mParentGop;
 RENDERING_ENGINE_CONTEXT      mSRE;
 EFI_EVENT                     mSampleSurfaceFrameTimerEvent;
-EFI_GUID                      *mMsGopOverrideProtocolGuid;
+EFI_EVENT                     mPreExitBootServicesEvent;
 BOOLEAN                       mPreExitBootServices = FALSE;
+
+// The parent GOP's original Blt, which SREBlt replaces and wraps.
+EFI_GRAPHICS_OUTPUT_PROTOCOL_BLT  mOriginalGopBlt;
+BOOLEAN                           mInSREBlt = FALSE;
 
 // ****** Typedefs and structures ******
 //
@@ -56,6 +61,11 @@ CalculateSurfaceFrameChecksum (
   );
 
 VOID
+ShutdownTimer (
+  VOID
+  );
+
+VOID
 DisplaySurfaceList (
   VOID
   )
@@ -85,6 +95,96 @@ DisplaySurfaceList (
 // ****** Function declarations ******
 //
 
+/**
+  Checks that the parent GOP is still installed on the controller.
+
+  The parent GOP can be removed without this driver being notified, so this must be checked
+  before every use of the parent GOP.
+
+  @retval TRUE   The parent GOP can be used.
+  @retval FALSE  The parent GOP is not available.
+
+**/
+static
+BOOLEAN
+IsParentGopValid (
+  VOID
+  )
+{
+  EFI_STATUS                    Status;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *Gop;
+
+  if ((mParentGop == NULL) || (mParentHandle == NULL)) {
+    return FALSE;
+  }
+
+  Status = gBS->OpenProtocol (
+                  mParentHandle,
+                  &gEfiGraphicsOutputProtocolGuid,
+                  (VOID **)&Gop,
+                  mImageHandle,
+                  mParentHandle,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                  );
+
+  return !EFI_ERROR (Status) && (Gop == mParentGop);
+}
+
+/**
+  Copies the parent GOP's mode data into the proxy GOP's own mode structures.
+
+  The parent GOP must be valid.
+
+**/
+static
+VOID
+SyncProxyMode (
+  VOID
+  )
+{
+  if ((mParentGop->Mode == NULL) || (mParentGop->Mode->Info == NULL)) {
+    return;
+  }
+
+  CopyMem (&mSRE.GopModeInfo, mParentGop->Mode->Info, sizeof (mSRE.GopModeInfo));
+  mSRE.GopMode.MaxMode         = mParentGop->Mode->MaxMode;
+  mSRE.GopMode.Mode            = mParentGop->Mode->Mode;
+  mSRE.GopMode.Info            = &mSRE.GopModeInfo;
+  mSRE.GopMode.SizeOfInfo      = sizeof (mSRE.GopModeInfo);
+  mSRE.GopMode.FrameBufferBase = mParentGop->Mode->FrameBufferBase;
+  mSRE.GopMode.FrameBufferSize = mParentGop->Mode->FrameBufferSize;
+}
+
+/**
+  Frees the mouse pointer buffers and clears the pointer description.
+
+**/
+static
+VOID
+FreeMousePointerBuffers (
+  VOID
+  )
+{
+  if (NULL != mSRE.MousePointerBitmap) {
+    FreePool (mSRE.MousePointerBitmap);
+    mSRE.MousePointerBitmap = NULL;
+  }
+
+  if (NULL != mSRE.MousePointerBltBuffer) {
+    FreePool (mSRE.MousePointerBltBuffer);
+    mSRE.MousePointerBltBuffer = NULL;
+  }
+
+  if (NULL != mSRE.MousePointerBackBuffer) {
+    FreePool (mSRE.MousePointerBackBuffer);
+    mSRE.MousePointerBackBuffer = NULL;
+  }
+
+  mSRE.MousePointerWidth  = 0;
+  mSRE.MousePointerHeight = 0;
+  mSRE.MousePointerBpp    = 0;
+}
+
 static
 EFI_STATUS
 DrawMousePointer (
@@ -96,25 +196,29 @@ DrawMousePointer (
   EFI_STATUS  Status = EFI_SUCCESS;
   UINTN       Index;
 
-  if (mParentGop == NULL) {
+  if (!IsParentGopValid () ||
+      (mSRE.MousePointerBitmap == NULL) ||
+      (mSRE.MousePointerBltBuffer == NULL) ||
+      (mSRE.MousePointerBackBuffer == NULL))
+  {
     return EFI_NOT_READY;
   }
 
   // Restore the location where the mouse pointer currently resides with the original screen content.
   //
   if (TRUE == mSRE.ShowingMousePointer) {
-    mParentGop->Blt (
-                  mParentGop,
-                  mSRE.MousePointerBackBuffer,
-                  EfiBltBufferToVideo,
-                  0,
-                  0,
-                  mSRE.MousePointerOrigX,
-                  mSRE.MousePointerOrigY,
-                  mSRE.MousePointerWidth,
-                  mSRE.MousePointerHeight,
-                  0
-                  );
+    mOriginalGopBlt (
+      mParentGop,
+      mSRE.MousePointerBackBuffer,
+      EfiBltBufferToVideo,
+      0,
+      0,
+      mSRE.MousePointerOrigX,
+      mSRE.MousePointerOrigY,
+      mSRE.MousePointerWidth,
+      mSRE.MousePointerHeight,
+      0
+      );
   }
 
   // If we don't need to show the mouse pointer, we're done.
@@ -125,33 +229,33 @@ DrawMousePointer (
 
   // Otherwise capture screen contents at the new location.
   //
-  mParentGop->Blt (
-                mParentGop,
-                mSRE.MousePointerBackBuffer,
-                EfiBltVideoToBltBuffer,
-                NewOrigX,
-                NewOrigY,
-                0,
-                0,
-                mSRE.MousePointerWidth,
-                mSRE.MousePointerHeight,
-                0
-                );
+  mOriginalGopBlt (
+    mParentGop,
+    mSRE.MousePointerBackBuffer,
+    EfiBltVideoToBltBuffer,
+    NewOrigX,
+    NewOrigY,
+    0,
+    0,
+    mSRE.MousePointerWidth,
+    mSRE.MousePointerHeight,
+    0
+    );
 
   // Proceed to draw the mouse pointer at the new location.
   //
-  mParentGop->Blt (
-                mParentGop,
-                mSRE.MousePointerBltBuffer,
-                EfiBltVideoToBltBuffer,
-                NewOrigX,
-                NewOrigY,
-                0,
-                0,
-                mSRE.MousePointerWidth,
-                mSRE.MousePointerHeight,
-                0
-                );
+  mOriginalGopBlt (
+    mParentGop,
+    mSRE.MousePointerBltBuffer,
+    EfiBltVideoToBltBuffer,
+    NewOrigX,
+    NewOrigY,
+    0,
+    0,
+    mSRE.MousePointerWidth,
+    mSRE.MousePointerHeight,
+    0
+    );
 
   // Logically "OR" the mouse pointer into the blt buffer
   //
@@ -167,18 +271,18 @@ DrawMousePointer (
 
   // Blt the result to the screen
   //
-  mParentGop->Blt (
-                mParentGop,
-                mSRE.MousePointerBltBuffer,
-                EfiBltBufferToVideo,
-                0,
-                0,
-                NewOrigX,
-                NewOrigY,
-                mSRE.MousePointerWidth,
-                mSRE.MousePointerHeight,
-                0
-                );
+  mOriginalGopBlt (
+    mParentGop,
+    mSRE.MousePointerBltBuffer,
+    EfiBltBufferToVideo,
+    0,
+    0,
+    NewOrigX,
+    NewOrigY,
+    mSRE.MousePointerWidth,
+    mSRE.MousePointerHeight,
+    0
+    );
 
 Exit:
 
@@ -236,7 +340,9 @@ SREBlt (
   UINT32            FrameWidth, FrameHeight;
   BOOLEAN           MousePointerState = mSRE.ShowingMousePointer;
 
-  if (mParentGop == NULL) {
+  // Only reachable through the parent GOP, so just check that SRE was not released while still hooked.
+  //
+  if (mOriginalGopBlt == NULL) {
     return EFI_NOT_READY;
   }
 
@@ -253,6 +359,27 @@ SREBlt (
   // Raise the TPL to avoid interrupting rendering and framebuffer capture.
   //
   PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+
+  // The parent's Blt can call back into the hooked Blt, which must go straight through.
+  //
+  if (mInSREBlt) {
+    Status = mOriginalGopBlt (
+               mParentGop,
+               BltBuffer,
+               BltOperation,
+               SourceX,
+               SourceY,
+               DestinationX,
+               DestinationY,
+               Width,
+               Height,
+               Delta
+               );
+    gBS->RestoreTPL (PreviousTPL);
+    return Status;
+  }
+
+  mInSREBlt = TRUE;
 
   // Current mouse pointer bounding rectangle.
   //
@@ -300,18 +427,18 @@ SREBlt (
 
       // Restore the contents to the framebuffer.
       //
-      mParentGop->Blt (
-                    mParentGop,
-                    Surface->pCaptureBuffer,
-                    EfiBltBufferToVideo,
-                    0,
-                    0,
-                    Surface->FrameRect.Left,
-                    Surface->FrameRect.Top,
-                    FrameWidth,
-                    FrameHeight,
-                    0
-                    );
+      mOriginalGopBlt (
+        mParentGop,
+        Surface->pCaptureBuffer,
+        EfiBltBufferToVideo,
+        0,
+        0,
+        Surface->FrameRect.Left,
+        Surface->FrameRect.Top,
+        FrameWidth,
+        FrameHeight,
+        0
+        );
 
       // Re-calculate the surface frame checksum.
       //
@@ -323,18 +450,18 @@ SREBlt (
 
   // Perform the caller's requested blit operation.
   //
-  mParentGop->Blt (
-                mParentGop,
-                BltBuffer,
-                BltOperation,
-                SourceX,
-                SourceY,
-                DestinationX,
-                DestinationY,
-                Width,
-                Height,
-                Delta
-                );
+  mOriginalGopBlt (
+    mParentGop,
+    BltBuffer,
+    BltOperation,
+    SourceX,
+    SourceY,
+    DestinationX,
+    DestinationY,
+    Width,
+    Height,
+    Delta
+    );
 
   // Now that we've finished the caller's requested blitting, recapture the contents underlying any active client surface that intersected with the blit rectangle.
   // Note that we ignore video to blit buffer operations since these don't affect the framebuffer.
@@ -353,18 +480,18 @@ SREBlt (
 
         // Save the contents of the framebuffer to this capture buffer.
         //
-        mParentGop->Blt (
-                      mParentGop,
-                      Surface->pCaptureBuffer,
-                      EfiBltVideoToBltBuffer,
-                      Surface->FrameRect.Left,
-                      Surface->FrameRect.Top,
-                      0,
-                      0,
-                      FrameWidth,
-                      FrameHeight,
-                      FrameWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
-                      );
+        mOriginalGopBlt (
+          mParentGop,
+          Surface->pCaptureBuffer,
+          EfiBltVideoToBltBuffer,
+          Surface->FrameRect.Left,
+          Surface->FrameRect.Top,
+          0,
+          0,
+          FrameWidth,
+          FrameHeight,
+          FrameWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+          );
       }
 
       // Re-calculate the surface frame checksum.
@@ -383,6 +510,8 @@ SREBlt (
       TRUE
       );
   }
+
+  mInSREBlt = FALSE;
 
   // Restore the TPL.
   //
@@ -403,9 +532,11 @@ SREQueryMode (
   OUT EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  **Info
   )
 {
-  if (mParentGop == NULL) {
+  if (!IsParentGopValid ()) {
     return EFI_NOT_READY;
   }
+
+  SyncProxyMode ();
 
   return mParentGop->QueryMode (
                        mParentGop,
@@ -426,7 +557,7 @@ SRESetMode (
   EFI_STATUS  Status;
   EFI_TPL     PreviousTPL;
 
-  if (mParentGop == NULL) {
+  if (!IsParentGopValid ()) {
     return EFI_NOT_READY;
   }
 
@@ -441,6 +572,10 @@ SRESetMode (
                          mParentGop,
                          ModeNumber
                          );
+  if (!EFI_ERROR (Status)) {
+    SyncProxyMode ();
+  }
+
   // Restore the TPL.
   //
   gBS->RestoreTPL (PreviousTPL);
@@ -477,21 +612,7 @@ SRESetMousePointer (
 
   // Free the existing mouse pointer buffers if they exist.
   //
-  if (NULL != mSRE.MousePointerBitmap) {
-    FreePool (mSRE.MousePointerBitmap);
-  }
-
-  if (NULL != mSRE.MousePointerBltBuffer) {
-    FreePool (mSRE.MousePointerBltBuffer);
-  }
-
-  if (NULL != mSRE.MousePointerBackBuffer) {
-    FreePool (mSRE.MousePointerBackBuffer);
-  }
-
-  mSRE.MousePointerWidth  = 0;
-  mSRE.MousePointerHeight = 0;
-  mSRE.MousePointerBpp    = 0;
+  FreeMousePointerBuffers ();
 
   // Allocate a buffer to hold a copy of the mouse pointer bitmap.
   //
@@ -519,6 +640,7 @@ SRESetMousePointer (
 
   ASSERT (NULL != mSRE.MousePointerBltBuffer);
   if (NULL == mSRE.MousePointerBltBuffer) {
+    FreeMousePointerBuffers ();
     Status = EFI_OUT_OF_RESOURCES;
     goto Exit;
   }
@@ -529,6 +651,7 @@ SRESetMousePointer (
 
   ASSERT (NULL != mSRE.MousePointerBackBuffer);
   if (NULL == mSRE.MousePointerBackBuffer) {
+    FreeMousePointerBuffers ();
     Status = EFI_OUT_OF_RESOURCES;
     goto Exit;
   }
@@ -630,6 +753,18 @@ CheckForPendingPaintRequest (
   )
 {
   SRE_SURFACE_LIST  *Surface = (SRE_SURFACE_LIST *)Context;
+  SRE_SURFACE_LIST  *Node;
+
+  // The client can still hold this event after the surface was deleted, so confirm the context is still a live surface.
+  //
+  Node = mSRE.Surfaces;
+  while ((NULL != Node) && (Node != Surface)) {
+    Node = Node->pNext;
+  }
+
+  if (NULL == Node) {
+    return;
+  }
 
   if (TRUE == Surface->PaintNotify) {
     Surface->PaintNotify = FALSE;
@@ -649,7 +784,14 @@ CalculateSurfaceFrameChecksum (
   UINT32                         Offset;
   UINT32                         Checksum = 0;
 
-  if (mParentGop == NULL) {
+  if ((mParentGop == NULL) ||
+      (mParentGop->Mode == NULL) ||
+      (mParentGop->Mode->Info == NULL) ||
+      (mParentGop->Mode->FrameBufferBase == 0) ||
+      (mParentGop->Mode->Info->PixelFormat == PixelBltOnly) ||
+      (Surface->FrameRect.Right >= mParentGop->Mode->Info->HorizontalResolution) ||
+      (Surface->FrameRect.Bottom >= mParentGop->Mode->Info->VerticalResolution))
+  {
     return 0;
   }
 
@@ -695,6 +837,18 @@ SampleSurfaceFrameTimerCallback (
   // Raise the TPL to avoid getting interrupted while we access shared data structures.
   //
   EFI_TPL  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+
+  // Stop sampling once the parent GOP is gone since the framebuffer is no longer valid.
+  //
+  if (!IsParentGopValid ()) {
+    gBS->SetTimer (Event, TimerCancel, 0);
+    gBS->RestoreTPL (PreviousTPL);
+    return;
+  }
+
+  // The parent's mode can change without going through the proxy.
+  //
+  SyncProxyMode ();
 
   // Check whether any active surface's frame has been altered.
   //
@@ -840,7 +994,7 @@ SREResizeSurface (
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Resizing surface (ImageHandle=0x%x).\r\n", (UINTN)ImageHandle));
 
-  if (mParentGop == NULL) {
+  if (!IsParentGopValid ()) {
     return EFI_NOT_READY;
   }
 
@@ -873,18 +1027,18 @@ SREResizeSurface (
 
           // Restore the contents to the framebuffer.
           //
-          mParentGop->Blt (
-                        mParentGop,
-                        Surface->pCaptureBuffer,
-                        EfiBltBufferToVideo,
-                        0,
-                        0,
-                        Surface->FrameRect.Left,
-                        Surface->FrameRect.Top,
-                        Width,
-                        Height,
-                        0
-                        );
+          mOriginalGopBlt (
+            mParentGop,
+            Surface->pCaptureBuffer,
+            EfiBltBufferToVideo,
+            0,
+            0,
+            Surface->FrameRect.Left,
+            Surface->FrameRect.Top,
+            Width,
+            Height,
+            0
+            );
         }
 
         FreePool (Surface->pCaptureBuffer);
@@ -903,7 +1057,8 @@ SREResizeSurface (
 
       ASSERT (NULL != Surface->pCaptureBuffer);
       if (NULL == Surface->pCaptureBuffer) {
-        Status = EFI_OUT_OF_RESOURCES;
+        Surface->Active = FALSE;
+        Status          = EFI_OUT_OF_RESOURCES;
         break;
       }
 
@@ -912,18 +1067,18 @@ SREResizeSurface (
       if (TRUE == Surface->Active) {
         // Save the contents of the framebuffer to this capture buffer.
         //
-        mParentGop->Blt (
-                      mParentGop,
-                      Surface->pCaptureBuffer,
-                      EfiBltVideoToBltBuffer,
-                      Surface->FrameRect.Left,
-                      Surface->FrameRect.Top,
-                      0,
-                      0,
-                      Width,
-                      Height,
-                      0
-                      );
+        mOriginalGopBlt (
+          mParentGop,
+          Surface->pCaptureBuffer,
+          EfiBltVideoToBltBuffer,
+          Surface->FrameRect.Left,
+          Surface->FrameRect.Top,
+          0,
+          0,
+          Width,
+          Height,
+          0
+          );
 
         // Compute the surface frame checksum.
         //
@@ -968,7 +1123,7 @@ SREActivateSurface (
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Setting surface active (ImageHandle=0x%x, MakeActive=%s).\r\n", (UINTN)ImageHandle, (TRUE == MakeActive ? L"TRUE" : L"FALSE")));
 
-  if (mParentGop == NULL) {
+  if (!IsParentGopValid ()) {
     return EFI_NOT_READY;
   }
 
@@ -1003,6 +1158,13 @@ SREActivateSurface (
   Surface = mSRE.Surfaces;
   while (NULL != Surface) {
     if (Surface->ImageHandle == ImageHandle) {
+      // A surface without a capture buffer (failed resize) can't be activated or deactivated.
+      //
+      if (NULL == Surface->pCaptureBuffer) {
+        Status = EFI_OUT_OF_RESOURCES;
+        break;
+      }
+
       Surface->Active = MakeActive;
 
       FrameWidth  = SWM_RECT_WIDTH (Surface->FrameRect);
@@ -1016,18 +1178,18 @@ SREActivateSurface (
 
         // Save the contents of the framebuffer to this capture buffer.
         //
-        mParentGop->Blt (
-                      mParentGop,
-                      Surface->pCaptureBuffer,
-                      EfiBltVideoToBltBuffer,
-                      Surface->FrameRect.Left,
-                      Surface->FrameRect.Top,
-                      0,
-                      0,
-                      FrameWidth,
-                      FrameHeight,
-                      0
-                      );
+        mOriginalGopBlt (
+          mParentGop,
+          Surface->pCaptureBuffer,
+          EfiBltVideoToBltBuffer,
+          Surface->FrameRect.Left,
+          Surface->FrameRect.Top,
+          0,
+          0,
+          FrameWidth,
+          FrameHeight,
+          0
+          );
       } else {
         if (Surface->PreviousActive != NULL) {
           Surface->PreviousActive->Active = TRUE;
@@ -1038,31 +1200,31 @@ SREActivateSurface (
         //
 
         if (mPreExitBootServices) {
-          mParentGop->Blt (
-                        mParentGop,
-                        &BlackPixel,
-                        EfiBltVideoFill,
-                        0,
-                        0,
-                        Surface->FrameRect.Left,
-                        Surface->FrameRect.Top,
-                        FrameWidth,
-                        FrameHeight,
-                        0
-                        );
+          mOriginalGopBlt (
+            mParentGop,
+            &BlackPixel,
+            EfiBltVideoFill,
+            0,
+            0,
+            Surface->FrameRect.Left,
+            Surface->FrameRect.Top,
+            FrameWidth,
+            FrameHeight,
+            0
+            );
         } else {
-          mParentGop->Blt (
-                        mParentGop,
-                        Surface->pCaptureBuffer,
-                        EfiBltBufferToVideo,
-                        0,
-                        0,
-                        Surface->FrameRect.Left,
-                        Surface->FrameRect.Top,
-                        FrameWidth,
-                        FrameHeight,
-                        0
-                        );
+          mOriginalGopBlt (
+            mParentGop,
+            Surface->pCaptureBuffer,
+            EfiBltBufferToVideo,
+            0,
+            0,
+            Surface->FrameRect.Left,
+            Surface->FrameRect.Top,
+            FrameWidth,
+            FrameHeight,
+            0
+            );
         }
       }
 
@@ -1228,32 +1390,121 @@ SRESetModeSurface (
   return Status;
 }
 
-static EFI_STATUS
-InitializeRenderingEngine (
-  VOID
+/**
+  Destroys the child handle carrying the proxy GOP and the SRE protocol.
+
+  Every driver that opened the proxy GOP or the SRE protocol BY_DRIVER (e.g., GraphicsConsole, SWM) is
+  explicitly disconnected first so the subsequent uninstall is deterministic rather than depending on
+  whatever order the core happens to visit agents when the parent GOP is itself disconnected.
+
+  @param[in] This  Pointer to the instance of this driver.
+
+  @retval EFI_SUCCESS  The child handle was destroyed.
+  @retval Others       The protocols are still installed and nothing was released.
+
+**/
+static
+EFI_STATUS
+DestroyChildHandle (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This
   )
 {
-  EFI_STATUS  Status = EFI_SUCCESS;
+  EFI_STATUS  Status;
+
+  gBS->DisconnectController (mSREGopHandle, NULL, NULL);
+
+  Status = gBS->UninstallMultipleProtocolInterfaces (
+                  mSREGopHandle,
+                  &gEfiGraphicsOutputProtocolGuid,
+                  &mSRE.Gop,
+                  &gMsSREProtocolGuid,
+                  &mSRE.SREProtocol,
+                  NULL
+                  );
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  // The child must be closed on the parent GOP before its last protocol is uninstalled since that deletes the handle.
+  //
+  gBS->CloseProtocol (
+         mParentHandle,
+         &gEfiGraphicsOutputProtocolGuid,
+         This->DriverBindingHandle,
+         mSREGopHandle
+         );
+
+  Status = gBS->UninstallProtocolInterface (
+                  mSREGopHandle,
+                  &gEfiDevicePathProtocolGuid,
+                  mSRE.ChildDevicePath
+                  );
+  if (!EFI_ERROR (Status)) {
+    FreePool (mSRE.ChildDevicePath);
+  }
+
+  mSRE.ChildDevicePath = NULL;
+  mSREGopHandle        = NULL;
+
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS
+InitializeRenderingEngine (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This
+  )
+{
+  EFI_STATUS                Status = EFI_SUCCESS;
+  EFI_DEVICE_PATH_PROTOCOL  *ParentDevicePath;
+  VENDOR_DEVICE_PATH        SreNode;
+  VOID                      *Interface;
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Initializing the Rendering Engine.\r\n"));
 
-  if (mParentGop == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Parent GOP is NULL during initialization.\r\n"));
+  if (!IsParentGopValid () ||
+      (mParentGop->Mode == NULL) ||
+      (mParentGop->Mode->Info == NULL) ||
+      (mParentGop->Blt == NULL) ||
+      (mParentGop->Blt == SREBlt))
+  {
+    DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Parent GOP is not usable during initialization.\r\n"));
     return EFI_NOT_READY;
+  }
+
+  // The child's device path extends the parent's so console selection by device path still matches.
+  //
+  Status = gBS->HandleProtocol (mParentHandle, &gEfiDevicePathProtocolGuid, (VOID **)&ParentDevicePath);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Parent GOP handle has no device path (%r).\r\n", Status));
+    return Status;
+  }
+
+  ZeroMem (&SreNode, sizeof (SreNode));
+  SreNode.Header.Type    = HARDWARE_DEVICE_PATH;
+  SreNode.Header.SubType = HW_VENDOR_DP;
+  SetDevicePathNodeLength (&SreNode.Header, sizeof (SreNode));
+  CopyGuid (&SreNode.Guid, &gMsSREProtocolGuid);
+
+  mSRE.ChildDevicePath = AppendDevicePathNode (ParentDevicePath, &SreNode.Header);
+  if (mSRE.ChildDevicePath == NULL) {
+    return EFI_OUT_OF_RESOURCES;
   }
 
   // Configure initial Rendering Engine context.
   //
+  mOriginalGopBlt          = mParentGop->Blt;
   mSRE.ShowingMousePointer = FALSE;
   mSRE.MousePointerOrigX   = (mParentGop->Mode->Info->HorizontalResolution / 2);          // Default X position (may be adjusted later for display mode switch).
   mSRE.MousePointerOrigY   = (mParentGop->Mode->Info->VerticalResolution   / 2);          // Default Y position (may be adjusted later for display mode switch).
 
-  // Install our own GOP handlers.
+  // Configure the proxy GOP. It uses its own mode data so it stays valid when the parent goes away.
   //
-  mSRE.Gop.Blt       = SREBlt;
   mSRE.Gop.QueryMode = SREQueryMode;
   mSRE.Gop.SetMode   = SRESetMode;
-  mSRE.Gop.Mode      = mParentGop->Mode;                        // Reference our parent's Mode structure directly.
+  mSRE.Gop.Blt       = SREBlt;
+  mSRE.Gop.Mode      = &mSRE.GopMode;
+  SyncProxyMode ();
 
   // Install our Rendering Engine protocol.
   //
@@ -1267,24 +1518,43 @@ InitializeRenderingEngine (
   mSRE.SREProtocol.DeleteSurface   = SREDeleteSurface;
   mSRE.SREProtocol.SetModeSurface  = SRESetModeSurface;
 
-  Status = gBS->InstallMultipleProtocolInterfaces (
-                  &mSREGopHandle,
-                  &gEfiGraphicsOutputProtocolGuid,
-                  (VOID **)&mSRE.Gop,
-                  &gMsSREProtocolGuid,
-                  (VOID **)&mSRE.SREProtocol,
-                  NULL,
-                  NULL
-                  );
+  mSREGopHandle = NULL;
+  Status        = gBS->InstallMultipleProtocolInterfaces (
+                         &mSREGopHandle,
+                         &gEfiDevicePathProtocolGuid,
+                         mSRE.ChildDevicePath,
+                         &gEfiGraphicsOutputProtocolGuid,
+                         &mSRE.Gop,
+                         &gMsSREProtocolGuid,
+                         &mSRE.SREProtocol,
+                         NULL
+                         );
 
   ASSERT_EFI_ERROR (Status);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Failed to install GOP (%r).\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Failed to install the child handle protocols (%r).\r\n", Status));
+    mSREGopHandle = NULL;
     goto Exit;
   }
 
-  DEBUG ((DEBUG_INFO, "INFO [SRE]: Registered our own GOP protocol, Handle=0x%x, Status: %r\r\n", mSREGopHandle, Status));
+  // Register the child on the parent GOP so the driver model stops it before the parent goes away.
+  //
+  Status = gBS->OpenProtocol (
+                  mParentHandle,
+                  &gEfiGraphicsOutputProtocolGuid,
+                  &Interface,
+                  This->DriverBindingHandle,
+                  mSREGopHandle,
+                  EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Failed to register the child handle (%r).\r\n", Status));
+    goto RemoveChild;
+  }
+
+  DEBUG ((DEBUG_INFO, "INFO [SRE]: Registered the proxy GOP and Rendering Engine protocol, Handle=0x%x, Status: %r\r\n", mSREGopHandle, Status));
 
   // Create a timer event to regularly sample active surface frames and confirm someone hasn't used the framebuffer pointer directly to step on the surface.
   //
@@ -1298,7 +1568,7 @@ InitializeRenderingEngine (
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Failed to create timer event for sampling surface frame (%r).\r\n", Status));
-    goto Exit;
+    goto RemoveChild;
   }
 
   // Start a periodic timer to sample active surface frames.
@@ -1309,13 +1579,148 @@ InitializeRenderingEngine (
                   SURFACE_FRAME_SAMPLE_REFRESH_INTERVAL
                   );
 
+  if (!EFI_ERROR (Status)) {
+    // Hook the parent GOP last so everything SREBlt relies on is ready. Callers that use the parent directly then also go through SRE.
+    //
+    mParentGop->Blt = SREBlt;
+    goto Exit;
+  }
+
+  DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Failed to start timer for sampling surface frame (%r).\r\n", Status));
+
+RemoveChild:
+
+  // Don't leave the child handle installed without the timer that supports it.
+  //
+  ShutdownTimer ();
+  DestroyChildHandle (This);
+
 Exit:
 
   return Status;
 }
 
 /**
-    Checks whether the specified controller has the GOP protocol installed on it.
+  Delete all surfaces registered with the rendering engine.
+
+**/
+VOID
+DeleteAllSurfaces (
+  VOID
+  )
+{
+  while (mSRE.Surfaces != NULL) {
+    SREDeleteSurface (
+      &mSRE.SREProtocol,
+      mSRE.Surfaces->ImageHandle
+      );
+  }
+}
+
+/**
+  Cancel the surface frame sampling timer.
+
+**/
+VOID
+ShutdownTimer (
+  VOID
+  )
+{
+  if (mSampleSurfaceFrameTimerEvent == NULL) {
+    return;
+  }
+
+  gBS->SetTimer (
+         mSampleSurfaceFrameTimerEvent,
+         TimerCancel,
+         0
+         );
+  gBS->CloseEvent (mSampleSurfaceFrameTimerEvent);
+  mSampleSurfaceFrameTimerEvent = NULL;
+}
+
+/**
+  Release everything held since SREDriverStart() so the driver can be started again.
+
+  The child handle must already be destroyed. The parent GOP is only accessed to unhook Blt if it's still installed.
+
+  @param[in] This  Pointer to the instance of this driver.
+
+**/
+static
+VOID
+ReleaseRenderingEngine (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This
+  )
+{
+  ShutdownTimer ();
+
+  if (IsParentGopValid () && (mParentGop->Blt == SREBlt)) {
+    mParentGop->Blt = mOriginalGopBlt;
+  }
+
+  DeleteAllSurfaces ();
+  FreeMousePointerBuffers ();
+
+  if (mSRE.ChildDevicePath != NULL) {
+    FreePool (mSRE.ChildDevicePath);
+  }
+
+  gBS->CloseProtocol (
+         mParentHandle,
+         &gEfiGraphicsOutputProtocolGuid,
+         This->DriverBindingHandle,
+         mParentHandle
+         );
+
+  ZeroMem (&mSRE, sizeof (mSRE));
+  mOriginalGopBlt = NULL;
+  mInSREBlt       = FALSE;
+  mParentGop      = NULL;
+  mParentHandle   = NULL;
+  mSREGopHandle   = NULL;
+}
+
+/**
+  Stops the Rendering Engine, unhooking the parent GOP and releasing everything.
+
+  @param[in] This  Pointer to the instance of this driver.
+
+  @retval EFI_SUCCESS        The Rendering Engine was stopped or was not started.
+  @retval EFI_ACCESS_DENIED  Another driver hooked Blt after SRE so SRE can't be removed from the chain.
+  @retval Others             The child handle couldn't be destroyed. Nothing was released.
+
+**/
+static
+EFI_STATUS
+StopRenderingEngine (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This
+  )
+{
+  EFI_STATUS  Status;
+
+  if (mParentHandle == NULL) {
+    return EFI_SUCCESS;
+  }
+
+  if (IsParentGopValid () && (mParentGop->Blt != SREBlt)) {
+    return EFI_ACCESS_DENIED;
+  }
+
+  if (mSREGopHandle != NULL) {
+    Status = DestroyChildHandle (This);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
+
+  ReleaseRenderingEngine (This);
+
+  return EFI_SUCCESS;
+}
+
+/**
+    Checks whether the specified controller has a GOP that the Rendering Engine can sit above.
 
     @param[in] This                 Pointer to the instance of this driver.
     @param[in] Controller           Controller handle to be checked.
@@ -1335,37 +1740,50 @@ SREDriverSupported (
 {
   EFI_STATUS                    Status = EFI_SUCCESS;
   EFI_GRAPHICS_OUTPUT_PROTOCOL  *Gop;
+  VOID                          *Interface;
 
-  // If we've already loaded or are trying to connect to our own published protocol, skip.
+  // Skip the console splitter's virtual GOP, ourselves, and handles that already carry the Rendering Engine protocol.
   //
-  if ((NULL != mSREGopHandle) || (Controller == mImageHandle) || (Controller == mSREGopHandle)) {
+  if ((Controller == gST->ConsoleOutHandle) ||
+      (Controller == mImageHandle) ||
+      !EFI_ERROR (gBS->HandleProtocol (Controller, &gMsSREProtocolGuid, &Interface)))
+  {
     Status = EFI_UNSUPPORTED;
     goto Exit;
   }
 
-  // Check for the GOP on the controller's handle.
+  // Only one controller is supported. A parent that went away without notification is released by Start.
+  //
+  if ((NULL != mParentHandle) && IsParentGopValid ()) {
+    Status = EFI_UNSUPPORTED;
+    goto Exit;
+  }
+
+  // Check for the GOP on the controller's handle. Ownership is only taken by Start.
   //
   Status = gBS->OpenProtocol (
                   Controller,
-                  mMsGopOverrideProtocolGuid,
+                  &gEfiGraphicsOutputProtocolGuid,
                   (VOID **)&Gop,
                   This->DriverBindingHandle,
                   Controller,
-                  EFI_OPEN_PROTOCOL_BY_DRIVER
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
 
   if (EFI_ERROR (Status)) {
     goto Exit;
   }
 
-  // Close the parent GOP.
+  // The child handle needs a device path to extend, and the GOP needs mode data and a Blt to wrap.
   //
-  gBS->CloseProtocol (
-         Controller,
-         mMsGopOverrideProtocolGuid,
-         This->DriverBindingHandle,
-         Controller
-         );
+  if ((Gop->Blt == NULL) ||
+      (Gop->Blt == SREBlt) ||
+      (Gop->Mode == NULL) ||
+      (Gop->Mode->Info == NULL) ||
+      EFI_ERROR (gBS->OpenProtocol (Controller, &gEfiDevicePathProtocolGuid, NULL, This->DriverBindingHandle, Controller, EFI_OPEN_PROTOCOL_TEST_PROTOCOL)))
+  {
+    Status = EFI_UNSUPPORTED;
+  }
 
 Exit:
 
@@ -1373,7 +1791,8 @@ Exit:
 }
 
 /**
-    Connects to the controller then manufactures a new version of the GOP for other drivers to attach to.
+    Takes ownership of the controller's GOP and publishes a proxy GOP and the Rendering Engine protocol on a child handle.
+    The parent's Blt is also hooked so callers that use the parent directly go through the Rendering Engine.
 
     @param[in] This                 Pointer to the instance of this driver.
     @param[in] Controller           Handle of controller to be managed.
@@ -1395,26 +1814,41 @@ SREDriverStart (
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Driver start (Controller=0x%x).\r\n", (UINTN)Controller));
 
-  // Locate the parent (real) GOP.
+  // A GOP that was removed without notification must be released before taking over a new one.
+  //
+  Status = StopRenderingEngine (This);
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  // Take ownership of the parent (real) GOP. Any driver already using it is disconnected and reconnects to the child below.
   //
   Status = gBS->OpenProtocol (
                   Controller,
-                  mMsGopOverrideProtocolGuid,
+                  &gEfiGraphicsOutputProtocolGuid,
                   (VOID **)&mParentGop,
                   This->DriverBindingHandle,
                   Controller,
-                  EFI_OPEN_PROTOCOL_BY_DRIVER
+                  EFI_OPEN_PROTOCOL_BY_DRIVER | EFI_OPEN_PROTOCOL_EXCLUSIVE
                   );
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Failed to open GOP (%r).\r\n", Status));
+    mParentGop = NULL;
     goto Exit;
   }
 
-  // Manufacture a new GOP and a RenderingEngine Protocol.
+  mParentHandle = Controller;
+  Status        = InitializeRenderingEngine (This);
+
+  if (EFI_ERROR (Status)) {
+    ReleaseRenderingEngine (This);
+    goto Exit;
+  }
+
+  // Let the GOP consumers attach to the child handle.
   //
-  mSREGopHandle = Controller;
-  Status        = InitializeRenderingEngine ();
+  gBS->ConnectController (mSREGopHandle, NULL, NULL, TRUE);
 
 Exit:
 
@@ -1447,51 +1881,9 @@ SREDriverStop (
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Driver stop Entry (Controller=0x%x).\r\n", (UINTN)Controller));
 
-  // Cancel the surface frame sampling timer.
+  // Stop() is called with the child handle and then again without it. Everything is released on the first call.
   //
-  gBS->SetTimer (
-         mSampleSurfaceFrameTimerEvent,
-         TimerCancel,
-         0
-         );
-
-  // Uninstall protocol interfaces.
-  //
-  Status = gBS->UninstallMultipleProtocolInterfaces (
-                  mSREGopHandle,
-                  &gEfiGraphicsOutputProtocolGuid,
-                  &mSRE.Gop,
-                  &gMsSREProtocolGuid,
-                  &mSRE.SREProtocol,
-                  NULL
-                  );
-
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
-
-  // Delete all surfaces.
-  //
-  while (NULL != mSRE.Surfaces) {
-    SREDeleteSurface (
-      &mSRE.SREProtocol,
-      mSRE.Surfaces->ImageHandle
-      );
-  }
-
-  // Close the parent (real) GOP.
-  //
-  gBS->CloseProtocol (
-         Controller,
-         mMsGopOverrideProtocolGuid,
-         This->DriverBindingHandle,
-         Controller
-         );
-
-  mParentGop    = NULL;
-  mSREGopHandle = NULL;
-
-Exit:
+  Status = StopRenderingEngine (This);
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Driver stop Exit (%r).\r\n", Status));
 
@@ -1515,6 +1907,7 @@ OnPreExitBootServicesNotification (
 {
   mPreExitBootServices = TRUE;
   gBS->CloseEvent (Event);
+  mPreExitBootServicesEvent = NULL;
 }
 
 /**
@@ -1534,14 +1927,11 @@ DriverInit (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_EVENT   InitEvent;
   EFI_STATUS  Status = EFI_SUCCESS;
 
   // Save the image handle for later.
   //
   mImageHandle = ImageHandle;
-
-  mMsGopOverrideProtocolGuid = PcdGetPtr (PcdMsGopOverrideProtocolGuid);
 
   // Install the Driver Binding Protocol.
   //
@@ -1556,6 +1946,10 @@ DriverInit (
 
   ASSERT_EFI_ERROR (Status);
 
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
   //
   // Register notify function to modify any window deactivate to a black background at PreExitBootServices.
   //
@@ -1565,11 +1959,20 @@ DriverInit (
                   OnPreExitBootServicesNotification,
                   gImageHandle,
                   &gEfiEventBeforeExitBootServicesGuid,
-                  &InitEvent
+                  &mPreExitBootServicesEvent
                   );
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+
+    // The image is freed when the entry point fails so the driver binding can't stay installed.
+    //
+    gBS->UninstallMultipleProtocolInterfaces (
+           ImageHandle,
+           &gEfiDriverBindingProtocolGuid,
+           &mSREDriverBinding,
+           NULL
+           );
   }
 
   return Status;
@@ -1580,7 +1983,7 @@ DriverInit (
 
   @param[in] ImageHandle    Image handle this driver.
 
-  @retval EFI_SUCCESS       This function always complete successfully.
+  @retval EFI_SUCCESS       The driver was unloaded.
 
 **/
 EFI_STATUS
@@ -1591,7 +1994,30 @@ DriverUnload (
 {
   EFI_STATUS  Status = EFI_SUCCESS;
 
-  // TODO
+  // Stop managing the controller so the timer, surfaces and parent GOP are released.
+  //
+  if (mParentHandle != NULL) {
+    Status = gBS->DisconnectController (mParentHandle, ImageHandle, NULL);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
+
+  Status = gBS->UninstallMultipleProtocolInterfaces (
+                  ImageHandle,
+                  &gEfiDriverBindingProtocolGuid,
+                  &mSREDriverBinding,
+                  NULL
+                  );
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  if (mPreExitBootServicesEvent != NULL) {
+    gBS->CloseEvent (mPreExitBootServicesEvent);
+    mPreExitBootServicesEvent = NULL;
+  }
 
   return Status;
 }
